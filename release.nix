@@ -7,7 +7,7 @@ rec {
       owner  = "TheoryMine";
       repo   = "IsaPlanner";
       rev    = "f3f4220";
-      sha256 = "xkzxfdnqnx9p43r40vjwskklqn0mqxg6";
+      sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
     };
 
 
@@ -20,7 +20,7 @@ rec {
       cp "${isaplannerRun}" "$out/bin/isaplanner-run"
     '';
 
-    isaplannerRun = writeFile "isaplanner-run" ''
+    isaplannerRun = writeScript "isaplanner-run" ''
       docker run -i -t theorymine/isaplanner:2015.0.2 /bin/bash
     '';
   };
