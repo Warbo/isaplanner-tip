@@ -1,6 +1,6 @@
 with import <nixpkgs> {};
 
-{
+rec {
   isaplannerDocker = stdenv.mkDerivation {
     name = "isaplanner";
     src  = fetchFromGitHub {
