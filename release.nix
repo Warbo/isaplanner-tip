@@ -1,7 +1,7 @@
 with import <nixpkgs> {};
 
 rec {
-  isaplannerDocker = stdenv.mkDerivation {
+  isaplannerDocker = stdenv.mkDerivation rec {
     name = "isaplanner";
     src  = fetchFromGitHub {
       owner  = "TheoryMine";
