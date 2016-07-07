@@ -10,6 +10,7 @@ rec {
       sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
     };
 
+    propagatedBuildInputs = [ docker ];
 
     buildPhase = ''
       docker build -t theorymine/isaplanner:2015.0.2 .
