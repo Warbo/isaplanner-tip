@@ -41,7 +41,7 @@ rec {
     };
 
     inherit isaplib;
-    buildInputs = [ perl ];
+    buildInputs = [ jre perl ];
 
     configurePhase = ''
       PLANNER="$PWD"
