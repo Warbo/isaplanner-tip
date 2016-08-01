@@ -58,7 +58,8 @@ rec {
 
       export ISABELLE_JDK_HOME
 
-      find .
+      patchelf --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) \
+        "$PAR/isabelle/contrib/jdk/x86_64-linux/jre/bin/java"
 
       cd ./isabelle/contrib/IsaPlanner
       "$PAR/isabelle/bin/isabelle" build -d . HOL-IsaPlannerSession
