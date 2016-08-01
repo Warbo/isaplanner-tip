@@ -57,6 +57,7 @@ rec {
       ISABELLE_JDK_HOME=$(dirname "$(dirname "$(command -v javac)")")
 
       export ISABELLE_JDK_HOME
+      export HOME="$PAR"
 
       patchelf --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) \
         "$PAR/isabelle/contrib/jdk/x86_64-linux/jre/bin/java"
