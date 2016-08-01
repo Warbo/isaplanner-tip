@@ -41,16 +41,23 @@ rec {
     };
 
     inherit isaplib;
-    buildInputs = [ jre perl ];
+    buildInputs = [ jdk perl ];
 
     configurePhase = ''
       PLANNER="$PWD"
       cd ..
+      PAR="$PWD"
+
       cp -a "$isaplib" ./isabelle
       chmod +w -R ./isabelle
       cp -a "$PLANNER" ./isabelle/contrib/IsaPlanner
     '';
     buildPhase = ''
+      ISABELLE_DIR="$PAR/isabelle"
+      ISABELLE_JDK_HOME=$(dirname "$(dirname "$(command -v javac)")")
+
+      export ISABELLE_JDK_HOME
+
       cd ./isabelle/contrib/IsaPlanner
       ../../bin/isabelle build -d . HOL-IsaPlannerSession
       ../../bin/isabelle build -d . IsaPlanner-Test
