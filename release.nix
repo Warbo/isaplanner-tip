@@ -39,25 +39,26 @@ rec {
       rev    = "f3f4220";
       sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
     };
-    buildInputs = [ isaplib ];
+    inherit isaplib;
+    configurePhase = ''
+      PLANNER="$PWD"
+      cd ..
+      cp -a "$isaplib" ./isabelle
+      chmod +w -R ./isabelle
+      cp -a "$PLANNER" ./isabelle/contrib/IsaPlanner
+    '';
+    buildPhase = ''
+      cd ./isabelle/contrib/IsaPlanner
+      ../../bin/isabelle build -d . HOL-IsaPlannerSession
+      ../../bin/isabelle build -d . IsaPlanner-Test
+    '';
+    installPhase = ''
+      cd "$PLANNER"
+      cd ..
+      cp -a ./isabelle "$out"
+    '';
   };
 }
-#     # Install isaplib for Isabelle-2015
-#     RUN git clone --branch Isabelle-2015 https://github.com/iislucas/isaplib.git \
-#         /usr/local/Isabelle2015/contrib/isaplib
-
-#         # Copy the local directory as the IsaPlanner directory for Isabelle2009-2
-#         COPY . /usr/local/Isabelle2015/contrib/IsaPlanner
-
-#         RUN cd /usr/local/Isabelle2015/contrib/IsaPlanner && \
-#           /usr/local/Isabelle2015/bin/isabelle build -d . HOL-IsaPlannerSession && \
-#             /usr/local/Isabelle2015/bin/isabelle build -d . IsaPlanner-Test
-
-
-# # Docker file for TheoryMine
-
-# FROM ubuntu:14.04
-# MAINTAINER Lucas Dixon <lucas.dixon@gmail.com>
 
 # # Install the necessary base packages for Isabelle/TheoryMine theorem
 # # generation
@@ -76,41 +77,3 @@ rec {
 #   curl \
 #   texlive-latex-extra \
 #   latex-cjk-all
-
-# # Install Isabelle-2015
-# RUN curl http://isabelle.in.tum.de/website-Isabelle2015/dist/Isabelle2015_linux.tar.gz \
-#   -o /usr/local/Isabelle2015_linux.tar.gz
-
-# RUN tar zxvf /usr/local/Isabelle2015_linux.tar.gz -C /usr/local/
-
-# # This is just a line to edit to make the below force to be re-run.
-# RUN echo "id:1"
-
-# # Install isaplib for Isabelle-2015
-# RUN git clone --branch Isabelle-2015 https://github.com/iislucas/isaplib.git \
-#     /usr/local/Isabelle2015/contrib/isaplib
-
-# # Copy the local directory as the IsaPlanner directory for Isabelle2009-2
-# COPY . /usr/local/Isabelle2015/contrib/IsaPlanner
-
-# RUN cd /usr/local/Isabelle2015/contrib/IsaPlanner && \
-#   /usr/local/Isabelle2015/bin/isabelle build -d . HOL-IsaPlannerSession && \
-#   /usr/local/Isabelle2015/bin/isabelle build -d . IsaPlanner-Test
-
-
-#     propagatedBuildInputs = [ docker ];
-
-#     buildPhase = ''
-#       docker build -t theorymine/isaplanner:2015.0.2 .
-#     '';
-
-#     installPhase = ''
-#       mkdir -p "$out/bin"
-#       cp "${isaplannerRun}" "$out/bin/isaplanner-run"
-#     '';
-
-#     isaplannerRun = writeScript "isaplanner-run" ''
-#       docker run -i -t theorymine/isaplanner:2015.0.2 /bin/bash
-#     '';
-#   };
-# }
