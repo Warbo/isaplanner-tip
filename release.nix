@@ -1,9 +1,24 @@
-with import <nixpkgs> {};
+let pkgs = import <nixpkgs> {};
+ in with pkgs; rec {
 
-rec {
+  polyml = pkgs.polyml.overrideDerivation (old: {
+    name = "polyml-5.5.2";
+    src  = "${isabelle2015}/contrib/polyml-5.5.2-3/src";
+    # src = fetchFromGitHub {
+    #   owner = "polyml";
+    #   repo  = "polyml";
+    #   rev   = "88a7241"; # fixes-5.5.2
+    #   sha256 = "0z34l4rcm9nxpvm2qb026pv51d0s98kkw88pnac7gqjam93c7fv2";
+    # };
+    #installPhase = ''
+    #  find .
+    #'';
+  });
 
-  isabelle = stdenv.mkDerivation {
-    name = "isabelle";
+  isabellePolyml = isabelle.override { inherit polyml; };
+
+  isabelle2015 = stdenv.mkDerivation {
+    name = "isabelle2015";
     src  = fetchurl {
       url    = "http://isabelle.in.tum.de/website-Isabelle2015/dist/Isabelle2015_linux.tar.gz";
       sha256 = "13kqm458d8mw7il1zg5bdb1nfbb869p331d75xzlm2v9xgjxx862";
@@ -20,11 +35,11 @@ rec {
       rev    = "714e0a2";
       sha256 = "04jnw51718fzhw6b14fbff99x6d2k59zqicqs6lv78ysiys8z76y";
     };
-    inherit isabelle;
+    inherit isabelle2015;
     installPhase = ''
       PLIB="$PWD"
       cd ..
-      cp -a "$isabelle" ./isabelle
+      cp -a "$isabelle2015" ./isabelle
       chmod +w -R ./isabelle
       cp -a "$PLIB" ./isabelle/contrib/isaplib
       cp -a ./isabelle "$out"
@@ -41,30 +56,72 @@ rec {
     };
 
     inherit isaplib;
-    buildInputs = [ jdk perl ];
+    buildInputs = [ file jdk perl polyml nettools ];
 
-    configurePhase = ''
-      PLANNER="$PWD"
+    #libPath = [
+    #  gmp
+    #  jdk
+    #  (runCommand "jli-lib" {
+    #                inherit jdk;
+    #                SYS = {   i686-linux = "i386";
+    #                        x86_64-linux = "amd64";
+    #                      }."${builtins.currentSystem}";
+    #              }
+    #              ''
+    #     mkdir -p "$out"
+    #     cp -r "$jdk/lib/openjdk/lib/$SYS" "$out/lib"
+    #   '')
+    #];
+
+    #SYS = { i686-linux   = "x86-linux";
+    #        x86_64-linux = "x86_64-linux"; }."${builtins.currentSystem}";
+
+    postPatch = (isabelle.override { inherit polyml; }).postPatch;
+
+    passAsFile = [ "postPatch" ];
+
+    patchPhase = ''
+      ORIG="$PWD"
       cd ..
-      PAR="$PWD"
 
-      cp -a "$isaplib" ./isabelle
-      chmod +w -R ./isabelle
-      cp -a "$PLANNER" ./isabelle/contrib/IsaPlanner
+      mv "$ORIG" IsaPlanner
+
+      cp -r "$isaplib" "$ORIG"
+      chmod +w -R "$ORIG"
+
+      mv IsaPlanner "$ORIG/contrib"
+
+      cd "$ORIG"
+      unset ORIG
+
+      echo "Patching with '$postPatchPath'" 1>&2
+      . "$postPatchPath"
     '';
+
+    #configurePhase = ''
+    #'';
     buildPhase = ''
-      ISABELLE_DIR="$PAR/isabelle"
+      set -e
+      ISABELLE_DIR="$PWD"
       ISABELLE_JDK_HOME=$(dirname "$(dirname "$(command -v javac)")")
 
       export ISABELLE_JDK_HOME
-      export HOME="$PAR"
+      HOME=$(dirname "$PWD")
+      export HOME
 
-      patchelf --set-interpreter $(cat $NIX_CC/nix-support/dynamic-linker) \
-        "$PAR/isabelle/contrib/jdk/x86_64-linux/jre/bin/java"
+      echo "Patching hard-coded executables" 1>&2
+      INTERP=$(cat $NIX_CC/nix-support/dynamic-linker)
+      #while read -r F
+      #do
+      #  if file "$F" | grep "interpreter /lib/ld-linux.so.2" > /dev/null
+      #  then
+      #    patchelf --set-interpreter "$INTERP" --set-rpath "$libPath" "$F"
+      #  fi
+      #done < <(find . -type f)
 
-      cd ./isabelle/contrib/IsaPlanner
-      "$PAR/isabelle/bin/isabelle" build -d . HOL-IsaPlannerSession
-      "$PAR/isabelle/bin/isabelle" build -d . IsaPlanner-Test
+      cd contrib/IsaPlanner
+      ../../bin/isabelle build -d . HOL-IsaPlannerSession
+      ../../bin/isabelle build -d . IsaPlanner-Test
     '';
     installPhase = ''
       cd "$PLANNER"
