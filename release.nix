@@ -58,6 +58,8 @@ rec {
 
       export ISABELLE_JDK_HOME
 
+      find .
+
       cd ./isabelle/contrib/IsaPlanner
       ../../bin/isabelle build -d . HOL-IsaPlannerSession
       ../../bin/isabelle build -d . IsaPlanner-Test
