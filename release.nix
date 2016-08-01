@@ -39,7 +39,10 @@ rec {
       rev    = "f3f4220";
       sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
     };
+
     inherit isaplib;
+    buildInputs = [ perl ];
+
     configurePhase = ''
       PLANNER="$PWD"
       cd ..
