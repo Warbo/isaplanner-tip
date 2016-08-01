@@ -15,8 +15,6 @@ let pkgs = import <nixpkgs> {};
     #'';
   });
 
-  isabellePolyml = isabelle.override { inherit polyml; };
-
   isabelle2015 = stdenv.mkDerivation {
     name = "isabelle2015";
     src  = fetchurl {
