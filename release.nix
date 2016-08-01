@@ -4,15 +4,6 @@ let pkgs = import <nixpkgs> {};
   polyml = pkgs.polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
     src  = "${isabelle2015}/contrib/polyml-5.5.2-3/src";
-    # src = fetchFromGitHub {
-    #   owner = "polyml";
-    #   repo  = "polyml";
-    #   rev   = "88a7241"; # fixes-5.5.2
-    #   sha256 = "0z34l4rcm9nxpvm2qb026pv51d0s98kkw88pnac7gqjam93c7fv2";
-    # };
-    #installPhase = ''
-    #  find .
-    #'';
   });
 
   isabelle2015 = stdenv.mkDerivation {
@@ -56,24 +47,6 @@ let pkgs = import <nixpkgs> {};
     inherit isaplib;
     buildInputs = [ file jdk perl polyml nettools ];
 
-    #libPath = [
-    #  gmp
-    #  jdk
-    #  (runCommand "jli-lib" {
-    #                inherit jdk;
-    #                SYS = {   i686-linux = "i386";
-    #                        x86_64-linux = "amd64";
-    #                      }."${builtins.currentSystem}";
-    #              }
-    #              ''
-    #     mkdir -p "$out"
-    #     cp -r "$jdk/lib/openjdk/lib/$SYS" "$out/lib"
-    #   '')
-    #];
-
-    #SYS = { i686-linux   = "x86-linux";
-    #        x86_64-linux = "x86_64-linux"; }."${builtins.currentSystem}";
-
     postPatch = (isabelle.override { inherit polyml; }).postPatch;
 
     passAsFile = [ "postPatch" ];
@@ -90,14 +63,11 @@ let pkgs = import <nixpkgs> {};
       mv IsaPlanner "$ORIG/contrib"
 
       cd "$ORIG"
-      unset ORIG
 
       echo "Patching with '$postPatchPath'" 1>&2
       . "$postPatchPath"
     '';
 
-    #configurePhase = ''
-    #'';
     buildPhase = ''
       set -e
       ISABELLE_DIR="$PWD"
@@ -107,24 +77,12 @@ let pkgs = import <nixpkgs> {};
       HOME=$(dirname "$PWD")
       export HOME
 
-      echo "Patching hard-coded executables" 1>&2
-      INTERP=$(cat $NIX_CC/nix-support/dynamic-linker)
-      #while read -r F
-      #do
-      #  if file "$F" | grep "interpreter /lib/ld-linux.so.2" > /dev/null
-      #  then
-      #    patchelf --set-interpreter "$INTERP" --set-rpath "$libPath" "$F"
-      #  fi
-      #done < <(find . -type f)
-
       cd contrib/IsaPlanner
       ../../bin/isabelle build -d . HOL-IsaPlannerSession
       ../../bin/isabelle build -d . IsaPlanner-Test
     '';
     installPhase = ''
-      cd "$PLANNER"
-      cd ..
-      cp -a ./isabelle "$out"
+      cp -a "$ORIG" "$out"
     '';
   };
 }
