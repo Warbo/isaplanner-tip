@@ -61,8 +61,8 @@ rec {
       find .
 
       cd ./isabelle/contrib/IsaPlanner
-      ../../bin/isabelle build -d . HOL-IsaPlannerSession
-      ../../bin/isabelle build -d . IsaPlanner-Test
+      "$PAR/isabelle/bin/isabelle" build -d . HOL-IsaPlannerSession
+      "$PAR/isabelle/bin/isabelle" build -d . IsaPlanner-Test
     '';
     installPhase = ''
       cd "$PLANNER"
