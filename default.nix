@@ -1,5 +1,6 @@
-let pkgs = import <nixpkgs> {};
- in with pkgs; rec {
+{ pkgs ? import <nixpkgs> {} }:
+
+with pkgs; rec {
 
   polyml = pkgs.polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
