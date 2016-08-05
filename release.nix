@@ -85,6 +85,26 @@ let pkgs = import <nixpkgs> {};
       cp -a "$ORIG" "$out"
     '';
   };
+
+  isabelle-tip = stdenv.mkDerivation {
+    name = "isabelle-tip";
+
+    buildInputs = let te-benchmark-src = fetchgit {
+                        url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+                        rev    = "b668e34";
+                        sha256 = "1vabsxdli29i8mxrn61n9yqb5psysc8xq1g7vz13lfymv2a0ypbd";
+                      };
+                      te-benchmark = callPackage "${te-benchmark-src}" {};
+                   in [ te-benchmark.tip-benchmark-smtlib ];
+
+    buildCommand = ''
+      source $stdenv/setup
+
+      completeTipSig 1>&2
+
+      exit 1
+    '';
+  };
 }
 
 # # Install the necessary base packages for Isabelle/TheoryMine theorem
