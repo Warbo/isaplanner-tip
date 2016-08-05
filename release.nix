@@ -102,9 +102,10 @@ let pkgs = import <nixpkgs> {};
     buildCommand = ''
       source $stdenv/setup
 
-      completeTipSig 1>&2
+      F=$(completeTipSig)
 
-      exit 1
+      echo "Converting smtlib data in '$F' into isabelle code" 1>&2
+      tip --isabelle < "$F" > "$out"
     '';
   };
 }
