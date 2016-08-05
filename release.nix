@@ -89,15 +89,17 @@ let pkgs = import <nixpkgs> {};
   isabelle-tip = stdenv.mkDerivation {
     name = "isabelle-tip";
 
-    buildInputs = let te-benchmark-src = fetchgit {
+    buildInputs = let haskellPackages  = haskell.packages.ghc7103;
+                      te-benchmark-src = fetchgit {
                         url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
                         rev    = "b668e34";
                         sha256 = "1vabsxdli29i8mxrn61n9yqb5psysc8xq1g7vz13lfymv2a0ypbd";
                       };
                       te-benchmark = callPackage "${te-benchmark-src}" {
-                        haskellPackages = haskell.packages.ghc7103;
+                        inherit haskellPackages;
                       };
-                   in [ te-benchmark.tip-benchmark-smtlib ];
+                   in [ te-benchmark.tip-benchmark-smtlib
+                        (haskellPackages.ghcWithPackages (h: [ h.tip-lib ])) ];
 
     buildCommand = ''
       source $stdenv/setup
