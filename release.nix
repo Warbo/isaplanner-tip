@@ -94,7 +94,9 @@ let pkgs = import <nixpkgs> {};
                         rev    = "b668e34";
                         sha256 = "1vabsxdli29i8mxrn61n9yqb5psysc8xq1g7vz13lfymv2a0ypbd";
                       };
-                      te-benchmark = callPackage "${te-benchmark-src}" {};
+                      te-benchmark = callPackage "${te-benchmark-src}" {
+                        haskellPackages = haskell.ghc7103;
+                      };
                    in [ te-benchmark.tip-benchmark-smtlib ];
 
     buildCommand = ''
