@@ -111,6 +111,31 @@ with pkgs; rec {
       tip --isabelle < "$F" > "$out"
     '';
   };
+
+  isaplanner-tip =
+    let theory = writeScript "Invoke.thy" ''
+                   theory Invoke
+                   imports A
+                   begin
+                   end
+                 '';
+     in stdenv.mkDerivation {
+          name = "isaplanner-tip";
+
+          inherit isabelle-tip;
+
+          buildInputs = [ isaplanner ];
+
+          buildCommand = ''
+            source $stdenv/setup
+
+            # Theory name must match file name; 'tip' uses the name "A"
+            cp "$isabelle-tip" "A.thy"
+            cp "$theory" "Invoke.thy"
+
+            echo 'use_thy "Invoke";' | isabelle console
+          '';
+        };
 }
 
 # # Install the necessary base packages for Isabelle/TheoryMine theorem
