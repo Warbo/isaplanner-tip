@@ -199,6 +199,8 @@ with pkgs; rec {
          buildCommand = ''
            source $stdenv/setup
 
+           export HOME="$PWD"
+
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "IsaCoSyNat.thy"
 
