@@ -194,7 +194,7 @@ with pkgs; rec {
         '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs = [ isaplanner ];
+         buildInputs = [ perl isaplanner ];
          inherit isaplanner theory;
          buildCommand = ''
            source $stdenv/setup
