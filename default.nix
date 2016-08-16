@@ -138,8 +138,9 @@ with pkgs; rec {
         };
 
   isacosy-nat =
-    let theory = writeScript "IsaCoSyNat.thy" ''
-          theory IsaCosyNat
+    let theoryName = "IsaCoSyNat";
+        theory = writeScript "${theoryName}.thy" ''
+          theory ${theoryName}
           imports Main IsaP IsaCoSy Orderings Set Pure List
           begin
 
@@ -196,15 +197,16 @@ with pkgs; rec {
          name = "isacosy-nat";
          buildInputs = [ perl isaplanner ];
          inherit isaplanner theory;
+
          buildCommand = ''
            source $stdenv/setup
 
            export HOME="$PWD"
 
            # Theory name must match file name; 'tip' uses the name "A"
-           cp "$theory" "IsaCoSyNat.thy"
+           cp "$theory" "${theoryName}.thy"
 
-           echo 'use_thy "IsaCoSyNat";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           echo 'use_thy "${theoryName}";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
          '';
   };
 }
