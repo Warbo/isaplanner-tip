@@ -194,9 +194,11 @@ with pkgs; rec {
         '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs  = [ isaplanner ];
+         buildInputs = [ isaplanner ];
          inherit isaplanner;
-         buildPhase   = ''
+         buildCommand = ''
+           source $stdenv/setup
+
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "IsaCoSyNat.thy"
 
