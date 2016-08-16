@@ -139,7 +139,7 @@ with pkgs; rec {
 
   isacosy-nat =
     let theory = writeScript "IsaCoSyNat.thy" ''
-          theory Invoke
+          theory IsaCosyNat
           imports Main IsaP IsaCoSy Orderings Set Pure List
           begin
 
