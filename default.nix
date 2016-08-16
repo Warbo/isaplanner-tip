@@ -204,8 +204,7 @@ with pkgs; rec {
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "IsaCoSyNat.thy"
 
-           #          -l HOL-IsaPlannerSession -d "$isaplanner/contrib/IsaPlanner"
-           echo 'use_thy "IsaCoSy";' | isabelle console
+           echo 'use_thy "IsaCoSy";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
          '';
   };
 }
