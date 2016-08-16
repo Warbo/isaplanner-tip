@@ -147,10 +147,10 @@ with pkgs; rec {
           ML {*
           val datatypes = [@{typ "nat"}, @{typ "nat list"}];
           val functions = map Term.dest_Const
-            [@{term "Groups.plus_class.plus :: nat ? nat ? nat"},
-            @{term "Groups.minus_class.minus :: nat ? nat ? nat"},
-            @{term "Groups.times_class.times :: nat ? nat ? nat"},
-            @{term "List.append :: nat list ? nat list ? nat list"}];
+            [@{term "Groups.plus_class.plus :: nat ⇒ nat ⇒ nat"},
+            @{term "Groups.minus_class.minus :: nat  ⇒ nat ⇒ nat"},
+            @{term "Groups.times_class.times :: nat  ⇒ nat  ⇒ nat"},
+            @{term "List.append :: nat list  ⇒ nat list ⇒ nat list"}];
           val def_thrms = [@{thms "Nat.plus_nat.simps"}, @{thms "Nat.minus_nat.simps"},  @{thms
           "Nat.times_nat.simps"},
                        @{thms "List.append.simps"}];
