@@ -207,8 +207,8 @@ with pkgs; rec {
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
 
-           ts isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
-           echo 'use_thy "${theoryName}";' | ts isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession | ts
+           echo 'use_thy "${theoryName}";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession | ts
          '';
   };
 }
