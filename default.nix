@@ -195,7 +195,7 @@ with pkgs; rec {
         '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs = [ perl isaplanner ];
+         buildInputs = [ perl isaplanner moreutils ];
          inherit isaplanner theory;
 
          buildCommand = ''
@@ -207,8 +207,8 @@ with pkgs; rec {
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
 
-           time isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
-           echo 'use_thy "${theoryName}";' | time isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           ts isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           echo 'use_thy "${theoryName}";' | ts isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
          '';
   };
 }
