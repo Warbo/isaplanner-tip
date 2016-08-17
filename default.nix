@@ -201,12 +201,14 @@ with pkgs; rec {
          buildCommand = ''
            source $stdenv/setup
 
+           set -x
            export HOME="$PWD"
 
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
 
-           echo 'use_thy "${theoryName}";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           time isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
+           echo 'use_thy "${theoryName}";' | time isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession
          '';
   };
 }
