@@ -214,12 +214,16 @@ with pkgs; rec {
 
          buildCommand = ''
            source $stdenv/setup
-
            set -x
-           export HOME="$PWD"
 
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
+
+           # Force Haskell to use UTF-8, or else we get I/O errors
+           export LANG="en_US.UTF-8"
+
+           # Used as a temporary directory by Isabelle
+           export HOME="$PWD"
 
            # Build IsaPlanner on its own, to avoid benchmarking it
            export ISAPLANNER_DIR="$isaplanner/contrib/IsaPlanner"
