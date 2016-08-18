@@ -1,5 +1,8 @@
 { pkgs ? import <nixpkgs> {} }:
 
+assert pkgs.haskellPackages ? callHackage ||
+       abort "haskellPackages doesn't have callHackage; nixpkgs too old?";
+
 with pkgs; rec {
 
   polyml = pkgs.polyml.overrideDerivation (old: {
@@ -137,6 +140,9 @@ with pkgs; rec {
           '';
         };
 
+  bench = with haskellPackages;
+          callPackage (callHackage "bench" "1.0.1") {};
+
   isacosy-nat =
     let theoryName = "IsaCoSyNat";
         theory = writeScript "${theoryName}.thy" ''
@@ -193,9 +199,17 @@ with pkgs; rec {
 
           end
         '';
+       explore = writeScript "explore.sh" ''
+         [[ -d "$ISAPLANNER_DIR" ]] || {
+           echo "ISAPLANNER_DIR '$ISAPLANNER_DIR' not found" 1>&2
+           exit 1
+         }
+         echo 'use_thy "${theoryName}";' |
+           isabelle console -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
+       '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs = [ perl isaplanner moreutils ];
+         buildInputs = [ perl isaplanner moreutils bench ];
          inherit isaplanner theory;
 
          buildCommand = ''
@@ -207,8 +221,12 @@ with pkgs; rec {
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
 
-           isabelle build -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession | ts
-           echo 'use_thy "${theoryName}";' | isabelle console -d "$isaplanner/contrib/IsaPlanner" -l HOL-IsaPlannerSession | ts
+           # Build IsaPlanner on its own, to avoid benchmarking it
+           export ISAPLANNER_DIR="$isaplanner/contrib/IsaPlanner"
+           isabelle build -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
+
+           # Benchmark IsaCoSy, using the build of IsaPlanner from above
+           bench "${explore}"
          '';
   };
 }
