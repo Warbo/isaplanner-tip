@@ -210,7 +210,7 @@ with pkgs; rec {
     in stdenv.mkDerivation {
          name = "isacosy-nat";
          buildInputs = [ perl isaplanner moreutils bench ];
-         inherit isaplanner theory;
+         inherit isaplanner theory glibcLocales;
 
          buildCommand = ''
            source $stdenv/setup
@@ -221,6 +221,9 @@ with pkgs; rec {
 
            # Force Haskell to use UTF-8, or else we get I/O errors
            export LANG="en_US.UTF-8"
+
+           # Stop Perl complaining about unset locale variables
+           export LOCALE_ARCHIVE="$glibcLocales/lib/locale/locale-archive"
 
            # Used as a temporary directory by Isabelle
            export HOME="$PWD"
