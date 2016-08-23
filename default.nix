@@ -243,16 +243,22 @@ with pkgs; rec {
              # the lines 'before' the 'first' occurrence of "Adding ...", put
              # back into order with tac, then trim off the "Adding ..." line with
              # tail
+             echo "Stripping prefix" 1>&2
              tac | grep -m 1 -B 1000000 | tac | tail -n +2
+             echo "Stripped prefix" 1>&2
            }
 
            function stripSuffix {
              # Get everything before the first "val ..." line, which indicates
              # the start of an ML code dump. Also strip out any "###" warnings
+             echo "Stripping suffix" 1>&2
              grep -m 1 -B 1000000 "^val " | head -n -1 | grep -v "^### "
+             echo "Stripped suffix" 1>&2
            }
 
-           ${explore} | stripSuffix | stripPrefix > equations
+           ${explore}  > raw
+           stripSuffix < raw    > noSuff
+           stripPrefix < noSuff > equations
 
            # Store results
            mkdir "$out"
