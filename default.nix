@@ -209,7 +209,7 @@ with pkgs; rec {
        '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs = [ perl isaplanner moreutils bench ];
+         buildInputs = [ perl isaplanner moreutils bench gnugrep ];
          inherit isaplanner theory glibcLocales;
 
          buildCommand = ''
