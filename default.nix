@@ -233,7 +233,13 @@ with pkgs; rec {
            isabelle build -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
 
            # Benchmark IsaCoSy, using the build of IsaPlanner from above
-           bench "${explore}"
+           bench "${explore}" --csv time.csv
+
+           ${explore} > equations
+
+           mkdir "$out"
+           cp equations "$out"/
+           cp time.csv "$out"/
          '';
   };
 }
