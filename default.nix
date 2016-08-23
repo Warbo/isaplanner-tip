@@ -249,7 +249,7 @@ with pkgs; rec {
            function stripSuffix {
              # Get everything before the first "val ..." line, which indicates
              # the start of an ML code dump. Also strip out any "###" warnings
-             grep -m 1 -B 1000000 "^val " | grep -v "^### "
+             grep -m 1 -B 1000000 "^val " | head -n -1 | grep -v "^### "
            }
 
            ${explore} | stripSuffix | stripPrefix > equations
