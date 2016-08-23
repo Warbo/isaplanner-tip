@@ -235,8 +235,26 @@ with pkgs; rec {
            # Benchmark IsaCoSy, using the build of IsaPlanner from above
            bench "${explore}" --csv time.csv
 
-           ${explore} > equations
+           # Get equations
 
+           function stripPrefix {
+             # Get everything after the last "Adding ..." message. We use tac to
+             # put the lines in reverse order, grep to get (up to a million of)
+             # the lines 'before' the 'first' occurrence of "Adding ...", put
+             # back into order with tac, then trim off the "Adding ..." line with
+             # tail
+             tac | grep -m 1 -B 1000000 | tac | tail -n +2
+           }
+
+           function stripSuffix {
+             # Get everything before the first "val ..." line, which indicates
+             # the start of an ML code dump. Also strip out any "###" warnings
+             grep -m 1 -B 1000000 "^val " | grep -v "^### "
+           }
+
+           ${explore} | stripSuffix | stripPrefix > equations
+
+           # Store results
            mkdir "$out"
            cp equations "$out"/
            cp time.csv "$out"/
