@@ -244,7 +244,7 @@ with pkgs; rec {
              # back into order with tac, then trim off the "Adding ..." line with
              # tail
              echo "Stripping prefix" 1>&2
-             tac | grep -m 1 -B 1000000 | tac | tail -n +2
+             tac | grep -m 1 -B 1000000 "^Adding " | tac | tail -n +2
              echo "Stripped prefix" 1>&2
            }
 
