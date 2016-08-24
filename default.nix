@@ -232,38 +232,49 @@ with pkgs; rec {
            export ISAPLANNER_DIR="$isaplanner/contrib/IsaPlanner"
            isabelle build -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
 
+           mkdir -p "$out"
+
            # Benchmark IsaCoSy, using the build of IsaPlanner from above
-           bench "${explore}" --raw times
+           bench "${explore}" --raw "$out/times"
 
-           # Get equations
-
-           function stripPrefix {
-             # Get everything after the last "Adding ..." message. We use tac to
-             # put the lines in reverse order, grep to get (up to a million of)
-             # the lines 'before' the 'first' occurrence of "Adding ...", put
-             # back into order with tac, then trim off the "Adding ..." line with
-             # tail
-             echo "Stripping prefix" 1>&2
-             tac | grep -m 1 -B 1000000 "^Adding " | tac | tail -n +2
-             echo "Stripped prefix" 1>&2
-           }
-
-           function stripSuffix {
-             # Get everything before the first "val ..." line, which indicates
-             # the start of an ML code dump. Also strip out any "###" warnings
-             echo "Stripping suffix" 1>&2
-             grep -m 1 -B 1000000 "^val " | head -n -1 | grep -v "^### "
-             echo "Stripped suffix" 1>&2
-           }
-
-           ${explore}  > raw
-           stripSuffix < raw    > noSuff
-           stripPrefix < noSuff > equations
-
-           # Store results
-           mkdir "$out"
-           cp equations "$out"/
-           cp times     "$out"/
+           "${explore}" > "$out/output"
          '';
+  };
+
+  isacosy-nat-eqs = stdenv.mkDerivation {
+    name = "isacosy-nat-eqs";
+    data = isacosy-nat;
+
+    buildCommand = ''
+      source $stdenv/setup
+
+      set -e
+
+      function stripPrefix {
+        # Get everything after the last "Adding ..." message. We use tac to
+        # put the lines in reverse order, grep to get (up to a million of)
+        # the lines 'before' the 'first' occurrence of "Adding ...", put
+        # back into order with tac, then trim off the "Adding ..." line with
+        # tail
+        echo "Stripping prefix" 1>&2
+        tac | grep -m 1 -B 1000000 "^Adding " | tac | tail -n +2
+        echo "Stripped prefix" 1>&2
+      }
+
+      function stripSuffix {
+        # Get everything before the first "val ..." line, which indicates
+        # the start of an ML code dump. Also strip out any "###" warnings
+        echo "Stripping suffix" 1>&2
+        grep -m 1 -B 1000000 "^val " | head -n -1 | grep -v "^### "
+        echo "Stripped suffix" 1>&2
+      }
+
+      mkdir -p "$out"
+
+      stripSuffix < "$data/output" > noSuff
+      stripPrefix < noSuff         > "$out/equations"
+
+      cp "$data/times" "$out/times"
+    '';
   };
 }
