@@ -131,7 +131,7 @@ with pkgs; rec {
           isabelle_tip = isabelle-tip;
           inherit theory;
 
-          buildInputs = [ isaplanner ];
+          buildInputs = [ isaplanner perl ];
 
           buildCommand = ''
             source $stdenv/setup
