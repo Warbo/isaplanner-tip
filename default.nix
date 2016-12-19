@@ -128,7 +128,8 @@ with pkgs; rec {
      in stdenv.mkDerivation {
           name = "isaplanner-tip";
 
-          inherit isabelle-tip;
+          isabelle_tip = isabelle-tip;
+          inherit theory;
 
           buildInputs = [ isaplanner ];
 
@@ -136,7 +137,7 @@ with pkgs; rec {
             source $stdenv/setup
 
             # Theory name must match file name; 'tip' uses the name "A"
-            cp "$isabelle-tip" "A.thy"
+            cp "$isabelle_tip" "A.thy"
             cp "$theory" "Invoke.thy"
 
             echo 'use_thy "Invoke";' | isabelle console
