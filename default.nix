@@ -140,6 +140,9 @@ with pkgs; rec {
             cp "$isabelle_tip" "A.thy"
             cp "$theory" "Invoke.thy"
 
+            # Isabelle tries to write stuff to HOME
+            export HOME="$PWD"
+
             echo 'use_thy "Invoke";' | isabelle console
           '';
         };
