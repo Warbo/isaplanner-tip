@@ -85,35 +85,38 @@ with pkgs; rec {
       ../../bin/isabelle build -d . HOL-IsaPlannerSession
       ../../bin/isabelle build -d . IsaPlanner-Test
     '';
+
     installPhase = ''
       cp -a "$ORIG" "$out"
     '';
   };
 
-  isabelle-tip = stdenv.mkDerivation {
-    name = "isabelle-tip";
+  isabelle-tip =
+    with rec {
+      haskellPackages  = haskell.packages.ghc7103;
+      te-benchmark-src = fetchgit {
+        url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+        rev    = "d569ec3a7e296c110b667773d07e423e22b797c9";
+        sha256 = "0kv7z2xwb872myzsq89s9yybd7vwf1yyx5vpbj0q2w0js3wxhf2n";
+      };
+      te-benchmark = callPackage "${te-benchmark-src}" {
+        inherit haskellPackages;
+      };
+    };
+    stdenv.mkDerivation {
+      name = "isabelle-tip";
 
-    buildInputs = let haskellPackages  = haskell.packages.ghc7103;
-                      te-benchmark-src = fetchgit {
-                        url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
-                        rev    = "b668e34";
-                        sha256 = "1vabsxdli29i8mxrn61n9yqb5psysc8xq1g7vz13lfymv2a0ypbd";
-                      };
-                      te-benchmark = callPackage "${te-benchmark-src}" {
-                        inherit haskellPackages;
-                      };
-                   in [ te-benchmark.tip-benchmark-smtlib
-                        (haskellPackages.ghcWithPackages (h: [ h.tip-lib ])) ];
+      buildInputs = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ])) ];
 
-    buildCommand = ''
-      source $stdenv/setup
+      smtdata = te-benchmark.tip-benchmark-smtlib;
 
-      F=$(completeTipSig)
+      buildCommand = ''
+        source $stdenv/setup
 
-      echo "Converting smtlib data in '$F' into isabelle code" 1>&2
-      tip --isabelle < "$F" > "$out"
-    '';
-  };
+        echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
+        tip --isabelle < "$smtdata" > "$out"
+      '';
+    };
 
   isaplanner-tip =
     let theory = writeScript "Invoke.thy" ''
