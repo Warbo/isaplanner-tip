@@ -145,22 +145,21 @@ with pkgs; rec {
 
       echo "Setting env in binaries" 1>&2
 
-      for F in "$out"/bin/*
+      mkdir -p "$out/bin"
+      for F in "$out"/isabelle_dir/bin/*
       do
-        # Hide each binary and suffix with "-notemp"
         NAME=$(basename "$F")
-        ORIG="$out/bin/.$NAME-notemp"
-        mv "$F" "$ORIG"
 
-        # Wrap each binaries to create and destroy a temporary, mutable Isabelle
-        # directory
-        "$wrapTemp" "$ORIG" > "$F"
-        chmod +x "$F"
+        # Wrap each binary to create and destroy a temporary, mutable Isabelle
+        # working directory
+        "$wrapTemp" "$F" > "$out/bin/$NAME"
+        chmod +x "$out/bin/$NAME"
 
         # Wrap again, to provide the appropriate environment variables
-        wrapProgram "$F" --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
-                         --set HOME              "$HOME"              \
-                         --set ISABELLE_DIR      "$ISABELLE_DIR"
+        wrapProgram "$out/bin/$NAME" \
+          --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
+          --set HOME              "$HOME"              \
+          --set ISABELLE_DIR      "$ISABELLE_DIR"
       done
     '';
   };
