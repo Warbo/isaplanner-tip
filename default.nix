@@ -61,7 +61,7 @@ with pkgs; rec {
         #!${bash}/bin/bash
         set -e
 
-        TEMP_DIR=$(mktemp -d --tmpdir=/tmp "isabelle-work-dir.XXXXX")
+        TEMP_DIR=\$(mktemp -d --tmpdir=/tmp "isabelle-work-dir.XXXXX")
         echo "Creating mutable Isabelle directories in \$TEMP_DIR" 1>&2
 
         cp -r "\$HOME" "\$TEMP_DIR/home"
@@ -70,7 +70,7 @@ with pkgs; rec {
         cp -r "\$ISABELLE_DIR" "\$TEMP_DIR/isabelle_dir"
         export ISABELLE_DIR="\$TEMP_DIR/isabelle_dir"
 
-        chmod 777 -R "\$TEMP_DIR"
+        chmod +w -R "\$TEMP_DIR"
 
         function cleanup {
           echo "Deleting mutable Isabelle directories from \$TEMP_DIR" 1>&2
