@@ -83,6 +83,11 @@ with pkgs; rec {
       EOF
     '';
 
+    isaplanner_bin = writeScript "isaplanner" ''
+      #!${bash}/bin/bash
+      isabelle console -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
+    '';
+
     ISABELLE_JDK_HOME = jdk;
 
     postPatch = (isabelle.override { inherit polyml; }).postPatch;
@@ -135,7 +140,7 @@ with pkgs; rec {
     installPhase = ''
       echo "Setting install environment" 1>&2
 
-      mkdir -p "$out"
+      mkdir -p "$out/bin"
 
       cp -a "$ISABELLE_DIR" "$out/isabelle_dir"
       export ISABELLE_DIR="$out/isabelle_dir"
@@ -143,9 +148,19 @@ with pkgs; rec {
       cp -a "$HOME" "$out/home"
       export HOME="$out/home"
 
+      echo "Installing isaplanner binary" 1>&2
+
+      cat <<< EOF > "$out/bin/isaplanner
+        #!${bash}/bin/bash
+
+        # Path gets hard-coded during installPhase
+        export ISAPLANNER_DIR="$out/isabelle_dir/contrib/IsaPlanner"
+        isabelle console -d "\$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "\$@"
+      EOF
+      chmod +x "$out/bin/isaplanner"
+
       echo "Setting env in binaries" 1>&2
 
-      mkdir -p "$out/bin"
       for F in "$out"/isabelle_dir/bin/*
       do
         NAME=$(basename "$F")
@@ -213,9 +228,6 @@ with pkgs; rec {
             cp "$isabelle_tip" "A.thy"
             cp "$theory" "Invoke.thy"
 
-            # Isabelle tries to write stuff to HOME
-            export HOME="$PWD"
-
             echo 'use_thy "Invoke";' | isabelle console
           '';
         };
@@ -281,12 +293,7 @@ with pkgs; rec {
           end
         '';
        explore = writeScript "explore.sh" ''
-         [[ -d "$ISAPLANNER_DIR" ]] || {
-           echo "ISAPLANNER_DIR '$ISAPLANNER_DIR' not found" 1>&2
-           exit 1
-         }
-         echo 'use_thy "${theoryName}";' |
-           isabelle console -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
+         echo 'use_thy "${theoryName}";' | isaplanner
        '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
@@ -307,16 +314,9 @@ with pkgs; rec {
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
 
-           # Used as a temporary directory by Isabelle
-           export HOME="$PWD"
-
-           # Build IsaPlanner on its own, to avoid benchmarking it
-           export ISAPLANNER_DIR="$isaplanner/contrib/IsaPlanner"
-           isabelle build -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession
-
            mkdir -p "$out"
 
-           # Benchmark IsaCoSy, using the build of IsaPlanner from above
+           # Benchmark IsaCoSy
            bench "${explore}" --raw "$out/times"
 
            "${explore}" > "$out/output"
