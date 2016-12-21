@@ -70,7 +70,7 @@ with pkgs; rec {
         cp -r "\$ISABELLE_DIR" "\$TEMP_DIR/isabelle_dir"
         export ISABELLE_DIR="\$TEMP_DIR/isabelle_dir"
 
-        chmod +w -R "\$TEMP_DIR"
+        chmod 777 -R "\$TEMP_DIR"
 
         function cleanup {
           echo "Deleting mutable Isabelle directories from \$TEMP_DIR" 1>&2
