@@ -51,22 +51,55 @@ with pkgs; rec {
     inherit isaplib;
     buildInputs = [ file jdk makeWrapper nettools perl polyml ];
 
+    # Run command with writable copy of Isabelle directories. We can't do this
+    # with makeWrapper's --run option, since traps aren't called after an exec.
+    wrapTemp = writeScript "wrap-temp.sh" ''
+      #!${bash}/bin/bash
+      CMD="$1"
+
+      cat << EOF
+        #!${bash}/bin/bash
+        set -e
+
+        TEMP_DIR=$(mktemp -d --tmpdir=/tmp "isabelle-work-dir.XXXXX")
+        echo "Creating mutable Isabelle directories in \$TEMP_DIR" 1>&2
+
+        cp -r "\$HOME" "\$TEMP_DIR/home"
+        export HOME="\$TEMP_DIR/home"
+
+        cp -r "\$ISABELLE_DIR" "\$TEMP_DIR/isabelle_dir"
+        export ISABELLE_DIR="\$TEMP_DIR/isabelle_dir"
+
+        chmod +w -R "\$TEMP_DIR"
+
+        function cleanup {
+          echo "Deleting mutable Isabelle directories from \$TEMP_DIR" 1>&2
+          rm -rf "\$TEMP_DIR"
+        }
+
+        trap cleanup EXIT
+
+        $1 "\$@"
+      EOF
+    '';
+
     postPatch = (isabelle.override { inherit polyml; }).postPatch;
 
     passAsFile = [ "postPatch" ];
 
     patchPhase = ''
-      ORIG="$PWD"
+      echo "Moving build directory out of the way" 1>&2
+      BUILDDIR="$PWD"
       cd ..
+      mv "$BUILDDIR" OriginalBuildDir
 
-      mv "$ORIG" IsaPlanner
+      echo "Using isaplib as our build directory instead" 1>&2
+      cp -r "$isaplib" "$BUILDDIR"
+      chmod +w -R "$BUILDDIR"
+      cd "$BUILDDIR"
 
-      cp -r "$isaplib" "$ORIG"
-      chmod +w -R "$ORIG"
-
-      mv IsaPlanner "$ORIG/contrib"
-
-      cd "$ORIG"
+      echo "Moving original build directory to contrib/IsaPlanner" 1>&2
+      mv ../OriginalBuildDir "$BUILDDIR/contrib/IsaPlanner"
 
       echo "Patching with '$postPatchPath'" 1>&2
       . "$postPatchPath"
@@ -87,9 +120,18 @@ with pkgs; rec {
     '';
 
     installPhase = ''
-      cp -a "$ORIG" "$out"
+      cp -a "$BUILDDIR" "$out"
       for F in "$out"/bin/*
       do
+        # Hide each binary and suffix with "-notemp"
+        NAME=$(basename "$F")
+        ORIG="$out/bin/.$NAME-notemp"
+        mv "$F" "$ORIG"
+
+        # Wrap the binaries to use temporary, mutable Isabelle directories
+        "$wrapTemp" "$ORIG" > "$F"
+
+        # Wrap again, to provide the appropriate environment
         wrapProgram "$F" --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
                          --set HOME              "$HOME"              \
                          --set ISABELLE_DIR      "$ISABELLE_DIR"
@@ -223,21 +265,22 @@ with pkgs; rec {
        '';
     in stdenv.mkDerivation {
          name = "isacosy-nat";
-         buildInputs = [ perl isaplanner moreutils bench gnugrep ];
-         inherit isaplanner theory glibcLocales;
 
+         inherit isaplanner theory;
+
+         # Force Haskell to use UTF-8, or else we get I/O errors
+         LANG = "en_US.UTF-8";
+
+         # Stop Perl complaining about unset locale variables
+         LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+
+         buildInputs  = [ perl isaplanner moreutils bench gnugrep ];
          buildCommand = ''
            source $stdenv/setup
            set -x
 
            # Theory name must match file name; 'tip' uses the name "A"
            cp "$theory" "${theoryName}.thy"
-
-           # Force Haskell to use UTF-8, or else we get I/O errors
-           export LANG="en_US.UTF-8"
-
-           # Stop Perl complaining about unset locale variables
-           export LOCALE_ARCHIVE="$glibcLocales/lib/locale/locale-archive"
 
            # Used as a temporary directory by Isabelle
            export HOME="$PWD"
@@ -263,6 +306,11 @@ with pkgs; rec {
       source $stdenv/setup
 
       set -e
+
+      [[ -f "$data/output" ]] || {
+        echo "Error: Isabelle output '$data/output' doesn't exist" 1>&2
+        exit 1
+      }
 
       function stripPrefix {
         # Get everything after the last "Adding ..." message. We use tac to
