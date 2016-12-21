@@ -83,44 +83,68 @@ with pkgs; rec {
       EOF
     '';
 
+    ISABELLE_JDK_HOME = jdk;
+
     postPatch = (isabelle.override { inherit polyml; }).postPatch;
 
     passAsFile = [ "postPatch" ];
 
     patchPhase = ''
-      echo "Moving build directory out of the way" 1>&2
-      BUILDDIR="$PWD"
-      cd ..
-      mv "$BUILDDIR" OriginalBuildDir
+      echo "Moving source into standalone directory" 1>&2
+      mkdir -p ./given-src
 
-      echo "Using isaplib as our build directory instead" 1>&2
-      cp -r "$isaplib" "$BUILDDIR"
-      chmod +w -R "$BUILDDIR"
-      cd "$BUILDDIR"
+      for F in ./*
+      do
+        NAME=$(basename "$F")
+        [[ "x$NAME" = "xgiven-src" ]] || mv "$F" ./given-src
+      done
 
-      echo "Moving original build directory to contrib/IsaPlanner" 1>&2
-      mv ../OriginalBuildDir "$BUILDDIR/contrib/IsaPlanner"
+      echo "Making mutable copy of isaplib" 1>&2
+      cp -r "$isaplib" ./isaplib
+      chmod +w -R ./isaplib
+
+      echo "Moving source to contrib/IsaPlanner" 1>&2
+      mv ./given-src ./isaplib/contrib/IsaPlanner
 
       echo "Patching with '$postPatchPath'" 1>&2
+      pushd ./isaplib
       . "$postPatchPath"
+      popd
     '';
 
     buildPhase = ''
       set -e
-      ISABELLE_DIR="$PWD"
-      ISABELLE_JDK_HOME=$(dirname "$(dirname "$(command -v javac)")")
 
-      export ISABELLE_JDK_HOME
-      HOME=$(dirname "$PWD")
+      echo "Setting build environment" 1>&2
+
+      ISABELLE_DIR="$PWD/isaplib"
+      export ISABELLE_DIR
+
+      mkdir ./mutable-home
+      HOME="$PWD/mutable-home"
       export HOME
 
-      cd contrib/IsaPlanner
+      echo "Building" 1>&2
+
+      pushd "$ISABELLE_DIR/contrib/IsaPlanner"
       ../../bin/isabelle build -d . HOL-IsaPlannerSession
       ../../bin/isabelle build -d . IsaPlanner-Test
+      popd
     '';
 
     installPhase = ''
-      cp -a "$BUILDDIR" "$out"
+      echo "Setting install environment" 1>&2
+
+      mkdir -p "$out"
+
+      cp -a "$ISABELLE_DIR" "$out/isabelle_dir"
+      export ISABELLE_DIR
+
+      cp -a "$HOME"         "$out/home"
+      export HOME
+
+      echo "Setting env in binaries" 1>&2
+
       for F in "$out"/bin/*
       do
         # Hide each binary and suffix with "-notemp"
@@ -128,11 +152,12 @@ with pkgs; rec {
         ORIG="$out/bin/.$NAME-notemp"
         mv "$F" "$ORIG"
 
-        # Wrap the binaries to use temporary, mutable Isabelle directories
+        # Wrap each binaries to create and destroy a temporary, mutable Isabelle
+        # directory
         "$wrapTemp" "$ORIG" > "$F"
         chmod +x "$F"
 
-        # Wrap again, to provide the appropriate environment
+        # Wrap again, to provide the appropriate environment variables
         wrapProgram "$F" --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
                          --set HOME              "$HOME"              \
                          --set ISABELLE_DIR      "$ISABELLE_DIR"
