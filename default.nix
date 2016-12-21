@@ -130,6 +130,7 @@ with pkgs; rec {
 
         # Wrap the binaries to use temporary, mutable Isabelle directories
         "$wrapTemp" "$ORIG" > "$F"
+        chmod +x "$F"
 
         # Wrap again, to provide the appropriate environment
         wrapProgram "$F" --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
