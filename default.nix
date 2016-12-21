@@ -138,10 +138,10 @@ with pkgs; rec {
       mkdir -p "$out"
 
       cp -a "$ISABELLE_DIR" "$out/isabelle_dir"
-      export ISABELLE_DIR
+      export ISABELLE_DIR="$out/isabelle_dir"
 
-      cp -a "$HOME"         "$out/home"
-      export HOME
+      cp -a "$HOME" "$out/home"
+      export HOME="$out/home"
 
       echo "Setting env in binaries" 1>&2
 
