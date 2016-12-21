@@ -49,7 +49,7 @@ with pkgs; rec {
     };
 
     inherit isaplib;
-    buildInputs = [ file jdk perl polyml nettools ];
+    buildInputs = [ file jdk makeWrapper nettools perl polyml ];
 
     postPatch = (isabelle.override { inherit polyml; }).postPatch;
 
@@ -88,6 +88,12 @@ with pkgs; rec {
 
     installPhase = ''
       cp -a "$ORIG" "$out"
+      for F in "$out"/bin/*
+      do
+        wrapProgram "$F" --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
+                         --set HOME              "$HOME"              \
+                         --set ISABELLE_DIR      "$ISABELLE_DIR"
+      done
     '';
   };
 
@@ -147,6 +153,7 @@ with pkgs; rec {
           '';
         };
 
+  # TODO: Should we actually run the benchmark in Nix? Maybe better to provide an environment with a "dobenchmark" command; maybe also one which doesn't benchmark but just spits out result
   bench = with haskellPackages;
           callPackage (callHackage "bench" "1.0.1") {};
 
