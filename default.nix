@@ -156,11 +156,11 @@ with pkgs; rec {
         echo "export ISAPLANNER_DIR='$out/isabelle_dir/contrib/IsaPlanner'"
 
         echo 'isabelle console -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "$@"'
-      } > "$out/bin/isaplanner"
+      } > "$out/isabelle_dir/bin/isaplanner"
 
-      chmod +x "$out/bin/isaplanner"
+      chmod +x "$out/isabelle_dir/bin/isaplanner"
 
-      echo "Setting env in binaries" 1>&2
+      echo "Wrapping binaries in required environment" 1>&2
 
       for F in "$out"/isabelle_dir/bin/*
       do
