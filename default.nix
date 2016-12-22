@@ -150,7 +150,7 @@ with pkgs; rec {
 
       echo "Installing isaplanner binary" 1>&2
 
-      cat <<< EOF > "$out/bin/isaplanner
+      cat <<< EOF > "$out/bin/isaplanner"
         #!${bash}/bin/bash
 
         # Path gets hard-coded during installPhase
