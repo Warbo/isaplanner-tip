@@ -149,14 +149,15 @@ with pkgs; rec {
       export HOME="$out/home"
 
       echo "Installing isaplanner binary" 1>&2
+      {
+        echo '#!${bash}/bin/bash'
 
-      cat <<< EOF > "$out/bin/isaplanner"
-        #!${bash}/bin/bash
+        # Hard-code path
+        echo "export ISAPLANNER_DIR='$out/isabelle_dir/contrib/IsaPlanner'"
 
-        # Path gets hard-coded during installPhase
-        export ISAPLANNER_DIR="$out/isabelle_dir/contrib/IsaPlanner"
-        isabelle console -d "\$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "\$@"
-      EOF
+        echo 'isabelle console -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "$@"'
+      } > "$out/bin/isaplanner"
+
       chmod +x "$out/bin/isaplanner"
 
       echo "Setting env in binaries" 1>&2
