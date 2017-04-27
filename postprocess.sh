@@ -4,6 +4,7 @@ echo "Reading broken Isabelle theory" 1>&2
 DATA=$(cat)
 echo "Fixing up theory" 1>&2
 
+# Remove any types which Isabelle doesn't support
 while read -r TYPE
 do
     # Perl options explained at: https://unix.stackexchange.com/a/26289/63735
@@ -35,5 +36,13 @@ do
     DATA=$(echo "$DATA" |
                perl -0777 -pe "s/datatype[^=]*$TYPE.*?(datatype|fun)/\$1/gs")
 done < <(jq -r '.nontypes.entries | .[]' < "$FIXES")
+
+# Use 'definition' instead of 'fun' for nullary values ('Nil', 'True', etc.)
+# See http://stackoverflow.com/questions/28113667/why-must-isabelle-functions-have-at-least-one-argument/28147895
+while read -r CONSTANT
+do
+    DATA=$(echo "$DATA" |
+               perl -0777 -pe "s/fun\s*($CONSTANT\s)/definition \$1/gs")
+done < <(jq -r '.constants.entries | .[]' < "$FIXES")
 
 echo "$DATA"
