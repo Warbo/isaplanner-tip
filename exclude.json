@@ -1,0 +1,96 @@
+{
+    "comment": "Workarounds for https://github.com/tip-org/tools/issues/7",
+    "nontypes": {
+        "comment": "These types aren't accepted by Isabelle.",
+        "entries": [
+            "tip2015polyrec_seq_indexsmt2Seq"
+        ]
+    },
+    "nonterminating": {
+        "comment": "Isabelle's 'fun' termination checker doesn't allow these.",
+        "entries": [
+            "tip2015polyrec_seq_indexsmt2index",
+            "tip2015tree_Flatten3smt2flatten3",
+            "destructor-tip2015polyrec_seq_indexsmt2Cons_1",
+            "destructor-tip2015polyrec_seq_indexsmt2Cons_0",
+            "constructor-tip2015polyrec_seq_indexsmt2Nil",
+            "constructor-tip2015polyrec_seq_indexsmt2Cons",
+            "tip2015tree_Flatten1smt2flatten1",
+            "tip2015sort_MSortBU2Countsmt2mergingbu2",
+            "tip2015sort_MSortBU2Countsmt2msortbu2",
+            "tip2015sort_MSortTDCountsmt2msorttd",
+            "tip2015sort_HSortCountsmt2hmerging",
+            "tip2015sort_HSortCountsmt2toHeap",
+            "tip2015sort_HSortCountsmt2toList",
+            "tip2015sort_BubSortCountsmt2bubsort",
+            "tip2015mccarthy91_M1smt2m",
+            "tip2015list_weird_concat_map_bindsmt2weird_concat",
+            "tip2015list_Interleavesmt2interleave",
+            "tip2015mod_samesmt2mod2",
+            "tip2015sort_BSortCountsmt2bmerge"
+        ]
+    },
+    "constants": {
+        "comment": "These take no arguments, so must use 'definition'.",
+        "entries": [
+            "tip2015int_mul_ident_leftsmt2one",
+            "tip2015int_add_ident_leftsmt2zero",
+            "prodprop_33smt2one",
+            "constructortip2015sort_HSortCountsmt2Nil",
+            "constructortip2015regexp_Deepssmt2Nil",
+            "constructortip2015regexp_Deepssmt2Eps",
+            "constructortip2015heap_deleteMinimumsmt2Nothing",
+            "constructortip2015heap_SortPermutessmt2Nil",
+            "constructortip2015escape_Injectivesmt2R",
+            "constructortip2015escape_Injectivesmt2Q",
+            "constructortip2015escape_Injectivesmt2P",
+            "constructortip2015escape_Injectivesmt2ESC",
+            "constructortip2015escape_Injectivesmt2D",
+            "constructortip2015escape_Injectivesmt2C",
+            "constructortip2015escape_Injectivesmt2B",
+            "constructortip2015escape_Injectivesmt2A",
+            "constructortip2015bin",
+            "constructorisaplannerprop_47smt2Leaf",
+            "constructorisaplannerprop_01smt2Z",
+            "constructorgrammarssimp_expr_unambig5smt2TY",
+            "constructorgrammarssimp_expr_unambig5smt2TX",
+            "constructorgrammarssimp_expr_unambig1smt2Y",
+            "constructorgrammarssimp_expr_unambig1smt2X",
+            "constructorgrammarssimp_expr_unambig1smt2Pl",
+            "constructorgrammarssimp_expr_unambig1smt2EY",
+            "constructorgrammarssimp_expr_unambig1smt2EX",
+            "constructorgrammarssimp_expr_unambig1smt2D",
+            "constructorgrammarssimp_expr_unambig1smt2C",
+            "constructorgrammarspackrat_unambigPackratsmt2nil",
+            "constructorgrammarspackrat_unambigPackratsmt2ZA",
+            "constructorgrammarspackrat_unambigPackratsmt2Z",
+            "constructorgrammarspackrat_unambigPackratsmt2Y",
+            "constructorgrammarspackrat_unambigPackratsmt2X"
+        ]
+    },
+    "dependents": {
+        "comment": "These depend on definitions which don't work.",
+        "entries": [
+            "tip2015sort_HSortCountsmt2hsort",
+            "tip2015sort_MSortBUCountsmt2msortbu",
+            "tip2015fermat_lastsmt2pow",
+            "tip2015propositional_Okaysmt2okay",
+            "tip2015sort_BSortCountsmt2bsort"
+        ]
+    },
+    "untypeable": {
+        "comment": "The types used by these can't be translated to Isabelle.",
+        "entries": [
+            "tip2015polyrec_seq_indexsmt2fromList"
+        ]
+    },
+    "unparseable": {
+        "comment": "These translations don't parse.",
+        "entries": [
+            "tip2015sort_SSortCountsmt2ssort",
+            "isaplannerprop_12smt2map2",
+            "tip2015sort_NMSortTDCountsmt2nmsorttd",
+            "tip2015subst_SubstFreeNosmt2subst"
+        ]
+    }
+}
