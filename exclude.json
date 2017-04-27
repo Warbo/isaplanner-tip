@@ -6,28 +6,26 @@
             "tip2015polyrec_seq_indexsmt2Seq"
         ]
     },
-    "nonterminating": {
-        "comment": "Isabelle's 'fun' termination checker doesn't allow these.",
+    "trickyterminating": {
+        "comment": "The termination checker of 'fun' can't handle these.",
         "entries": [
-            "tip2015polyrec_seq_indexsmt2index",
-            "tip2015tree_Flatten3smt2flatten3",
-            "destructor-tip2015polyrec_seq_indexsmt2Cons_1",
-            "destructor-tip2015polyrec_seq_indexsmt2Cons_0",
-            "constructor-tip2015polyrec_seq_indexsmt2Nil",
-            "constructor-tip2015polyrec_seq_indexsmt2Cons",
-            "tip2015tree_Flatten1smt2flatten1",
+            "tip2015list_Interleavesmt2interleave"
+        ]
+    },
+    "nonterminating": {
+        "comment": "No automatic way to prove these terminate.",
+        "entries": [
             "tip2015sort_MSortBU2Countsmt2mergingbu2",
-            "tip2015sort_MSortBU2Countsmt2msortbu2",
-            "tip2015sort_MSortTDCountsmt2msorttd",
+            "tip2015tree_Flatten3smt2flatten3",
+            "tip2015tree_Flatten1smt2flatten1",
             "tip2015sort_HSortCountsmt2hmerging",
-            "tip2015sort_HSortCountsmt2toHeap",
-            "tip2015sort_HSortCountsmt2toList",
             "tip2015sort_BubSortCountsmt2bubsort",
             "tip2015mccarthy91_M1smt2m",
             "tip2015list_weird_concat_map_bindsmt2weird_concat",
-            "tip2015list_Interleavesmt2interleave",
             "tip2015mod_samesmt2mod2",
-            "tip2015sort_BSortCountsmt2bmerge"
+            "tip2015sort_BSortCountsmt2bmerge",
+            "tip2015sort_HSortCountsmt2toList",
+            "tip2015sort_QSortCountsmt2qsort"
         ]
     },
     "constants": {
@@ -75,13 +73,15 @@
             "tip2015sort_MSortBUCountsmt2msortbu",
             "tip2015fermat_lastsmt2pow",
             "tip2015propositional_Okaysmt2okay",
-            "tip2015sort_BSortCountsmt2bsort"
-        ]
-    },
-    "untypeable": {
-        "comment": "The types used by these can't be translated to Isabelle.",
-        "entries": [
-            "tip2015polyrec_seq_indexsmt2fromList"
+            "tip2015sort_BSortCountsmt2bsort",
+            "tip2015polyrec_seq_indexsmt2fromList",
+            "tip2015sort_MSortBU2Countsmt2msortbu2",
+            "tip2015polyrec_seq_indexsmt2index",
+            "tip2015sort_HSortCountsmt2toHeap",
+            "constructortip2015polyrec_seq_indexsmt2Nil",
+            "destructortip2015polyrec_seq_indexsmt2Cons_0",
+            "destructortip2015polyrec_seq_indexsmt2Cons_1",
+            "constructortip2015polyrec_seq_indexsmt2Cons"
         ]
     },
     "unparseable": {
@@ -90,7 +90,8 @@
             "tip2015sort_SSortCountsmt2ssort",
             "isaplannerprop_12smt2map2",
             "tip2015sort_NMSortTDCountsmt2nmsorttd",
-            "tip2015subst_SubstFreeNosmt2subst"
+            "tip2015subst_SubstFreeNosmt2subst",
+            "tip2015sort_MSortTDCountsmt2msorttd"
         ]
     }
 }
