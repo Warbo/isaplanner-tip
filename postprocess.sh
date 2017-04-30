@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 function replace {
     # Perl options explained at: https://unix.stackexchange.com/a/26289/63735

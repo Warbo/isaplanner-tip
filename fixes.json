@@ -69,19 +69,18 @@
     "dependents": {
         "comment": "These depend on definitions which don't work.",
         "entries": [
-            "tip2015sort_HSortCountsmt2hsort",
             "tip2015sort_MSortBUCountsmt2msortbu",
-            "tip2015fermat_lastsmt2pow",
-            "tip2015propositional_Okaysmt2okay",
+            "tip2015sort_MSortBU2Countsmt2msortbu2",
+            "tip2015sort_HSortCountsmt2toHeap",
+            "tip2015sort_HSortCountsmt2hsort",
             "tip2015sort_BSortCountsmt2bsort",
             "tip2015polyrec_seq_indexsmt2fromList",
-            "tip2015sort_MSortBU2Countsmt2msortbu2",
             "tip2015polyrec_seq_indexsmt2index",
-            "tip2015sort_HSortCountsmt2toHeap",
             "constructortip2015polyrec_seq_indexsmt2Nil",
             "destructortip2015polyrec_seq_indexsmt2Cons_0",
             "destructortip2015polyrec_seq_indexsmt2Cons_1",
-            "constructortip2015polyrec_seq_indexsmt2Cons"
+            "constructortip2015polyrec_seq_indexsmt2Cons",
+            "tip2015propositional_Okaysmt2okay"
         ]
     },
     "unparseable": {

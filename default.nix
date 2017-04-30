@@ -151,17 +151,32 @@ with pkgs; rec {
       };
     };
     stdenv.mkDerivation {
-      name = "isabelle-tip";
-
-      buildInputs = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ])) ];
-
-      smtdata = te-benchmark.tip-benchmark-smtlib;
-
+      name         = "isabelle-tip";
+      buildInputs  = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ]))
+                       isaplanner jq perl ];
+      smtdata      = te-benchmark.tip-benchmark-smtlib;
+      FIXES        = ./fixes.json;
+      postprocess  = ./postprocess.sh;
       buildCommand = ''
         source $stdenv/setup
+        set -e
+        set -o pipefail
 
         echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
-        tip --isabelle < "$smtdata" > "$out"
+        tip --isabelle < "$smtdata" | "$postprocess" > A.thy
+
+        echo "Testing"
+        OUTPUT=$(echo 'use_thy "A";' | isaplanner)
+
+        if echo "$OUTPUT" |  grep -i -C 10 'error'
+        then
+           echo "Fail: Errors found in generated theory" 1>&2
+           exit 1
+        fi
+        echo "Passed"
+
+        mkdir -p "$out"
+        mv A.thy "$out/"
       '';
     };
 
