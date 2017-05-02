@@ -2,95 +2,116 @@
     "comment": "Workarounds for https://github.com/tip-org/tools/issues/7",
     "nontypes": {
         "comment": "These types aren't accepted by Isabelle.",
-        "entries": [
-            "tip2015polyrec_seq_indexsmt2Seq"
+        "encoded": [
+            "Global746970323031352f706f6c797265635f7365715f696e6465782e736d7432536571"
         ]
     },
     "trickyterminating": {
         "comment": "The termination checker of 'fun' can't handle these.",
-        "entries": [
-            "tip2015list_Interleavesmt2interleave"
+        "encoded": [
+            "global746970323031352f6c6973745f496e7465726c656176652e736d7432696e7465726c65617665"
         ]
     },
     "nonterminating": {
         "comment": "No automatic way to prove these terminate.",
-        "entries": [
-            "tip2015sort_MSortBU2Countsmt2mergingbu2",
-            "tip2015tree_Flatten3smt2flatten3",
-            "tip2015tree_Flatten1smt2flatten1",
-            "tip2015sort_HSortCountsmt2hmerging",
-            "tip2015sort_BubSortCountsmt2bubsort",
-            "tip2015mccarthy91_M1smt2m",
-            "tip2015list_weird_concat_map_bindsmt2weird_concat",
-            "tip2015mod_samesmt2mod2",
-            "tip2015sort_BSortCountsmt2bmerge",
-            "tip2015sort_HSortCountsmt2toList",
-            "tip2015sort_QSortCountsmt2qsort"
+        "encoded": [
+            "global746970323031352f736f72745f4d536f7274425532436f756e742e736d74326d657267696e67627532",
+            "global746970323031352f747265655f466c617474656e332e736d7432666c617474656e33",
+            "global746970323031352f747265655f466c617474656e312e736d7432666c617474656e31",
+            "global746970323031352f736f72745f48536f7274436f756e742e736d7432686d657267696e67",
+            "global746970323031352f736f72745f427562536f7274436f756e742e736d7432627562736f7274",
+            "global746970323031352f6d6363617274687939315f4d312e736d74326d",
+            "global746970323031352f6c6973745f77656972645f636f6e6361745f666d61705f62696e642e736d743277656972645f636f6e636174",
+            "global746970323031352f736f72745f42536f7274436f756e742e736d7432626d65726765",
+            "global746970323031352f736f72745f48536f7274436f756e742e736d7432746f4c697374",
+            "global746970323031352f736f72745f51536f7274436f756e742e736d743271736f7274",
+            "global746970323031352f726f746174655f6d6f642e736d74326d6f6432",
+            "global637573746f6d2d2b"
         ]
     },
     "constants": {
         "comment": "These take no arguments, so must use 'definition'.",
-        "entries": [
-            "tip2015int_mul_ident_leftsmt2one",
-            "tip2015int_add_ident_leftsmt2zero",
-            "prodprop_33smt2one",
-            "constructortip2015sort_HSortCountsmt2Nil",
-            "constructortip2015regexp_Deepssmt2Nil",
-            "constructortip2015regexp_Deepssmt2Eps",
-            "constructortip2015heap_deleteMinimumsmt2Nothing",
-            "constructortip2015heap_SortPermutessmt2Nil",
-            "constructortip2015escape_Injectivesmt2R",
-            "constructortip2015escape_Injectivesmt2Q",
-            "constructortip2015escape_Injectivesmt2P",
-            "constructortip2015escape_Injectivesmt2ESC",
-            "constructortip2015escape_Injectivesmt2D",
-            "constructortip2015escape_Injectivesmt2C",
-            "constructortip2015escape_Injectivesmt2B",
-            "constructortip2015escape_Injectivesmt2A",
-            "constructortip2015bin_distribsmt2One",
-            "constructorisaplannerprop_47smt2Leaf",
-            "constructorisaplannerprop_01smt2Z",
-            "constructorgrammarssimp_expr_unambig5smt2TY",
-            "constructorgrammarssimp_expr_unambig5smt2TX",
-            "constructorgrammarssimp_expr_unambig1smt2Y",
-            "constructorgrammarssimp_expr_unambig1smt2X",
-            "constructorgrammarssimp_expr_unambig1smt2Pl",
-            "constructorgrammarssimp_expr_unambig1smt2EY",
-            "constructorgrammarssimp_expr_unambig1smt2EX",
-            "constructorgrammarssimp_expr_unambig1smt2D",
-            "constructorgrammarssimp_expr_unambig1smt2C",
-            "constructorgrammarspackrat_unambigPackratsmt2nil",
-            "constructorgrammarspackrat_unambigPackratsmt2ZA",
-            "constructorgrammarspackrat_unambigPackratsmt2Z",
-            "constructorgrammarspackrat_unambigPackratsmt2Y",
-            "constructorgrammarspackrat_unambigPackratsmt2X"
+        "encoded": [
+            "global746970323031352f696e745f6d756c5f6964656e745f6c6566742e736d74326f6e65",
+            "global746970323031352f696e745f6164645f6964656e745f6c6566742e736d74327a65726f",
+            "global70726f642f70726f705f33332e736d74326f6e65",
+            "global636f6e7374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e696c",
+            "global636f6e7374727563746f722d746970323031352f7265676578705f44656570732e736d74324e696c",
+            "global636f6e7374727563746f722d746970323031352f7265676578705f44656570732e736d7432457073",
+            "global636f6e7374727563746f722d746970323031352f686561705f64656c6574654d696e696d756d2e736d74324e6f7468696e67",
+            "global636f6e7374727563746f722d746970323031352f686561705f536f72745065726d757465732e736d74324e696c",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743252",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743251",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743250",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d7432455343",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743244",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743243",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743242",
+            "global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743241",
+            "global636f6e7374727563746f722d746970323031352f62696e5f646973747269622e736d74324f6e65",
+            "global636f6e7374727563746f722d697361706c616e6e65722f70726f705f34372e736d74324c656166",
+            "global636f6e7374727563746f722d697361706c616e6e65722f70726f705f30312e736d74325a",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967352e736d74325459",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967352e736d74325458",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743259",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432506c",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324559",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324558",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743244",
+            "global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243",
+            "global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c",
+            "global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a41",
+            "global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a",
+            "global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d743259",
+            "global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d743258",
+            "global636f6e7374727563746f722d746970323031352f726f746174655f6d6f642e736d74324e696c",
+            "global636f6e7374727563746f722d746970323031352f686561705f536f72745065726d75746573272e736d74324e696c",
+            "global636f6e7374727563746f722d437573746f6d5a65726f",
+            "global636f6e7374727563746f722d437573746f6d54727565",
+            "global636f6e7374727563746f722d437573746f6d46616c7365"
         ]
     },
     "dependents": {
         "comment": "These depend on definitions which don't work.",
-        "entries": [
-            "tip2015sort_MSortBUCountsmt2msortbu",
-            "tip2015sort_MSortBU2Countsmt2msortbu2",
-            "tip2015sort_HSortCountsmt2toHeap",
-            "tip2015sort_HSortCountsmt2hsort",
-            "tip2015sort_BSortCountsmt2bsort",
-            "tip2015polyrec_seq_indexsmt2fromList",
-            "tip2015polyrec_seq_indexsmt2index",
-            "constructortip2015polyrec_seq_indexsmt2Nil",
-            "destructortip2015polyrec_seq_indexsmt2Cons_0",
-            "destructortip2015polyrec_seq_indexsmt2Cons_1",
-            "constructortip2015polyrec_seq_indexsmt2Cons",
-            "tip2015propositional_Okaysmt2okay"
+        "encoded": [
+            "global746970323031352f736f72745f4d536f72744255436f756e742e736d74326d736f72746275",
+            "global746970323031352f736f72745f4d536f7274425532436f756e742e736d74326d736f7274627532",
+            "global746970323031352f736f72745f48536f7274436f756e742e736d7432746f48656170",
+            "global746970323031352f736f72745f48536f7274436f756e742e736d743268736f7274",
+            "global746970323031352f736f72745f42536f7274436f756e742e736d743262736f7274",
+            "global746970323031352f706f6c797265635f7365715f696e6465782e736d743266726f6d4c697374",
+            "global746970323031352f706f6c797265635f7365715f696e6465782e736d7432696e646578",
+            "global636f6e7374727563746f722d746970323031352f706f6c797265635f7365715f696e6465782e736d74324e696c",
+            "global64657374727563746f722d746970323031352f706f6c797265635f7365715f696e6465782e736d7432436f6e735f30",
+            "global64657374727563746f722d746970323031352f706f6c797265635f7365715f696e6465782e736d7432436f6e735f31",
+            "global636f6e7374727563746f722d746970323031352f706f6c797265635f7365715f696e6465782e736d7432436f6e73",
+            "global746970323031352f70726f706f736974696f6e616c5f4f6b61792e736d74326f6b6179",
+            "global637573746f6d2d2d",
+            "global746970323031352f706f6c797265635f7365715f696e6465782e736d74326c6f6f6b7570",
+            "global746970323031352f736f72745f4d536f72745444436f756e742e736d74327a64726f70",
+            "global746970323031352f736f72745f4d536f72745444436f756e742e736d74327a74616b65",
+            "global637573746f6d2d646976",
+            "global637573746f6d2d6d6f64",
+            "global746970323031352f736f72745f53746f6f6765536f727432436f756e742e736d74327a73706c69744174",
+            "global746970323031352f736f72745f4d536f72745444436f756e742e736d74327a6c656e677468",
+            "global746970323031352f73756273745f5375627374467265654e6f2e736d74326e6577",
+            "global637573746f6d2d2a",
+            "global746970323031352f736f72745f53746f6f6765536f727432436f756e742e736d743273746f6f676532736f727432",
+            "global746970323031352f736f72745f53746f6f6765536f727432436f756e742e736d743273746f6f6765736f727432",
+            "global746970323031352f736f72745f53746f6f6765536f727432436f756e742e736d743273746f6f676532736f727431"
         ]
     },
     "unparseable": {
         "comment": "These translations don't parse.",
-        "entries": [
-            "tip2015sort_SSortCountsmt2ssort",
-            "isaplannerprop_12smt2map2",
-            "tip2015sort_NMSortTDCountsmt2nmsorttd",
-            "tip2015subst_SubstFreeNosmt2subst",
-            "tip2015sort_MSortTDCountsmt2msorttd"
+        "encoded": [
+            "global746970323031352f736f72745f53536f7274436f756e742e736d743273736f7274",
+            "global697361706c616e6e65722f70726f705f31322e736d74326d617032",
+            "global746970323031352f736f72745f4e4d536f72745444436f756e742e736d74326e6d736f72747464",
+            "global746970323031352f73756273745f5375627374467265654e6f2e736d74327375627374",
+            "global746970323031352f736f72745f4d536f72745444436f756e742e736d74326d736f72747464",
+            "global746970323031352f736f72745f427562536f7274436f756e742e736d7432627562626c65",
+            "global746970323031352f736f72745f4d536f7274425532436f756e742e736d7432726973657273"
         ]
     }
 }

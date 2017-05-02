@@ -143,8 +143,8 @@ with pkgs; rec {
       haskellPackages  = haskell.packages.ghc7103;
       te-benchmark-src = fetchgit {
         url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
-        rev    = "d569ec3a7e296c110b667773d07e423e22b797c9";
-        sha256 = "0kv7z2xwb872myzsq89s9yybd7vwf1yyx5vpbj0q2w0js3wxhf2n";
+        rev    = "9642c88";
+        sha256 = "0874bhvsifyrg3gb30k7ic2w3ms6ak26apf1rv0x2bmrqmzav6gj";
       };
       te-benchmark = callPackage "${te-benchmark-src}" {
         inherit haskellPackages;
@@ -153,9 +153,10 @@ with pkgs; rec {
     stdenv.mkDerivation {
       name         = "isabelle-tip";
       buildInputs  = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ]))
-                       isaplanner jq perl ];
+                       isaplanner jq perl  vim ];
       smtdata      = te-benchmark.tip-benchmark-smtlib;
       FIXES        = ./fixes.json;
+      preprocess   = ./preprocess.sh;
       postprocess  = ./postprocess.sh;
       buildCommand = ''
         source $stdenv/setup
@@ -163,14 +164,16 @@ with pkgs; rec {
         set -o pipefail
 
         echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
-        tip --isabelle < "$smtdata" | "$postprocess" > A.thy
+        "$preprocess" < "$smtdata" | tip --isabelle | "$postprocess" > A.thy
 
         echo "Testing"
         OUTPUT=$(echo 'use_thy "A";' | isaplanner)
 
-        if echo "$OUTPUT" |  grep -i -C 10 'error'
+        if echo "$OUTPUT" |  grep -i -C 10 'error' > /dev/null
         then
            echo "Fail: Errors found in generated theory" 1>&2
+           echo "$OUTPUT" 1>&2
+           cp -v "A.thy" /tmp/A.thy
            exit 1
         fi
         echo "Passed"
