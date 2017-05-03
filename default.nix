@@ -183,35 +183,89 @@ with pkgs; rec {
       '';
     };
 
-  isaplanner-tip =
-    let theory = writeScript "Invoke.thy" ''
-                   theory Invoke
-                   imports A
-                   begin
-                   end
-                 '';
-     in stdenv.mkDerivation {
-          name = "isaplanner-tip";
+  haskellTypesOf = haskell-tip: runCommand "haskell-types-of"
+    {
+      buildInputs = [ makeWrapper ];
+      raw = writeScript "haskell-types-of-raw" ''
+        #!/usr/bin/env bash
+        while read -r NAME
+        do
+          jq --arg name "$NAME" \
+          'map(select(.name == $name)) | .[] | .type' < "${haskell-tip}"
+        done | jq -s '.'
+      '';
+    }
+    ''
+      makeWrapper "$raw" "$out" --prefix PATH : "${jq}/bin"
+    '';
 
-          isabelle_tip = isabelle-tip;
-          inherit theory;
+  isacosy-template = ''
+    theory ISACOSY
 
-          buildInputs = [ isaplanner perl ];
+    imports Main IsaP IsaCoSy Orderings Set Pure List A
+    begin
 
-          buildCommand = ''
-            source $stdenv/setup
+    ML {*
+    val datatypes = [@{typ "nat"}, @{typ "nat list"}];
+    val functions = map Term.dest_Const [
+      @{term "Groups.plus_class.plus :: nat => nat => nat"},
+      @{term "Groups.minus_class.minus :: nat => nat => nat"},
+      @{term "Groups.times_class.times :: nat => nat => nat"},
+      @{term "List.append :: nat list => nat list => nat list"}
+    ];
 
-            # Theory name must match file name; 'tip' uses the name "A"
-            cp "$isabelle_tip" "A.thy"
-            cp "$theory" "Invoke.thy"
+    val def_thrms = [
+      @{thms  "Nat.plus_nat.simps"},
+      @{thms "Nat.minus_nat.simps"},
+      @{thms "Nat.times_nat.simps"},
+      @{thms   "List.append.simps"}
+    ];
 
-            echo 'use_thy "Invoke";' | isabelle console
-          '';
-        };
+    val fundefs = functions ~~ def_thrms;
 
-  # TODO: Should we actually run the benchmark in Nix? Maybe better to provide an environment with a "dobenchmark" command; maybe also one which doesn't benchmark but just spits out result
-  bench = with haskellPackages;
-          callPackage (callHackage "bench" "1.0.1") {};
+    (* Don't want to synthesise undefined terms *)
+    val constr_trms = [
+      Trm.change_frees_to_fresh_vars @{term "hd([])"},
+      Trm.change_frees_to_fresh_vars @{term "tl([])"}
+    ];
+
+    (* Set constraints *)
+    val cparams = ConstraintParams.empty
+                |> ThyConstraintParams.add_eq @{context}
+                |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
+                |> ThyConstraintParams.add_datatype' @{context} @{typ "nat list"}
+                |> ConstraintParams.add_consts functions
+                |> ConstraintParams.add_arb_terms @{context} constr_trms
+
+    (* Perform the exploration *)
+    val (_, nw_ctxt) = SynthInterface.thm_synth
+      SynthInterface.rippling_prover
+      SynthInterface.quickcheck
+      SynthInterface.wave_rule_config
+      SynthInterface.var_allowed_in_lhs
+      {max_size = 8, min_size = 3, max_vars = 3, max_nesting = SOME 2}
+      (Constant.mk "HOL.eq") (cparams, @{context});
+
+    (* Extract the results *)
+    val show           = Trm.pretty nw_ctxt;
+    val result_context = SynthOutput.Ctxt.get nw_ctxt;
+
+    val found_conjectures = map show
+                                (SynthOutput.get_conjs result_context);
+
+    val found_theorems    = map (fn (_, thm) =>
+                                   show (Thm.full_prop_of thm))
+                                (SynthOutput.get_thms result_context);
+
+    (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
+    PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
+      ([Pretty.str "BEGIN OUTPUT"] @
+       found_theorems              @
+       found_conjectures           @
+       [Pretty.str "END OUTPUT"])));
+    *}
+    end
+  '';
 
   isacosy-nat =
     let theoryName = "IsaCoSyNat";
