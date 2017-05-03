@@ -371,7 +371,7 @@ with pkgs; rec {
       }
 
       mkdir -p "$out"
-      "${extract_eqs.sh}" < "$data/output" > "$out/equations"
+      "${./extract_eqs.sh}" < "$data/output" > "$out/equations"
     '';
   };
 }
