@@ -337,7 +337,7 @@ with pkgs; rec {
          # Stop Perl complaining about unset locale variables
          LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
 
-         buildInputs  = [ perl isaplanner moreutils bench gnugrep ];
+         buildInputs  = [ perl isaplanner moreutils gnugrep ];
          buildCommand = ''
            source $stdenv/setup
            set -x
@@ -346,9 +346,6 @@ with pkgs; rec {
            cp "$theory" "${theoryName}.thy"
 
            mkdir -p "$out"
-
-           # Benchmark IsaCoSy
-           bench "${explore}" --raw "$out/times"
 
            "${explore}" > "$out/output"
          '';
@@ -392,7 +389,10 @@ with pkgs; rec {
       stripSuffix < "$data/output" > noSuff
       stripPrefix < noSuff         > "$out/equations"
 
-      cp "$data/times" "$out/times"
+      if [[ -e "$data/times" ]]
+      then
+        cp "$data/times" "$out/times"
+      fi
     '';
   };
 }
