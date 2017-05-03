@@ -271,84 +271,89 @@ with pkgs; rec {
     let theoryName = "IsaCoSyNat";
         theory = writeScript "${theoryName}.thy" ''
           theory ${theoryName}
+
           imports Main IsaP IsaCoSy Orderings Set Pure List
           begin
 
           ML {*
-          val datatypes = [@{typ "nat"}, @{typ "nat list"}];
-          val functions = map Term.dest_Const
-            [@{term "Groups.plus_class.plus :: nat => nat => nat"},
-            @{term "Groups.minus_class.minus :: nat => nat => nat"},
-            @{term "Groups.times_class.times :: nat => nat => nat"},
-            @{term "List.append :: nat list => nat list => nat list"}];
-          val def_thrms = [@{thms "Nat.plus_nat.simps"}, @{thms "Nat.minus_nat.simps"},  @{thms
-          "Nat.times_nat.simps"},
-                       @{thms "List.append.simps"}];
-          val thrms = flat def_thrms;
-          val fundefs = functions ~~ def_thrms;
-          (* Don't want to synthesise undefined terms *)
-          val constr_trms = [Trm.change_frees_to_fresh_vars @{term "hd([])"},
-                             Trm.change_frees_to_fresh_vars @{term "tl([])"}
-            ];
+            val functions = map Term.dest_Const
+              [@{term "Groups.plus_class.plus :: nat => nat => nat"},
+               @{term "Groups.minus_class.minus :: nat => nat => nat"},
+               @{term "Groups.times_class.times :: nat => nat => nat"}];
 
-          (* set constraint params *)
-            val cparams0 =
-                ConstraintParams.empty
-                  |> ThyConstraintParams.add_eq @{context}
-                  |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
-                  |> ThyConstraintParams.add_datatype' @{context} @{typ "nat list"}
-                  |> (ConstraintParams.add_consts functions)
-                  |> ConstraintParams.add_arb_terms @{context} constr_trms
-                  (*|> ConstraintParams.add_thms @{context} thrms*);
-          val (init_ctxt, cparams) =
-            ConstraintParams.add_ac_properties_of_consts @{context} fundefs cparams0;
-           ConstraintParams.print init_ctxt cparams;
+            val def_thrms = [@{thms "Nat.plus_nat.simps"},
+                             @{thms "Nat.minus_nat.simps"},
+                             @{thms "Nat.times_nat.simps"}];
 
-          val thy_constraints = (Constraints.init init_ctxt cparams);
-          val top_term = Thm.term_of @{cpat "op = :: ?'a => ?'a => bool"};
-          val top_const = (Constant.mk (fst (Term.dest_Const top_term)));
-          val dummy_prover = SynthInterface.Prover(fn ctxt => fn term => (NONE,[]));
+            val fundefs = functions ~~ def_thrms;
 
-          val (nw_cparams, nw_ctxt) = SynthInterface.thm_synth
-            SynthInterface.rippling_prover
-            SynthInterface.quickcheck
-            SynthInterface.wave_rule_config
-            SynthInterface.var_allowed_in_lhs
-            {max_size = 8, min_size = 3, max_vars = 3, max_nesting= SOME 2}
-            (Constant.mk "HOL.eq") (cparams0,@{context});
-          (*map (Trm.print nw_ctxt) (SynthOutput.get_all (SynthOutput.Ctxt.get nw_ctxt));*)
+            (* set constraint params *)
+            val cparams0 = ConstraintParams.empty
+              |> ThyConstraintParams.add_eq        @{context}
+              |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
+              |>    ConstraintParams.add_consts    functions;
 
-          map (Trm.print nw_ctxt) (SynthOutput.get_conjs (SynthOutput.Ctxt.get nw_ctxt));
+            (* Perform the exploration *)
+            val (_, nw_ctxt) = SynthInterface.thm_synth
+                               SynthInterface.rippling_prover
+                               SynthInterface.quickcheck
+                               SynthInterface.wave_rule_config
+                               SynthInterface.var_allowed_in_lhs
+                               { max_size = 8,
+                                 min_size = 3,
+                                 max_vars = 3,
+                                 max_nesting = SOME 2 }
+                               (Constant.mk "HOL.eq")
+                               (cparams0, @{context});
+
+            (* Extract the results *)
+            val result_context = SynthOutput.Ctxt.get nw_ctxt;
+
+            val found_conjectures = map (Trm.pretty nw_ctxt)
+                                        (SynthOutput.get_conjs result_context);
+
+            val found_theorems    = map (fn (_, thm) =>
+                                          Trm.pretty nw_ctxt
+                                            (Trm.change_frees_to_fresh_vars
+                                              (Thm.full_prop_of thm)))
+                                        (SynthOutput.get_thms result_context);
+
+            (* Write output, delimited to ease chopping off Isabelle noise *)
+            PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
+              ([Pretty.str "BEGIN OUTPUT"] @
+               found_theorems              @
+               found_conjectures           @
+               [Pretty.str "END OUTPUT"])));
           *}
-
           end
         '';
-       explore = writeScript "explore.sh" ''
-         echo 'use_thy "${theoryName}";' | isaplanner
-       '';
-    in stdenv.mkDerivation {
-         name = "isacosy-nat";
 
-         inherit isaplanner theory;
+        explore = writeScript "explore.sh" ''
+          echo 'use_thy "${theoryName}";' | isaplanner
+        '';
+     in stdenv.mkDerivation {
+          name = "isacosy-nat";
 
-         # Force Haskell to use UTF-8, or else we get I/O errors
-         LANG = "en_US.UTF-8";
+          inherit isaplanner theory;
 
-         # Stop Perl complaining about unset locale variables
-         LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+          # Force Haskell to use UTF-8, or else we get I/O errors
+          LANG = "en_US.UTF-8";
 
-         buildInputs  = [ perl isaplanner moreutils gnugrep ];
-         buildCommand = ''
-           source $stdenv/setup
-           set -x
+          # Stop Perl complaining about unset locale variables
+          LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
 
-           # Theory name must match file name; 'tip' uses the name "A"
-           cp "$theory" "${theoryName}.thy"
+          buildInputs  = [ perl isaplanner moreutils gnugrep ];
+          buildCommand = ''
+            source $stdenv/setup
+            set -x
 
-           mkdir -p "$out"
+            # Theory name must match file name; 'tip' uses the name "A"
+            cp "$theory" "${theoryName}.thy"
 
-           "${explore}" > "$out/output"
-         '';
+            mkdir -p "$out"
+
+            "${explore}" > "$out/output"
+          '';
   };
 
   isacosy-nat-eqs = stdenv.mkDerivation {
@@ -365,34 +370,8 @@ with pkgs; rec {
         exit 1
       }
 
-      function stripPrefix {
-        # Get everything after the last "Adding ..." message. We use tac to
-        # put the lines in reverse order, grep to get (up to a million of)
-        # the lines 'before' the 'first' occurrence of "Adding ...", put
-        # back into order with tac, then trim off the "Adding ..." line with
-        # tail
-        echo "Stripping prefix" 1>&2
-        tac | grep -m 1 -B 1000000 "^Adding " | tac | tail -n +2
-        echo "Stripped prefix" 1>&2
-      }
-
-      function stripSuffix {
-        # Get everything before the first "val ..." line, which indicates
-        # the start of an ML code dump. Also strip out any "###" warnings
-        echo "Stripping suffix" 1>&2
-        grep -m 1 -B 1000000 "^val " | head -n -1 | grep -v "^### "
-        echo "Stripped suffix" 1>&2
-      }
-
       mkdir -p "$out"
-
-      stripSuffix < "$data/output" > noSuff
-      stripPrefix < noSuff         > "$out/equations"
-
-      if [[ -e "$data/times" ]]
-      then
-        cp "$data/times" "$out/times"
-      fi
+      "${extract_eqs.sh}" < "$data/output" > "$out/equations"
     '';
   };
 }
