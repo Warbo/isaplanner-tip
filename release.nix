@@ -7,7 +7,7 @@ with rec {
   };
 
   # Remove 'debug', as it's just an API to private implementation details
-  tests = filterAttrs (n: _: n != "debug") (import ./tests.nix);
+  tests = removeAttrs (import ./tests.nix) [ "debug" ];
 
   derivationsIn = filterAttrs (_: isDerivation);
 };

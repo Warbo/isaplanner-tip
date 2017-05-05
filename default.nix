@@ -199,6 +199,153 @@ with pkgs; rec {
       makeWrapper "$raw" "$out" --prefix PATH : "${jq}/bin"
     '';
 
+  isacosy = runCommand "isacosy"
+    {
+      buildInputs = [ makeWrapper ];
+      raw = writeScript "isacosy-raw" ''
+        #!/usr/bin/env bash
+        set -e
+        set -o pipefail
+
+        [[ -n "$1" ]] || {
+          echo "No file given, aborting" 1>&2
+          exit 1
+        }
+        THY=$(basename "$1" .thy)
+        echo "use_thy \"$THY\";" | isaplanner | "${./extract_eqs.sh}"
+      '';
+    }
+    ''
+      mkdir -p "$out/bin"
+      makeWrapper "$raw" "$out/bin/isacosy" --prefix PATH : "${isaplanner}/bin"
+    '';
+
+  hackage = h: n: h.callPackage (runCabal2nix { url = "cabal://${n}"; });
+
+  haskellToIsabelleTypes = runCommand "haskellToIsabelleTypes"
+    rec {
+      buildInputs = [ makeWrapper ];
+      typeconvert = writeScript "typeConvert.hs" ''
+        import Data.List
+        import Language.Haskell.Exts.Parser
+        import Language.Haskell.Exts.Pretty
+        import Language.Haskell.Exts.Syntax
+
+        main = interact convert
+
+        -- Turns Haskell type signatures into Isabelle ones
+        convert :: String -> String
+        convert = render . parseSig
+
+        -- Parse a type signature from a String
+        parseSig :: String -> TypeSig
+        parseSig s = case parseType s of
+            ParseOk     t     -> typeToSig parseErr t
+            ParseFailed _ err -> error err
+          where parseErr msg = error (msg ++ ": " ++ s)
+
+        -- Turns a subset of Haskell type signatures into our TypeSig format
+        typeToSig :: (String -> TypeSig) -> Type b -> TypeSig
+        typeToSig e t = case t of
+          TyFun   _ i o -> collapseArrows i o
+          TyApp   _ f x -> collapseApps   f x
+          TyCon   _ c   -> Name (showName c)
+          TyParen _ x   -> TSParen (typeToSig e x)
+
+          TyVar{}    -> e "Type should have been monomorphised"
+          TyForall{} -> e "Quantification not supported"
+          TyTuple{}  -> e "Tuples not supported"
+          TyList{}   -> e "Native lists not supported"
+          TyInfix{}  -> e "Infix types not supported"
+          _          -> e "Unsupported type wizardry"
+
+        -- Unfolds 'a -> (b -> (c -> d))' into 'Arrow [a, b, c, d]'
+        collapseArrows :: Type a -> Type a -> TypeSig
+        collapseArrows i o = Arrow (typeToSig error i : process o)
+          where process :: Type a -> [TypeSig]
+                process (TyFun _ i2 o2) = typeToSig error i2 : process o2
+                process x               = [typeToSig error x]
+
+        collapseApps :: Type a -> Type a -> TypeSig
+        collapseApps f x = TSApp (process f ++ [typeToSig error x])
+          where process :: Type a -> [TypeSig]
+                process (TyApp _ f2 x2) = process f2 ++ [typeToSig error x2]
+                process t               = [typeToSig error t]
+
+        -- Turns identifiers into Strings, discarding context, etc.
+        showName :: QName a -> String
+        showName n = case n of
+          Qual   _ m x -> prettyPrint x
+          UnQual _ x   -> prettyPrint x
+          Special{}    -> error "'Special' names not supported"
+
+        -- Takes a TypeSig and outputs an Isabelle representation
+        render :: TypeSig -> String
+        render s = case s of
+          Name  n    -> n
+          TSApp   sigs -> intercalate " " (rotate (map render sigs))
+          TSParen sig  -> "(" ++ render sig ++ ")"
+          Arrow sigs -> intercalate " => " (map render sigs)
+
+        -- Moves the head of a list to the end (if there is one)
+        rotate :: [a] -> [a]
+        rotate []     = []
+        rotate (x:xs) = xs ++ [x]
+
+        data TypeSig = Name  String
+                     | TSApp   [TypeSig]
+                     | TSParen TypeSig
+                     | Arrow [TypeSig]
+      '';
+      raw = writeScript "haskellToIsabelleTypes-raw" ''
+        #!/usr/bin/env bash
+        set -e
+        set -o pipefail
+
+        # Incoming type signatures may straddle multiple lines, so we require
+        # them to be given as an array of quoted strings
+        INPUT=$(cat)
+
+        # '-c' should cause jq to put each string on a single line, i.e. using
+        # '\n' for new lines.
+        while read -r STR
+        do
+          # Unwrap the given quoted string, pass through typeconvert, then
+          # replace all 'Integer' types (used for monomorphising) with 'nat'
+          echo "$STR" | jq -r '.'                   |
+                        runhaskell "${typeconvert}" |
+                        sed -e 's/Integer/nat/g'    |
+                        jq -Rs '.'
+        done < <(echo "$INPUT" | jq -c '.[]') | jq -s '.'
+      '';
+    }
+    ''
+      makeWrapper "$raw" "$out" \
+        --prefix PATH : "${jq}/bin" \
+        --prefix PATH : "${haskellPackages.ghcWithPackages (h: [
+                             (hackage h "haskell-src-exts-1.19.1" {
+                               "pretty-show" = hackage h "pretty-show-1.6.10" {};
+                             })
+                           ])}/bin"
+    '';
+
+  make_isacosy_theory = haskell-tip: runCommand "make_isacosy_theory"
+    {
+      itip = isabelle-tip;
+      itemp = isacosy-template;
+      buildInputs = [ makeWrapper ];
+      raw = writeScript "make_isacosy_theory-raw" ''
+        #!/usr/bin/env bash
+        ln -s "$itip"/A.thy ./A.thy
+        cp "$itemp" "ISACOSY.thy"
+
+        echo "FIXME: Replace template contents with names and types from stdin" 1>&2
+      '';
+    }
+    ''
+      makeWrapper "$raw" "$out"
+    '';
+
   isacosy-template = ''
     theory ISACOSY
 
@@ -206,63 +353,57 @@ with pkgs; rec {
     begin
 
     ML {*
-    val datatypes = [@{typ "nat"}, @{typ "nat list"}];
-    val functions = map Term.dest_Const [
-      @{term "Groups.plus_class.plus :: nat => nat => nat"},
-      @{term "Groups.minus_class.minus :: nat => nat => nat"},
-      @{term "Groups.times_class.times :: nat => nat => nat"},
-      @{term "List.append :: nat list => nat list => nat list"}
-    ];
+      (* Example: @{term "Groups.plus_class.plus :: nat => nat => nat"} *)
+      val functions = map Term.dest_Const [
+        (*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS*)
+      ];
 
-    val def_thrms = [
-      @{thms  "Nat.plus_nat.simps"},
-      @{thms "Nat.minus_nat.simps"},
-      @{thms "Nat.times_nat.simps"},
-      @{thms   "List.append.simps"}
-    ];
+      (* Example: @{thms "Nat.plus_nat.simps"} *)
+      val def_thrms = [
+        (*TEMPLATE_REPLACE_ME_WITH_DEFINITIONS*)
+      ];
 
-    val fundefs = functions ~~ def_thrms;
+      val fundefs = functions ~~ def_thrms;
 
-    (* Don't want to synthesise undefined terms *)
-    val constr_trms = [
-      Trm.change_frees_to_fresh_vars @{term "hd([])"},
-      Trm.change_frees_to_fresh_vars @{term "tl([])"}
-    ];
+      (* Undefined terms, eg. Trm.change_frees_to_fresh_vars @{term "hd([])"} *)
+      val constr_trms = [
+        (*TEMPLATE_REPLACE_ME_WITH_UNDEFINED*)
+      ];
 
-    (* Set constraints *)
-    val cparams = ConstraintParams.empty
-                |> ThyConstraintParams.add_eq @{context}
-                |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
-                |> ThyConstraintParams.add_datatype' @{context} @{typ "nat list"}
-                |> ConstraintParams.add_consts functions
-                |> ConstraintParams.add_arb_terms @{context} constr_trms
+      (* Add variables for each datatype, e.g.
+           ThyConstraintParams.add_datatype' @{context} @{typ "nat"} *)
+      val cparams = ConstraintParams.empty
+                  |> ThyConstraintParams.add_eq @{context}
+                  (*TEMPLATE_REPLACE_ME_WITH_DATATYPES*)
+                  |> ConstraintParams.add_consts functions
+                  |> ConstraintParams.add_arb_terms @{context} constr_trms
 
-    (* Perform the exploration *)
-    val (_, nw_ctxt) = SynthInterface.thm_synth
-      SynthInterface.rippling_prover
-      SynthInterface.quickcheck
-      SynthInterface.wave_rule_config
-      SynthInterface.var_allowed_in_lhs
-      {max_size = 8, min_size = 3, max_vars = 3, max_nesting = SOME 2}
-      (Constant.mk "HOL.eq") (cparams, @{context});
+      (* Perform the exploration *)
+      val (_, nw_ctxt) = SynthInterface.thm_synth
+        SynthInterface.rippling_prover
+        SynthInterface.quickcheck
+        SynthInterface.wave_rule_config
+        SynthInterface.var_allowed_in_lhs
+        {max_size = 8, min_size = 3, max_vars = 3, max_nesting = SOME 2}
+        (Constant.mk "HOL.eq") (cparams, @{context});
 
-    (* Extract the results *)
-    val show           = Trm.pretty nw_ctxt;
-    val result_context = SynthOutput.Ctxt.get nw_ctxt;
+      (* Extract the results *)
+      val show           = Trm.pretty nw_ctxt;
+      val result_context = SynthOutput.Ctxt.get nw_ctxt;
 
-    val found_conjectures = map show
-                                (SynthOutput.get_conjs result_context);
+      val found_conjectures = map show
+                                  (SynthOutput.get_conjs result_context);
 
-    val found_theorems    = map (fn (_, thm) =>
-                                   show (Thm.full_prop_of thm))
-                                (SynthOutput.get_thms result_context);
+      val found_theorems    = map (fn (_, thm) =>
+                                     show (Thm.full_prop_of thm))
+                                  (SynthOutput.get_thms result_context);
 
-    (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
-    PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
-      ([Pretty.str "BEGIN OUTPUT"] @
-       found_theorems              @
-       found_conjectures           @
-       [Pretty.str "END OUTPUT"])));
+      (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
+      PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
+        ([Pretty.str "BEGIN OUTPUT"] @
+         found_theorems              @
+         found_conjectures           @
+         [Pretty.str "END OUTPUT"])));
     *}
     end
   '';
