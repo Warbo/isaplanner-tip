@@ -1,11 +1,19 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pkgs ? null, system ? builtins.currentSystem }:
 
-assert pkgs.haskellPackages ? callHackage ||
+with builtins;
+with {
+  configuredPkgs = if pkgs == null
+                      then (import ./pkgs.nix { inherit system; }).stablePkgs
+                      else pkgs;
+};
+with configuredPkgs;
+
+assert haskellPackages ? callHackage ||
        abort "haskellPackages doesn't have callHackage; nixpkgs too old?";
 
-with pkgs; rec {
+rec {
 
-  polyml = pkgs.polyml.overrideDerivation (old: {
+  polyml = configuredPkgs.polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
     src  = "${isabelle2015}/contrib/polyml-5.5.2-3/src";
   });
@@ -133,7 +141,8 @@ with pkgs; rec {
         makeWrapper "$F" "$out/bin/$(basename "$F")"   \
           --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
           --set HOME              "$HOME"              \
-          --set ISABELLE_DIR      "$ISABELLE_DIR"
+          --set ISABELLE_DIR      "$ISABELLE_DIR"      \
+          --prefix PATH : "${perl}/bin"
       done
     '';
   };
@@ -331,22 +340,54 @@ with pkgs; rec {
 
   make_isacosy_theory = haskell-tip: runCommand "make_isacosy_theory"
     {
-      itip = isabelle-tip;
-      itemp = isacosy-template;
       buildInputs = [ makeWrapper ];
-      raw = writeScript "make_isacosy_theory-raw" ''
+      raw         = writeScript "make_isacosy_theory-raw" ''
         #!/usr/bin/env bash
-        ln -s "$itip"/A.thy ./A.thy
-        cp "$itemp" "ISACOSY.thy"
+        ln -s "${isabelle-tip}"/A.thy ./A.thy
+        cp "${isacosy-template}" "ISACOSY.thy"
 
+        NAMES=$(cat)
+        TYPES=$(echo "$NAMES" | "${haskellTypesOf haskell-tip.annotatedAsts}" |
+                                "${haskellToIsabelleTypes}")
+        DATA='[]'
+        while read -r PAIR
+        do
+          N=$(echo "$PAIR" | cut -f1)
+          T=$(echo "$PAIR" | cut -f2)
+          DATA=$(echo "$DATA" | jq --arg name "$N" --argjson type "$T" \
+                                   '. + [{"name": $name, "type": $type}]')
+        done < <(paste <(echo "$NAMES") <(echo "$TYPES" | jq -c '.[]'))
+
+        echo "DATA: $DATA" 1>&2
         echo "FIXME: Replace template contents with names and types from stdin" 1>&2
+
+        # Example: @{term "Groups.plus_class.plus :: nat => nat => nat"}
+        FUNCS=$(echo "$DATA" |
+                jq -r 'map("@{term \"A." + .name + " :: " + .type + "\"}") |
+                       reduce .[] as $item (""; . + ", " + $item)' |
+                sed -e 's/^, //g')
+
+        sed -i ISACOSY.thy \
+            -e "s/(\*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS\*)/$FUNCS/"
+
+        # Example: @{thms "Nat.plus_nat.simps"}
+        THMS=$(echo "$DATA" |
+               jq -r 'map("@{thms \"A." + .name + ".simps\"}") |
+                      reduce .[] as $item (""; . + ", " + $item)' |
+               sed -e 's/^, //g')
+        sed -i ISACOSY.thy \
+            -e "s/(\*TEMPLATE_REPLACE_ME_WITH_DEFINITIONS\*)/$THMS/"
+
+        echo "$PWD/ISACOSY.thy"
       '';
     }
     ''
-      makeWrapper "$raw" "$out"
+      mkdir -p "$out/bin"
+      makeWrapper "$raw" "$out/bin/make_isacosy_theory" \
+                         --prefix PATH : "${jq}/bin"
     '';
 
-  isacosy-template = ''
+  isacosy-template = writeScript "isacosy-template" ''
     theory ISACOSY
 
     imports Main IsaP IsaCoSy Orderings Set Pure List A
