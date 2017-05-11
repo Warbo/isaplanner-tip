@@ -1,19 +1,15 @@
-{ pkgs ? null, system ? builtins.currentSystem }:
+{ pkgs ? (import ./pkgs.nix).stable }:
 
 with builtins;
-with {
-  configuredPkgs = if pkgs == null
-                      then (import ./pkgs.nix { inherit system; }).stablePkgs
-                      else pkgs;
-};
-with configuredPkgs;
+with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
+with pkgs;
 
 assert haskellPackages ? callHackage ||
        abort "haskellPackages doesn't have callHackage; nixpkgs too old?";
 
 rec {
 
-  polyml = configuredPkgs.polyml.overrideDerivation (old: {
+  polyml = pkgsAlias.polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
     src  = "${isabelle2015}/contrib/polyml-5.5.2-3/src";
   });

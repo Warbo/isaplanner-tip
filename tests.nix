@@ -1,8 +1,4 @@
-{ system ? builtins.currentSystem }:
-
 with rec {
-  pkgSets = import ./pkgs.nix { inherit system; };
-
   defs = pkgs: import ./. { inherit pkgs; };
 
   helpers = pkgs: with pkgs; with defs pkgs; rec {
@@ -120,7 +116,4 @@ with rec {
       '';
   };
 };
-{
-  stable   = results pkgSets.stablePkgs;
-  unstable = results pkgSets.unstablePkgs;
-}
+(import <nixpkgs> {}).lib.mapAttrs (_: results) (import ./pkgs.nix)
