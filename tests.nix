@@ -1,21 +1,20 @@
-with rec {
-  defs = pkgs: import ./. { inherit pkgs; };
+pkgs:
 
-  helpers = pkgs: with pkgs; with defs pkgs; rec {
-    haskell-te-src = latestGit {
-      url = "http://chriswarbo.net/git/haskell-te.git";
-    };
+with pkgs;
+rec {
+  defs = import ./. { inherit pkgs; };
 
-    haskell-te = (import "${haskell-te-src}").allDefs;
-
-    tip-benchmarks = latestGit {
-      url = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
-    };
+  haskell-te-src = latestGit {
+    url = "http://chriswarbo.net/git/haskell-te.git";
   };
 
-  results = pkgs: tests pkgs // { debug = defs // helpers; };
+  haskell-te = (import "${haskell-te-src}").allDefs;
 
-  tests = pkgs: with pkgs; with defs pkgs; with helpers pkgs; rec {
+  tip-benchmarks = latestGit {
+    url = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
+  };
+
+  tests = rec {
     haskellTypesOfTip = runCommand "haskell-types-of-tip"
       {
         typesof     = haskellTypesOf haskell-te.tipBenchmarks.annotatedAsts;
@@ -115,5 +114,4 @@ with rec {
         }
       '';
   };
-};
-(import <nixpkgs> {}).lib.mapAttrs (_: results) (import ./pkgs.nix)
+}

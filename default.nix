@@ -1,4 +1,4 @@
-{ pkgs ? (import ./pkgs.nix).stable }:
+{ pkgs ? (import ./pkgs.nix {}).stable }:
 
 with builtins;
 with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'

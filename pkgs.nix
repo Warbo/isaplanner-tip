@@ -1,6 +1,9 @@
 # Nixpkgs sets, augmented with some custom configuration
+{ system ? builtins.currentSystem }:
 with {
-  call = f: import "${f}" {};
+  call = f: import "${f}" {
+              pkgFunc = args: import <nixpkgs> ({ inherit system; } // args);
+            };
   url  = http://chriswarbo.net/git/nix-config.git;
 };
 rec {
