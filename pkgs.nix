@@ -13,5 +13,5 @@ rec {
 
   # Fetches whatever the latest version of our config is; useful for regression
   # testing
-  unstable = call (stablePkgs.latestGit { inherit url; });
+  unstable = call (stable.latestGit { inherit url; });
 }
