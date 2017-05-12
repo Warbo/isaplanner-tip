@@ -4,9 +4,6 @@ with builtins;
 with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
 with pkgs;
 
-assert haskellPackages ? callHackage ||
-       abort "haskellPackages doesn't have callHackage; nixpkgs too old?";
-
 rec {
 
   polyml = pkgsAlias.polyml.overrideDerivation (old: {
