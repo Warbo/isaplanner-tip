@@ -14,7 +14,7 @@ rec {
     url = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
   };
 
-  tests = rec {
+  tests = with defs; rec {
     haskellTypesOfTip = runCommand "haskell-types-of-tip"
       {
         typesof     = haskellTypesOf haskell-te.tipBenchmarks.annotatedAsts;
