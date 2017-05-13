@@ -10,8 +10,8 @@ rec {
   # A known-good version of our configuration; this is "production"
   stable = call ((import <nixpkgs> {}).fetchgit {
     inherit url;
-    rev    = "521aca2";
-    sha256 = "0g7ih65b7lfspbgbiwq6gxa2ffidifbypkw9c2nqy4fqc1lw3vqa";
+    rev    = "1f455dd";
+    sha256 = "1k39ki6h8mciama2k7g5hd2niam5lj1fkyp0ffmn5ncbjfniavjp";
   });
 
   # Fetches whatever the latest version of our config is; useful for regression
