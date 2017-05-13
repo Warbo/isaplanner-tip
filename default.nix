@@ -154,8 +154,10 @@ rec {
     };
     stdenv.mkDerivation {
       name         = "isabelle-tip";
-      buildInputs  = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ]))
-                       isaplanner jq perl  vim ];
+      buildInputs  = [ (haskell.packages.ghc802.ghcWithPackages (h: [
+                         h.tip-lib
+                       ]))
+                       isaplanner jq perl ];
       smtdata      = te-benchmark.tip-benchmark-smtlib;
       FIXES        = ./fixes.json;
       preprocess   = ./preprocess.sh;
