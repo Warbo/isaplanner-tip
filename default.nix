@@ -145,8 +145,8 @@ rec {
       haskellPackages  = haskell.packages.ghc802;
       te-benchmark-src = fetchgit {
         url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
-        rev    = "a06be2b";
-        sha256 = "19g5r4ji9518qdxs48h4l9drjsgly4yrjpgd93cp7abi4smlbvd2";
+        rev    = "ed557d3";
+        sha256 = "1iighm70nnfhy50g5vf93wb223wr7kb75cmwixl29mq317dyz429";
       };
       te-benchmark = callPackage "${te-benchmark-src}" {
         inherit haskellPackages;
