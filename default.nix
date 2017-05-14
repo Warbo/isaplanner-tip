@@ -142,19 +142,19 @@ rec {
 
   isabelle-tip =
     with rec {
-      haskellPackages  = haskell.packages.ghc802;
       te-benchmark-src = fetchgit {
         url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
-        rev    = "ed557d3";
-        sha256 = "1iighm70nnfhy50g5vf93wb223wr7kb75cmwixl29mq317dyz429";
+        rev    = "f6439d1";
+        sha256 = "0z3lxf6izhglifmdraamrs487acp4yav4d8ddddl1m0nz6c82ypn";
       };
       te-benchmark = callPackage "${te-benchmark-src}" {
-        inherit haskellPackages;
+        haskellPackages = haskell.packages.ghc802;
       };
+      haskellPackages = te-benchmark.patchedHaskellPackages;
     };
     stdenv.mkDerivation {
       name         = "isabelle-tip";
-      buildInputs  = [ #(haskellPackages.ghcWithPackages (h: [ h.tip-lib ]))
+      buildInputs  = [ (haskellPackages.ghcWithPackages (h: [ h.tip-lib ]))
                        isaplanner jq perl ];
       smtdata      = te-benchmark.tip-benchmark-smtlib;
       FIXES        = ./fixes.json;
