@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Tue, 05 Sep 2017 02:28:16 +0100
+Subject: Re: Skip termination proofs
+Message-Id: <c4843bd67c2960f3-af59c2aec7e15d34-artemis@nixos>
+References: <c4843bd67c2960f3-0-artemis@nixos>
+In-Reply-To: <c4843bd67c2960f3-0-artemis@nixos>
+
+We now use 'sorry' for all proofs. Note that this requires us to use the
+'-o quick_and_dirty' argument for isaplanner.
