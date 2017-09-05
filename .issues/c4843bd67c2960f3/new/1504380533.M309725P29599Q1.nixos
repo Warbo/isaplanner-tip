@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Sat, 02 Sep 2017 20:25:49 +0100
+State: new
+Subject: Skip termination proofs
+Message-Id: <c4843bd67c2960f3-0-artemis@nixos>
+
+See if we can run IsaCoSy without proving termination. We might be able
+to do this by using "sorry" as our termination proof ("oops" will cause
+Isabelle to ignore the proof obligation *and* ignore the definition; we
+want it to keep the definition but 'cheat' the proof).

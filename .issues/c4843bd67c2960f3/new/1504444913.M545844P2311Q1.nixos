@@ -1,0 +1,36 @@
+From: Chris Warburton
+Date: Sun, 03 Sep 2017 14:19:32 +0100
+Subject: Re: Skip termination proofs
+Message-Id: <c4843bd67c2960f3-e601b7af14dced04-artemis@nixos>
+References: <c4843bd67c2960f3-0-artemis@nixos>
+In-Reply-To: <c4843bd67c2960f3-0-artemis@nixos>
+
+Here's an example of before/after for skipping a termination proof:
+
+Before:
+
+  function (sequential) exp :: "Nat => Nat => Nat" where
+  "exp x (Z) = S Z"
+  | "exp x (S y2) = times x (exp x (S y2))"
+  by pat_completeness auto
+  termination by size_change
+
+After:
+
+  function (sequential) exp :: "Nat => Nat => Nat" where
+  "exp x (Z) = S Z"
+  | "exp x (S y2) = times x (exp x (S y2))"
+  by pat_completeness auto
+  termination sorry
+
+Note that we don't use 'by'; probably some object/meta distinction
+between proofs and tactics or something...
+
+Note that we should *also* use 'sorry' for the completeness proof as
+well, since things like destructor functions are partial:
+
+  function (sequential) exp :: "Nat => Nat => Nat" where
+  "exp x (Z) = S Z"
+  | "exp x (S y2) = times x (exp x (S y2))"
+  sorry
+  termination sorry

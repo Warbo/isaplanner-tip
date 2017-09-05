@@ -1,0 +1,26 @@
+From: Chris Warburton
+Date: Sat, 02 Sep 2017 20:50:45 +0100
+State: new
+Subject: Fix let bindings
+Message-Id: <d8dbda64b0689e12-0-artemis@nixos>
+
+Looks like `tip` generates broken Isabelle code when it comes to
+let-bindings.
+
+This is a known issue on their bug tracker, but it might be easy enough
+to work-around rather than spending the effort to fix it.
+
+For the record, here's a valid Isabelle expression (from
+https://groups.google.com/forum/#!topic/fa.isabelle/WJWMky_Vt7c ):
+
+  lemma "(let pb = foobar b in f pb (λpad. g (pb * pad :: int))) = bar"
+  apply(simp add: mult.commute)
+
+Here's the output we're getting from tip:
+
+  fun foo :: "Baz Bar => Baz Bar" where
+  "foo (Quux) = Quux"
+  | "foo (fizz local3 local4) = let local2 :: Baz = foobar local3 local4
+                                 in fizz local2 (foo (buzz local2 (fizz local3 local4)))"
+
+We should alter the tip output's invalid syntax to be acceptable by Isabelle.

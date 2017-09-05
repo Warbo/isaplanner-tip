@@ -1,0 +1,18 @@
+From: Chris Warburton
+Date: Sun, 03 Sep 2017 14:21:57 +0100
+Subject: Re: Skip termination proofs
+Message-Id: <c4843bd67c2960f3-dcb4b2f89211cfce-artemis@nixos>
+References: <c4843bd67c2960f3-0-artemis@nixos>
+In-Reply-To: <c4843bd67c2960f3-0-artemis@nixos>
+
+NOTE - Using 'sorry' as an exhaustiveness proof will, in cases like
+destructors, give warnings like:
+
+  ### Missing patterns in function definition:
+  ### destructorp Z = undefined
+
+This comes from the internals of the way 'function' works; it inserts
+these 'undefined' values for any patterns which weren't provided
+(e.g. the 'Z' pattern for predecessor in this case).
+
+This is just a warning, so we can ignore it.
