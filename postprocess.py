@@ -71,4 +71,20 @@ def funToFunction(d):
         return pre + d[3:] + post
     return d
 
-print('\n'.join(map(funToFunction, map(defConstant, map(useSorry, defs)))))
+def fixCases(d):
+    '''Wrap 'case' expressions in parentheses, if needed.'''
+    if d.split()[0] != 'function':
+        return d
+    name = d.split()[2]  # function (sequential) name
+    if name in fixes['cases']['encoded']:
+        bits = d.split('case')
+        bobs = bits[2].split('"')
+        return ''.join([
+            bits[0],
+            '(case ', bits[1], ') (case ', bobs[0], ')"',
+            bobs[1]])
+    return d
+
+print('\n'.join(reduce(lambda result, func: map(func, result),
+                       [useSorry, defConstant, funToFunction, fixCases],
+                       defs)))

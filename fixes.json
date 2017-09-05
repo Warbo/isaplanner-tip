@@ -6,6 +6,10 @@
             "Global746970323031352f706f6c797265635f7365715f696e6465782e736d7432536571"
         ]
     },
+    "cases": {
+        "comment": "These have ambiguous 'case' expressions which need parens.",
+        "encoded": [
+            "global746970323031352f736f72745f427562536f7274436f756e742e736d7432627562626c65"
         ]
     },
     "constants": {

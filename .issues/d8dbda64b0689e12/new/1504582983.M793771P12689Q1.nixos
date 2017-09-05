@@ -1,0 +1,10 @@
+From: Chris Warburton
+Date: Tue, 05 Sep 2017 04:42:26 +0100
+Subject: Re: Fix let bindings
+Message-Id: <d8dbda64b0689e12-f00fd7f28d611ea8-artemis@nixos>
+References: <d8dbda64b0689e12-0-artemis@nixos>
+In-Reply-To: <d8dbda64b0689e12-0-artemis@nixos>
+
+Looks like 'let' and 'case' should both be wrapped in parentheses to
+avoid problems. This is tricky to do post-hoc, since we need to infer
+the structure :(
