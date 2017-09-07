@@ -46,45 +46,109 @@ def useSorry(d):
     '''Replace TIP's choice of proofs with 'sorry'.'''
     return d.replace('by pat_completeness auto', 'sorry\ntermination sorry')
 
-def defConstant(d):
-    '''Use 'definition' instead of 'fun' for names given in FIXES. See
-    http://stackoverflow.com/questions/28113667/why-must-isabelle-functions-have-at-least-one-argument/28147895
-    '''
+def insertStrInto(into, insert, at, before, skip):
+    '''Insert string 'insert' into string 'into'. If 'skip' is None, we insert
+    before/after (depending on 'before') the first occurrence of 'at' in 'into'.
+    If 'skip' is a string, we look for the first occurrence of 'skip' in 'into',
+    then look for the subsequent occurrence of 'at', and do our insertion there.
+    Hence 'skip' is useful if 'at' is ambiguous; since 'skip' can occur
+    anywhere before 'at', we have more opportunity to find a unique string.
 
-    # Ignore non-fun
-    if d[:3] != 'fun':
-        return d
+    To aid further insertions, we return a '(pre, post)' pair, where 'pre'
+    contains everything up to and including the 'insert' and 'at', while 'post'
+    contains everything after.'''
 
-    # Extract the name and check if it's meant to use 'definition'
-    name = d.split()[1]
-    if name in fixes['constants']['encoded']:
-        return 'definition ' + d[3:]
+    # Go to the start location (either the start of the string, or 'skip')
+    prefix, lookIn, skipBits = ('', into, None)
+    if skip:
+        skipBits = into.split(skip)
+        prefix = skipBits[0] + skip
+        lookIn = skip.join(skipBits[1:])
 
-    # Otherwise return unchanged
-    return d
+    assert prefix + lookIn == into, \
+        'skip did not split correctly: ' + repr(locals())
+    del skipBits
 
-def funToFunction(d):
-    '''Turns any given 'fun' definition into a 'function' definition.'''
-    if d.startswith('fun') and not d.startswith('function'):
-        pre  = 'function (sequential) '
-        post = '\nsorry\ntermination sorry\n'
-        return pre + d[3:] + post
-    return d
+    # Look for 'at'
+    bits   = lookIn.split(at)
+    middle = bits[0]
+    suffix = at.join(bits[1:])
 
-def fixCases(d):
-    '''Wrap 'case' expressions in parentheses, if needed.'''
+    assert middle.count(at) == 0, \
+        'Broken "middle": ' + repr(locals())
+
+    assert prefix + middle + at + suffix == into, \
+        'Did not split correctly: ' + repr(locals())
+
+    new      = (insert if before else '') + at + (insert if not before else '')
+    begin    = prefix + middle + new
+    combined = begin + suffix
+
+    assert combined.count(insert) == 1 + into.count(insert), \
+        'Result count wrong: ' + repr(locals())
+
+    return (begin, suffix)
+
+def putInParens(d, config):
+    '''Add '(' and ')' to 'd', based on position info given in 'config'.'''
+
+    # Where to insert
+    startBefore = 'startBefore' in config
+    endBefore   = 'endBefore'   in config
+
+    # Get the strings we're looking for
+    start = config['startBefore' if startBefore else 'startAfter']
+    end   = config['endBefore'   if endBefore   else 'endAfter']
+
+    # If given, we should skip ahead to these, before looking for our start/end
+    # strings. This is useful when the start/end locations are ambiguous.
+    startSkip = config['startSkipTo'] if 'startSkipTo' in config else None
+    endSkip   = config['endSkipTo']   if 'endSkipTo'   in config else None
+
+    # Insert '(' and ')'
+    prefix, rest   = insertStrInto(d,    '(', start, startBefore, startSkip)
+    middle, suffix = insertStrInto(rest, ')', end,   endBefore,   endSkip)
+    result         = prefix + middle + suffix
+
+    assert result.count('(') == 1 + d.count('('), \
+        'Final "(" count wrong: ' + repr(locals())
+
+    assert result.count(')') == 1 + d.count(')'), \
+        'Final ")" count wrong: ' + repr(locals())
+
+    assert      d.replace('(', '').replace(')', '') == \
+           result.replace('(', '').replace(')', ''),   \
+           'Result does not match input, modulo parentheses: ' + repr(locals())
+
+    return result
+
+# Unit tests
+for config, expect in [
+        # Each before/after combination
+        ({'startBefore':'A', 'endBefore':'C'}, '(AB)CDABCD'),
+        ({'startAfter' :'A', 'endBefore':'C'}, 'A(B)CDABCD'),
+        ({'startBefore':'A', 'endAfter' :'C'}, '(ABC)DABCD'),
+        ({'startAfter' :'A', 'endAfter' :'C'}, 'A(BC)DABCD'),
+
+        # Ensure end looks for occurrences after start
+        ({'startBefore':'B', 'endAfter' :'A'},  'A(BCDA)BCD'),
+
+        # Check that we can skip
+        ({'startBefore':'A', 'endAfter':'D', 'startSkipTo':'C'}, 'ABCD(ABCD)'),
+        ({'startBefore':'A', 'endAfter':'C', 'endSkipTo'  :'D'}, '(ABCDABC)D')]:
+    assert putInParens('ABCDABCD', config) == expect, 'Test failed: ' + repr(locals())
+
+def addParens(d):
+    '''Wrap expressions in parentheses, if needed.'''
     if d.split()[0] != 'function':
         return d
     name = d.split()[2]  # function (sequential) name
-    if name in fixes['cases']['encoded']:
-        bits = d.split('case')
-        bobs = bits[2].split('"')
-        return ''.join([
-            bits[0],
-            '(case ', bits[1], ') (case ', bobs[0], ')"',
-            bobs[1]])
+    if name in fixes['parenthesise']['encoded'].keys():
+        return reduce(putInParens,
+                      fixes['parenthesise']['encoded'][name],
+                      d)
     return d
 
 print('\n'.join(reduce(lambda result, func: map(func, result),
-                       [useSorry, defConstant, funToFunction, fixCases],
+                       [useSorry, addParens],
                        defs)))
