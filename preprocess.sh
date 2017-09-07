@@ -13,9 +13,7 @@ DATA=$(cat)
 while read -r NAME
 do
     remove "$NAME"
-done < <(jq -r '(.unparseable.encoded    +
-                 .dependents.encoded     +
-                 .nonterminating.encoded +
-                 .nontypes.encoded)      | .[]' < "$FIXES")
+done < <(jq -r '(.dependents.encoded +
+                 .nontypes.encoded   ) | .[]' < "$FIXES")
 
 echo "$DATA"
