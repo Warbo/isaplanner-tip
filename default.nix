@@ -221,7 +221,6 @@ rec {
         smtdata      = te-benchmark.tip-benchmark-smtlib;
         FIXES        = ./fixes.json;
         preprocess   = ./preprocess.sh;
-        postprocess  = ./postprocess.py;
       }
       ''
         source $stdenv/setup
@@ -229,7 +228,7 @@ rec {
         set -o pipefail
 
         echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
-        "$preprocess" < "$smtdata" | tip --isabelle | "$postprocess" > A.thy
+        "$preprocess" < "$smtdata" | tip --isabelle > A.thy
 
         echo "Testing"
         OUTPUT=$(echo 'use_thy "A";' | isaplanner -o quick_and_dirty)
