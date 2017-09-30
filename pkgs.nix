@@ -1,20 +1,26 @@
 # Nixpkgs sets, augmented with some custom configuration
-{ system ? builtins.currentSystem }:
-with {
-  call = f: import "${f}" {
-              pkgFunc = args: import <nixpkgs> ({ inherit system; } // args);
-            };
-  url  = http://chriswarbo.net/git/nix-config.git;
+with rec {
+  # Mixes unstable <nixpkgs> and stable config; only use as way to get fully
+  # stable and unstable versions.
+  pkgsWithCfg = import <nixpkgs> { config = import "${stableCfg}/config.nix"; };
+
+  stableCfg   = (import <nixpkgs> {}).fetchgit {
+    url    = http://chriswarbo.net/git/nix-config.git;
+    rev    = "76d441a";
+    sha256 = "047vqfyb7qbl49hyi93vfz5dkqpz89jjscs1w5kc29hn6881v0w8";
+  };
+
+  unstableCfg = pkgsWithCfg.latestNixCfg;
 };
-rec {
+{
   # A known-good version of our configuration; this is "production"
-  stable = call ((import <nixpkgs> {}).fetchgit {
-    inherit url;
-    rev    = "f07885a";
-    sha256 = "190cxpk2r42zyhj972ndzsr81r9p9dashfx9dgg1fgshyp6hz8j6";
-  });
+  stable = import pkgsWithCfg.repo1609 {
+    config = import "${stableCfg}/stable.nix";
+  };
 
   # Fetches whatever the latest version of our config is; useful for regression
   # testing
-  unstable = call (stable.latestGit { inherit url; });
+  unstable = import <nixpkgs> {
+    config = import "${unstableCfg}/unstable.nix";
+  };
 }

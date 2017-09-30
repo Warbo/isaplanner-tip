@@ -13,6 +13,4 @@ with rec {
     derivationsIn withTests.defs // { tests = trimTests withTests.tests; };
 };
 
-genAttrs [ "i686-linux" "x86_64-linux" ]
-         (system: mapAttrs (_: fromPkgs)
-                           (import ./pkgs.nix { inherit system; }))
+mapAttrs (_: fromPkgs) (import ./pkgs.nix)

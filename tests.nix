@@ -5,13 +5,21 @@ rec {
   defs = import ./. { inherit pkgs; };
 
   haskell-te-src = latestGit {
-    url = "http://chriswarbo.net/git/haskell-te.git";
+    url    = "http://chriswarbo.net/git/haskell-te.git";
+    stable = {
+      rev    = "063274d";
+      sha256 = "1qmzwx7fg77hs3yknyrh2z3r97val219kcj98793vchfdavqpxay";
+    };
   };
 
   haskell-te = (import "${haskell-te-src}").allDefs;
 
   tip-benchmarks = latestGit {
     url = http://chriswarbo.net/git/theory-exploration-benchmarks.git;
+    stable = {
+      rev    = "ccf838d";
+      sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
+    };
   };
 
   tests = with defs; rec {
