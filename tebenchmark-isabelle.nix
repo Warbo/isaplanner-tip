@@ -2,7 +2,7 @@
 { bash, callPackage, fetchFromGitHub, fetchgit, gcc, haskell, isaplanner, jq,
   perl, runCommand }:
 
-with rec {
+rec {
   te-benchmark-src = fetchgit {
     url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
     rev    = "ccf838d";
@@ -65,37 +65,37 @@ with rec {
     name = "tip-lib";
     src  = parserSrc;
   };
-};
 
-runCommand "isabelle-tip"
-  {
-    buildInputs  = [ (haskellPackages.ghcWithPackages (h: [
-                       (h.callPackage tip-lib {}) ]))
-                     isaplanner jq perl ];
-    smtdata      = te-benchmark.tip-benchmark-smtlib;
-    FIXES        = ./fixes.json;
-    preprocess   = ./preprocess.sh;
-  }
-  ''
-    source $stdenv/setup
-    set -e
-    set -o pipefail
+  tebenchmark-isabelle = runCommand "tebenchmark-isabelle"
+    {
+      buildInputs  = [ (haskellPackages.ghcWithPackages (h: [
+                         (h.callPackage tip-lib {}) ]))
+                       isaplanner jq perl ];
+      smtdata      = te-benchmark.tip-benchmark-smtlib;
+      FIXES        = ./fixes.json;
+      preprocess   = ./preprocess.sh;
+    }
+    ''
+      source $stdenv/setup
+      set -e
+      set -o pipefail
 
-    echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
-    "$preprocess" < "$smtdata" | tip --isabelle > A.thy
+      echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
+      "$preprocess" < "$smtdata" | tip --isabelle > A.thy
 
-    echo "Testing"
-    OUTPUT=$(echo 'use_thy "A";' | isaplanner -o quick_and_dirty)
+      echo "Testing"
+      OUTPUT=$(echo 'use_thy "A";' | isaplanner -o quick_and_dirty)
 
-    if echo "$OUTPUT" |  grep -i -C 10 'error' > /dev/null
-    then
-       echo "Fail: Errors found in generated theory" 1>&2
-       echo "$OUTPUT" 1>&2
-       cp -v "A.thy" /tmp/A.thy
-       exit 1
-    fi
-    echo "Passed"
+      if echo "$OUTPUT" |  grep -i -C 10 'error' > /dev/null
+      then
+         echo "Fail: Errors found in generated theory" 1>&2
+         echo "$OUTPUT" 1>&2
+         cp -v "A.thy" /tmp/A.thy
+         exit 1
+      fi
+      echo "Passed"
 
-    mkdir -p "$out"
-    mv A.thy "$out/"
-  ''
+      mkdir -p "$out"
+      mv A.thy "$out/"
+    '';
+}
