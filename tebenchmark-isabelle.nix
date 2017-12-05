@@ -83,7 +83,7 @@ rec {
       echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
       "$preprocess" < "$smtdata" | tip --isabelle > A.thy
 
-      echo "Testing"
+      echo "Testing" 1>&2
       OUTPUT=$(echo 'use_thy "A";' | isaplanner -o quick_and_dirty)
 
       if echo "$OUTPUT" |  grep -i -C 10 'error' > /dev/null
@@ -93,7 +93,7 @@ rec {
          cp -v "A.thy" /tmp/A.thy
          exit 1
       fi
-      echo "Passed"
+      echo "Passed" 1>&2
 
       mkdir -p "$out"
       mv A.thy "$out/"

@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Tue, 05 Dec 2017 14:07:41 +0000
+Subject: Re: Put sampled names into IsaCoSy signature
+Message-Id: <b3d4c59d4490e2d8-aaac4985ed299b80-artemis@nixos>
+References: <b3d4c59d4490e2d8-0-artemis@nixos>
+In-Reply-To: <b3d4c59d4490e2d8-0-artemis@nixos>
+
+I've made a new Nix function 'isacosy-theory' which takes the template
+we made, an argument to fill in for each (which we assume is a file,
+e.g. from another derivation) and does the substitutions for us.
+
+We still don't have the actual data, but at least the horrible business
+of plugging it in will now be reasonably easy and safe.
