@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Fri, 01 Dec 2017 19:42:19 +0000
+State: new
+Subject: Put sampled names into IsaCoSy signature
+Message-Id: <b3d4c59d4490e2d8-0-artemis@nixos>
+
+Fill in the gaps in isacosy-template.
+
+We need function names, function types, function definitions (these must
+be given explicitly, but we should be able to just do 'A.foo').
+
+We need variables for each input type. Try all of them to see what
+happens; maybe we'll have to be more selective e.g. if there are no
+generic data generators, but we can cross that bridge when we come to
+it.
+
+Try ignoring the undefined terms (like 'head([])') for now; we might get
+away without having to put them in. Otherwise, we can just follow the
+error messages.

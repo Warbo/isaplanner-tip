@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Fri, 01 Dec 2017 19:41:34 +0000
+State: new
+Subject: Get types of generated Isabelle functions
+Message-Id: <c2213dd10651f215-0-artemis@nixos>
+
+We need to know the types for use with IsaCoSy
