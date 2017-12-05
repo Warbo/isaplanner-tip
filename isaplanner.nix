@@ -1,10 +1,10 @@
 # Isabelle with Isaplanner support
 { bash, fetchFromGitHub, fetchgit, fetchurl, file, isabelle, jdk, makeWrapper,
-  nettools, perl, polyml, stdenv, writeScript }:
+  nettools, perl, polyml, stdenv, writeScript }@args:
 
 rec {
   # The ML system Isabelle is written in
-  polyml = polyml.overrideDerivation (old: {
+  polyml = args.polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
     src  = "${isabelle2015}/contrib/polyml-5.5.2-3/src";
   });
