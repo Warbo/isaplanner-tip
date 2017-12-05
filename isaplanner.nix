@@ -2,7 +2,7 @@
 { bash, fetchFromGitHub, fetchgit, fetchurl, file, isabelle, jdk, makeWrapper,
   nettools, perl, polyml, stdenv, writeScript }:
 
-with rec {
+rec {
   # The ML system Isabelle is written in
   polyml = polyml.overrideDerivation (old: {
     name = "polyml-5.5.2";
@@ -39,105 +39,105 @@ with rec {
       cp -a ./isabelle "$out"
     '';
   };
-};
 
-# Isabelle with Isaplanner
-stdenv.mkDerivation {
-  name = "isaplanner";
-  src  = fetchFromGitHub {
-    owner  = "TheoryMine";
-    repo   = "IsaPlanner";
-    rev    = "f3f4220";
-    sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
+  # Isabelle with Isaplanner
+  isaplanner = stdenv.mkDerivation {
+    name = "isaplanner";
+    src  = fetchFromGitHub {
+      owner  = "TheoryMine";
+      repo   = "IsaPlanner";
+      rev    = "f3f4220";
+      sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
+    };
+
+    inherit isaplib;
+    buildInputs = [ file jdk makeWrapper nettools perl polyml ];
+
+    isaplanner_bin = writeScript "isaplanner" ''
+      #!${bash}/bin/bash
+      # -n tells Isabelle not to build the base theories (Pure, HOL, IsaPlanner,
+      #    etc.). We do this for two reasons: we've already built these theories
+      #    during installation, so it's a big waste of time; it also lets us use
+      #    read-only directories, like Nix store paths, for our HOME.
+      # -d tells Isabelle where to find its the base theories.
+      # -l tells Isabelle which base theory we want to use.
+      isabelle console -n -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "$@"
+    '';
+
+    ISABELLE_JDK_HOME = jdk;
+
+    postPatch  = (isabelle.override { inherit polyml; }).postPatch;
+    passAsFile = [ "postPatch" ];
+    patchPhase = ''
+      echo "Moving source into standalone directory" 1>&2
+      mkdir -p ./given-src
+
+      for F in ./*
+      do
+        NAME=$(basename "$F")
+        [[ "x$NAME" = "xgiven-src" ]] || mv "$F" ./given-src
+      done
+
+      echo "Making mutable copy of isaplib" 1>&2
+      cp -r "$isaplib" ./isaplib
+      chmod +w -R ./isaplib
+
+      echo "Moving source to contrib/IsaPlanner" 1>&2
+      mv ./given-src ./isaplib/contrib/IsaPlanner
+
+      echo "Patching with '$postPatchPath'" 1>&2
+      pushd ./isaplib
+        . "$postPatchPath"
+      popd
+    '';
+
+    buildPhase = ''
+      set -e
+
+      echo "Setting build environment" 1>&2
+
+      ISABELLE_DIR="$PWD/isaplib"
+      export ISABELLE_DIR
+
+      mkdir ./mutable-home
+      HOME="$PWD/mutable-home"
+      export HOME
+
+      echo "Building" 1>&2
+
+      pushd "$ISABELLE_DIR/contrib/IsaPlanner"
+        ../../bin/isabelle build -d . HOL-IsaPlannerSession
+        ../../bin/isabelle build -d . IsaPlanner-Test
+      popd
+    '';
+
+    installPhase = ''
+      echo "Setting install environment" 1>&2
+
+      mkdir -p "$out/bin"
+
+      cp -a "$ISABELLE_DIR" "$out/isabelle_dir"
+      export ISABELLE_DIR="$out/isabelle_dir"
+
+      cp -a "$HOME" "$out/home"
+      export HOME="$out/home"
+
+      echo "Installing isaplanner binary" 1>&2
+      makeWrapper "$isaplanner_bin" "$out/isabelle_dir/bin/isaplanner" \
+        --set ISAPLANNER_DIR "$out/isabelle_dir/contrib/IsaPlanner"
+
+      echo "Wrapping binaries in required environment" 1>&2
+      for F in "$out"/isabelle_dir/bin/*
+      do
+        # ISABELLE_JDK_HOME is the Java VM to use (for Scala, jEdit, etc.)
+        # HOME is for caches, settings, etc. Hopefully these are pre-populated.
+        # ISABELLE_DIR is for Isabelle's binaries, etc.
+        makeWrapper "$F" "$out/bin/$(basename "$F")"   \
+          --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
+          --set HOME              "$HOME"              \
+          --set ISABELLE_DIR      "$ISABELLE_DIR"      \
+          --prefix PATH : "${perl}/bin"
+      done
+    '';
   };
-
-  inherit isaplib;
-  buildInputs = [ file jdk makeWrapper nettools perl polyml ];
-
-  isaplanner_bin = writeScript "isaplanner" ''
-    #!${bash}/bin/bash
-    # -n tells Isabelle not to build the base theories (Pure, HOL, IsaPlanner,
-    #    etc.). We do this for two reasons: we've already built these theories
-    #    during installation, so it's a big waste of time; it also lets us use
-    #    read-only directories, like Nix store paths, for our HOME.
-    # -d tells Isabelle where to find its the base theories.
-    # -l tells Isabelle which base theory we want to use.
-    isabelle console -n -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "$@"
-  '';
-
-  ISABELLE_JDK_HOME = jdk;
-
-  postPatch  = (isabelle.override { inherit polyml; }).postPatch;
-  passAsFile = [ "postPatch" ];
-  patchPhase = ''
-    echo "Moving source into standalone directory" 1>&2
-    mkdir -p ./given-src
-
-    for F in ./*
-    do
-      NAME=$(basename "$F")
-      [[ "x$NAME" = "xgiven-src" ]] || mv "$F" ./given-src
-    done
-
-    echo "Making mutable copy of isaplib" 1>&2
-    cp -r "$isaplib" ./isaplib
-    chmod +w -R ./isaplib
-
-    echo "Moving source to contrib/IsaPlanner" 1>&2
-    mv ./given-src ./isaplib/contrib/IsaPlanner
-
-    echo "Patching with '$postPatchPath'" 1>&2
-    pushd ./isaplib
-    . "$postPatchPath"
-    popd
-  '';
-
-  buildPhase = ''
-    set -e
-
-    echo "Setting build environment" 1>&2
-
-    ISABELLE_DIR="$PWD/isaplib"
-    export ISABELLE_DIR
-
-    mkdir ./mutable-home
-    HOME="$PWD/mutable-home"
-    export HOME
-
-    echo "Building" 1>&2
-
-    pushd "$ISABELLE_DIR/contrib/IsaPlanner"
-    ../../bin/isabelle build -d . HOL-IsaPlannerSession
-    ../../bin/isabelle build -d . IsaPlanner-Test
-    popd
-  '';
-
-  installPhase = ''
-    echo "Setting install environment" 1>&2
-
-    mkdir -p "$out/bin"
-
-    cp -a "$ISABELLE_DIR" "$out/isabelle_dir"
-    export ISABELLE_DIR="$out/isabelle_dir"
-
-    cp -a "$HOME" "$out/home"
-    export HOME="$out/home"
-
-    echo "Installing isaplanner binary" 1>&2
-    makeWrapper "$isaplanner_bin" "$out/isabelle_dir/bin/isaplanner" \
-      --set ISAPLANNER_DIR "$out/isabelle_dir/contrib/IsaPlanner"
-
-    echo "Wrapping binaries in required environment" 1>&2
-    for F in "$out"/isabelle_dir/bin/*
-    do
-      # ISABELLE_JDK_HOME is the Java VM to use (for Scala, jEdit, etc.)
-      # HOME is for caches, settings, etc. Hopefully these are pre-populated.
-      # ISABELLE_DIR is for Isabelle's binaries, etc.
-      makeWrapper "$F" "$out/bin/$(basename "$F")"   \
-        --set ISABELLE_JDK_HOME "$ISABELLE_JDK_HOME" \
-        --set HOME              "$HOME"              \
-        --set ISABELLE_DIR      "$ISABELLE_DIR"      \
-        --prefix PATH : "${perl}/bin"
-    done
-  '';
 }

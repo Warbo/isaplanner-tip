@@ -5,9 +5,11 @@ with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
 with pkgs;
 
 rec {
-  isaplanner = callPackage ./isaplanner.nix {};
+  inherit (callPackage ./isaplanner.nix {}) isaplanner;
 
-  isabelle-tip = callPackage ./isabelle-tip.nix { inherit isaplanner; };
+  tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
+    inherit isaplanner;
+  };
 
   haskellTypesOf = haskell-tip: runCommand "haskell-types-of"
     {
@@ -170,7 +172,7 @@ rec {
       buildInputs = [ makeWrapper ];
       raw         = writeScript "make_isacosy_theory-raw" ''
         #!/usr/bin/env bash
-        ln -s "${isabelle-tip}"/A.thy ./A.thy
+        ln -s "${tebenchmark-isabelle}"/A.thy ./A.thy
         cp "${isacosy-template}" "ISACOSY.thy"
 
         NAMES=$(cat)
