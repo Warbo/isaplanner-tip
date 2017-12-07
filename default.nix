@@ -5,14 +5,19 @@ with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
 with pkgs;
 
 rec {
-  inherit (callPackage ./isaplanner.nix {})
-                         isaplanner;
+  inherit (defs.isaplanner)           isaplanner;
+  inherit (defs.tebenchmark-isabelle) tebenchmark-isabelle;
+  inherit (defs.isacosy)              isacosy;
 
-  inherit (callPackage ./tebenchmark-isabelle.nix { inherit isaplanner; })
-                         tebenchmark-isabelle;
-
-  inherit (callPackage ./isacosy.nix              { inherit isaplanner; })
-                         isacosy;
+  defs = {
+    isaplanner           = callPackage ./isaplanner.nix {};
+    tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
+                             inherit isaplanner;
+                           };
+    isacosy              = callPackage ./isacosy.nix {
+                             inherit isaplanner;
+                           };
+  };
 
   haskellTypesOf = haskell-tip: runCommand "haskell-types-of"
     {
