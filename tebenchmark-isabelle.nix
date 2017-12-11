@@ -1,6 +1,6 @@
 # TEBenchmark converted to an Isabelle theory
 { bash, callPackage, fetchFromGitHub, fetchgit, gcc, haskell, isaplanner, jq,
-  perl, runCommand }:
+  perl, runCommand, writeScript }:
 
 rec {
   te-benchmark-src = fetchgit {
@@ -98,4 +98,15 @@ rec {
       mkdir -p "$out"
       mv A.thy "$out/"
     '';
+
+  tebenchmark-data = runCommand "tebenchmark-functions"
+    (te-benchmark.cache  // {
+      buildInputs = [ te-benchmark.env ];
+      FIXES       = ./fixes.json;
+      PLTCOLLECTS = ":${te-benchmark-src}/scripts";
+      script      = ./tebenchmark-data.rkt;
+      smtlib      = te-benchmark.tip-benchmark-smtlib;
+      tebIsabelle = tebenchmark-isabelle;
+    })
+    ''racket "$script" > "$out"'';
 }
