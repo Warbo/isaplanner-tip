@@ -1,0 +1,73 @@
+From: Chris Warburton
+Date: Tue, 12 Dec 2017 14:12:18 +0000
+State: resolved
+Subject: Mutual recursion seems to be broken
+Message-Id: <ce16f7ab0a715a49-0-artemis@nixos>
+resolution: fixed
+
+If we compare all of the TIP functions defined in tip-benchmark-smtlib
+to the Isabelle functions defined in tebenchmark-isabelle, we find the
+following missing from the Isabelle (after decoding):
+
+  tip2015/polyrec_seq_index.smt2fromList
+  destructor-tip2015/polyrec_seq_index.smt2Cons_0
+  tip2015/polyrec_seq_index.smt2index
+  destructor-tip2015/polyrec_seq_index.smt2Cons_1
+  constructor-tip2015/polyrec_seq_index.smt2Nil
+  constructor-tip2015/polyrec_seq_index.smt2Cons
+
+These are expected, since they all rely on the 'Seq' datatype which is
+"polyrecursive", which Isabelle can't represent. These should all get
+stripped out by 'fixes.json'.
+
+The following are also missing, but they shouldn't be:
+
+  grammars/simp_expr_unambig4.smt2lin
+
+  tip2015/list_Interleave.smt2odds
+
+  tip2015/propositional_AndCommutative.smt2models2
+  tip2015/propositional_AndCommutative.smt2models5
+
+  tip2015/sort_NStoogeSortCount.smt2nstooge1sort2
+  tip2015/sort_NStoogeSortCount.smt2nstooge1sort1
+
+  tip2015/sort_NStoogeSort2Count.smt2nstooge2sort1
+  tip2015/sort_NStoogeSort2Count.smt2nstooge2sort2
+
+  tip2015/sort_StoogeSortCount.smt2stoogesort
+  tip2015/sort_StoogeSortCount.smt2stooge1sort1
+
+  tip2015/sort_StoogeSort2Count.smt2stoogesort2
+  tip2015/sort_StoogeSort2Count.smt2stooge2sort1
+
+They're all defined using mutual recursion, so it looks like this is a
+problem with the TIP tool's translation.
+
+For the record, Isabelle does support mutual recursion. According to the
+documentation, it's defined like this:
+
+    function even :: "nat => bool"
+         and odd  :: "nat => bool"
+    where
+      "even 0 = True"
+    | "odd 0 = False"
+    | "even (Suc n) = odd n"
+    | "odd (Suc n) = even n"
+    by pat_completeness auto
+    termination
+    by (relation "measure (λx. case x of Inl n => n | Inr n => n)") auto
+
+Note that Isabelle will actually define 3 functions here: one (let's
+call it "f") accepts and returns a sum type, i.e.
+
+    f :: nat + nat => nat + nat
+
+The actual 'even' and 'odd' functions just inject/project to/from this
+sum, e.g.
+
+    even n = fromLeft  (f (Inl n))
+    odd  n = fromRight (f (Inr n))
+
+That's why the termination condition above involves sums and
+projections.

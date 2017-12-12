@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Mon, 11 Dec 2017 16:31:46 +0000
+State: new
+Subject: Turn standalone tests into inline dependencies
+Message-Id: <860daff55a4d9972-0-artemis@nixos>
+
+Rather than having a standalone set of test derivations, we should put
+each test alongside one of the derivations it uses, make a new
+derivation which depends on that test and exposes that derivation.

@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Tue, 12 Dec 2017 16:38:10 +0000
+Subject: Re: Mutual recursion seems to be broken
+Message-Id: <ce16f7ab0a715a49-8c9377e5e24ebb8f-artemis@nixos>
+References: <ce16f7ab0a715a49-0-artemis@nixos>
+In-Reply-To: <ce16f7ab0a715a49-0-artemis@nixos>
+
+Whoops! Looks like the problem was the way we were parsing out names and
+types from the Isabelle; mutual definitions were there, but we weren't
+spotting more than the first one.
+
+This is now fixed, so the only functions which are "missing" are those
+which we've purposely stripped out because they use "polyrec".

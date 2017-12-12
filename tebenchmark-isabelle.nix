@@ -31,7 +31,7 @@ rec {
         bash make_parser.sh
         ln -s $(gcc --print-file-name=libstdc++.so)
         pushd tip-lib
-          ln -s $(gcc --print-file-name=libstdc++.so)
+         ln -s $(gcc --print-file-name=libstdc++.so)
         popd
       popd
       cp -r ./tip "$out"

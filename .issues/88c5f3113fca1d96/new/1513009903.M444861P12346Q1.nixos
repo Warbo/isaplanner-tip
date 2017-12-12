@@ -1,0 +1,7 @@
+From: Chris Warburton
+Date: Mon, 11 Dec 2017 16:31:23 +0000
+State: new
+Subject: Remove obsolete tests
+Message-Id: <88c5f3113fca1d96-0-artemis@nixos>
+
+For example, those involving Haskell types
