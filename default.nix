@@ -6,7 +6,8 @@ with pkgs;
 
 rec {
   inherit (defs.isaplanner)           isaplanner;
-  inherit (defs.tebenchmark-isabelle) te-benchmark tebenchmark-isabelle;
+  inherit (defs.tebenchmark-isabelle) te-benchmark tebenchmark-data
+                                      tebenchmark-isabelle;
   inherit (defs.isacosy)              isacosy;
 
   defs = {
@@ -16,7 +17,7 @@ rec {
       inherit isaplanner;
     };
     isacosy              = callPackage ./isacosy.nix {
-      inherit isaplanner te-benchmark tebenchmark-isabelle;
+      inherit isaplanner te-benchmark tebenchmark-data tebenchmark-isabelle;
     };
     sampling             = callPackage ./sampling.nix {
       inherit (defs.haskell-te) get-haskell-te;
