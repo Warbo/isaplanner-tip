@@ -85,4 +85,22 @@ rec {
       sha256   = "109g8hkpggjjlw7ksd7l157jknp4wkg9lbjlyiqqvqzah2kl65jf";
     };
   };
+
+  known-theories = mapAttrs (_: mapAttrs (size: mapAttrs (rep: names:
+                              isacosy-from-sample { inherit names size rep; })))
+                            known-samples;
+
+  known-runners = mapAttrs (rev: mapAttrs (size: mapAttrs (rep: theory:
+                             wrap {
+                               name   = "isacosy-runner-${rev}-${size}-${rep}";
+                               paths  = [ bash isacosy ];
+                               vars   = { inherit theory; };
+                               script = ''
+                                 #!/usr/bin/env bash
+                                 set -e
+                                 cp "$theory" ISACOSY.thy
+                                 isacosy ISACOSY.thy
+                               '';
+                             })))
+                           known-theories;
 }
