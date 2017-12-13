@@ -99,7 +99,7 @@ rec {
       mv A.thy "$out/"
     '';
 
-  tebenchmark-data = runCommand "tebenchmark-functions"
+  tebenchmark-data = runCommand "tebenchmark-data.json"
     (te-benchmark.cache  // {
       buildInputs = [ te-benchmark.env ];
       FIXES       = ./fixes.json;
