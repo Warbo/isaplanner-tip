@@ -1,0 +1,16 @@
+From: Chris Warburton
+Date: Tue, 12 Dec 2017 17:40:55 +0000
+Subject: Re: Remove obsolete tests
+Message-Id: <88c5f3113fca1d96-ffa82399b716357a-artemis@nixos>
+References: <88c5f3113fca1d96-0-artemis@nixos>
+In-Reply-To: <88c5f3113fca1d96-0-artemis@nixos>
+
+Removed a bunch of tests involving translating TIP to Haskell, then
+converting that manually into Isabelle types, etc. Basically, a fragile
+and over-engineered approach, compared to pulling types out of the
+generated Isabelle.
+
+I've left a test about finding equations for + and * from a theory of
+naturals, since that's a decent thing to test. However, it won't work
+as-is and it should also be put somewhere more appropriate, e.g. as a
+dependency of isacosy or something.

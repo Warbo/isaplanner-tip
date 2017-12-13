@@ -1,0 +1,37 @@
+From: Chris Warburton
+Date: Tue, 12 Dec 2017 17:43:35 +0000
+State: resolved
+Subject: Take samples from haskell-te ASV runs
+Message-Id: <a5e1f99a93309420-0-artemis@nixos>
+resolution: fixed
+
+We should allow the following workflows for sampling:
+
+  choose a sample (size/rep)             Pull sample names out of
+           |                               haskell-te ASV JSON
+           |                                         |
+           |                                         |
+           \--------------------+--------------------/
+                                |
+                                |
+                                V
+                           Sampled names
+                                |
+                                |
+                                V
+                         Fill in template
+                                |
+                                |
+                                V
+                      Run IsaCoSy from template
+                                |
+                                |
+                                V
+                           Store data
+
+In other words, we should have a generic runner which accepts sampled
+names, and we should have two potential sources of those names:
+choosing a sample, and taking known names from some haskell-te ASV JSON.
+
+The first way gives us a standalone tool. The second way lets us do
+paired-difference testing with the two tools.

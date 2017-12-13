@@ -109,4 +109,8 @@ rec {
       tebIsabelle = tebenchmark-isabelle;
     })
     ''racket "$script" > "$out"'';
+
+
+  # namesFile contains newline-separated names to include in a sample
+  tebenchmark-sample = { namesFile }: abort "FIXME";
 }

@@ -1,7 +1,107 @@
-{ isaplanner, makeWrapper, runCommand, writeScript }:
+{ allDrvsIn, glibcLocales, gnugrep, isaplanner, jq, makeWrapper, moreutils,
+  perl, runCommand, stdenv, te-benchmark, tebenchmark-isabelle, withDeps,
+  writeScript }:
 
 rec {
-  isacosy = runCommand "isacosy"
+  make_isacosy_theory = runCommand "make_isacosy_theory"
+    {
+      buildInputs = [ makeWrapper ];
+      raw         = isacosy-theory { x = "FIXME"; }
+    }
+    ''
+      mkdir -p "$out/bin"
+      makeWrapper "$raw" "$out/bin/make_isacosy_theory" \
+                         --prefix PATH : "${jq}/bin"
+    '';
+
+
+  isacosy-nat =
+    let theoryName = "IsaCoSyNat";
+        theory = writeScript "${theoryName}.thy" ''
+          theory ${theoryName}
+
+          imports Main IsaP IsaCoSy Orderings Set Pure List
+          begin
+
+          ML {*
+            val functions = map Term.dest_Const
+              [@{term "Groups.plus_class.plus :: nat => nat => nat"},
+               @{term "Groups.minus_class.minus :: nat => nat => nat"},
+               @{term "Groups.times_class.times :: nat => nat => nat"}];
+
+            val def_thrms = [@{thms "Nat.plus_nat.simps"},
+                             @{thms "Nat.minus_nat.simps"},
+                             @{thms "Nat.times_nat.simps"}];
+
+            val fundefs = functions ~~ def_thrms;
+
+            (* set constraint params *)
+            val cparams0 = ConstraintParams.empty
+              |> ThyConstraintParams.add_eq        @{context}
+              |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
+              |>    ConstraintParams.add_consts    functions;
+
+            (* Perform the exploration *)
+            val (_, nw_ctxt) = SynthInterface.thm_synth
+                               SynthInterface.rippling_prover
+                               SynthInterface.quickcheck
+                               SynthInterface.wave_rule_config
+                               SynthInterface.var_allowed_in_lhs
+                               { max_size = 8,
+                                 min_size = 3,
+                                 max_vars = 3,
+                                 max_nesting = SOME 2 }
+                               (Constant.mk "HOL.eq")
+                               (cparams0, @{context});
+
+            (* Extract the results *)
+            val result_context = SynthOutput.Ctxt.get nw_ctxt;
+
+            val found_conjectures = map (Trm.pretty nw_ctxt)
+                                        (SynthOutput.get_conjs result_context);
+
+            val found_theorems    = map (fn (_, thm) =>
+                                          Trm.pretty nw_ctxt
+                                            (Trm.change_frees_to_fresh_vars
+                                              (Thm.full_prop_of thm)))
+                                        (SynthOutput.get_thms result_context);
+
+            (* Write output, delimited to ease chopping off Isabelle noise *)
+            PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
+              ([Pretty.str "BEGIN OUTPUT"] @
+               found_theorems              @
+               found_conjectures           @
+               [Pretty.str "END OUTPUT"])));
+          *}
+          end
+        '';
+
+        explore = writeScript "explore.sh" ''
+          echo 'use_thy "${theoryName}";' | isaplanner
+        '';
+     in stdenv.mkDerivation {
+          name = "isacosy-nat";
+
+          inherit isaplanner theory;
+
+          LANG           = "en_US.UTF-8";
+          LOCALE_ARCHIVE = "${glibcLocales}/lib/locale/locale-archive";
+
+          buildInputs  = [ perl isaplanner moreutils gnugrep ];
+          buildCommand = ''
+            source $stdenv/setup
+            set -x
+
+            # Theory name must match file name; 'tip' uses the name "A"
+            cp "$theory" "${theoryName}.thy"
+
+            mkdir -p "$out"
+
+            "${explore}" > "$out/output"
+          '';
+  };
+
+  isacosy-untested = runCommand "isacosy"
     {
       buildInputs = [ makeWrapper ];
       raw = writeScript "isacosy-raw" ''
@@ -21,6 +121,48 @@ rec {
     mkdir -p "$out/bin"
     makeWrapper "$raw" "$out/bin/isacosy" --prefix PATH : "${isaplanner}/bin"
   '';
+
+  isacosy = withDeps
+    (allDrvsIn {
+      natSampleFindsEqs = runCommand "nat-sample-finds-eqs"
+        {
+          buildInputs = [
+            isacosy-untested
+            te-benchmark.tools
+            (make_isacosy_theory /*te-benchmark*/)
+          ];
+        }
+        ''
+          function getNames {
+            echo "Gathering TIP names" 1>&2
+            NAMES=""
+            TIPNAMES=$(choose_sample 219 0)
+            TIPTRANS=$(echo "$TIPNAMES" | decode)
+
+            for N in plus times
+            do
+              while read -r PAIR
+              do
+                NEWNAME=$(echo "$PAIR" | cut -f1)
+                NAMES=$(echo -e "$NAMES\n$NEWNAME" | grep '^.')
+              done < <(paste <(echo "$TIPNAMES") <(echo "$TIPTRANS") | grep "$N")
+            done
+
+            echo -e "Found names:\n$NAMES" 1>&2
+            echo "$NAMES" | sort -u
+          }
+
+          THY=$(getNames | make_isacosy_theory)
+          RESULT=$(isacosy "$THY")
+          EQS=$(echo "$RESULT" | grep -c '=')
+          [[ "$EQS" -gt 2 ]] || {
+            echo "Didn't find equations for + and *:" 1>&2
+            echo "$RESULT" 1>&2
+            exit 1
+          }
+        '';
+    })
+    isacosy-untested;
 
   isacosy-template = writeScript "isacosy-template" ''
     theory ISACOSY

@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Tue, 12 Dec 2017 17:48:14 +0000
+State: new
+Subject: Make ASV benchmark suite
+Message-Id: <ebf4f1a93a336ac5-0-artemis@nixos>
+
+ASV does nice things like iterating things, storing data in JSON,
+storing machine details and git commit IDs, etc. so we should use it.

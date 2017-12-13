@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Wed, 13 Dec 2017 10:43:02 +0000
+Subject: Re: Take samples from haskell-te ASV runs
+Message-Id: <a5e1f99a93309420-b080004136985ee6-artemis@nixos>
+References: <a5e1f99a93309420-0-artemis@nixos>
+In-Reply-To: <a5e1f99a93309420-0-artemis@nixos>
+
+defs.sampling.known_samples will read the samples from haskell-te
+benchmark runs.
