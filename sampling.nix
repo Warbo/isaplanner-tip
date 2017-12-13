@@ -1,4 +1,5 @@
-{ get-haskell-te, jq, lib, runCommand }:
+{ bash, get-haskell-te, isacosy, isacosy-theory, jq, lib, runCommand,
+  tebenchmark-data, wrap, writeScript }:
 
 with lib;
 rec {
@@ -37,7 +38,46 @@ rec {
         echo "$nixExpr" > "$out/default.nix"
       '';
 
-  known_samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
+  isacosy-from-sample = { names, rep, size }:
+    with rec {
+      functions = runCommand "functions-${size}-${rep}"
+        {
+          buildInputs = [ jq ];
+          data        = tebenchmark-data;
+        }
+        ''
+          set -e
+          set -o pipefail
+
+          function namesTypes {
+            # This assumes there are no spaces in the names, but that's a pretty
+            # safe assumption given that they're Isabelle identifiers, and (if
+            # they came from TIP) they'll be hex encoded as well.
+            for NAME in ${concatStringsSep " " names}
+            do
+              jq -e --arg name "$NAME" '.types | has($name)' < "$data" 1>&2 || {
+                echo "Name '$NAME' is needed but wasn't found in '$data'" 1>&2
+                exit 1
+              }
+              TYPE=$(jq -r --arg name "$NAME" '.types | .[$name]' < "$data")
+
+              # We assume the definition comes from A.thy
+              echo "@{term \"A.$NAME :: $TYPE\"}" | jq -R '.'
+            done
+          }
+
+          namesTypes | jq -rs 'join(", ")' > "$out"
+        '';
+    };
+    isacosy-theory {
+      inherit functions;
+      name        = "sample-${size}-${rep}";
+      datatypes   = writeScript "fixme" "";
+      definitions = writeScript "fixme" "";
+      undefined   = writeScript "fixme" "";
+    };
+
+  known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
     ce9c9478 = {
       filename = "ce9c9478-nix-py-dirnull.json.gz";
       machine  = "desktop";

@@ -5,43 +5,23 @@ with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
 with pkgs;
 
 rec {
-  inherit (defs.isaplanner)           isaplanner;
-  inherit (defs.tebenchmark-isabelle) te-benchmark tebenchmark-data
-                                      tebenchmark-isabelle;
-  inherit (defs.isacosy)              isacosy;
+  inherit (defs.isacosy) isacosy isacosy-nat-eqs;
 
   defs = {
-    haskell-te           = callPackage ./haskell-te.nix {};
-    isaplanner           = callPackage ./isaplanner.nix {};
-    tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
-      inherit isaplanner;
+    haskell-te = callPackage ./haskell-te.nix {};
+    isaplanner = callPackage ./isaplanner.nix {};
+    isacosy    = callPackage ./isacosy.nix {
+      inherit (defs.isaplanner) isaplanner;
+      inherit (defs.tebenchmark-isabelle) te-benchmark tebenchmark-data
+                                          tebenchmark-isabelle;
     };
-    isacosy              = callPackage ./isacosy.nix {
-      inherit isaplanner te-benchmark tebenchmark-data tebenchmark-isabelle;
-    };
-    sampling             = callPackage ./sampling.nix {
+    sampling = callPackage ./sampling.nix {
       inherit (defs.haskell-te) get-haskell-te;
+      inherit (defs.isacosy) isacosy isacosy-theory;
+      inherit (defs.tebenchmark-isabelle) tebenchmark-data;
     };
-  };
-
-  hackage = h: n: h.callPackage (runCabal2nix { url = "cabal://${n}"; });
-
-  isacosy-nat-eqs = stdenv.mkDerivation {
-    name = "isacosy-nat-eqs";
-    data = isacosy-nat;
-
-    buildCommand = ''
-      source $stdenv/setup
-
-      set -e
-
-      [[ -f "$data/output" ]] || {
-        echo "Error: Isabelle output '$data/output' doesn't exist" 1>&2
-        exit 1
-      }
-
-      mkdir -p "$out"
-      "${./extract_eqs.sh}" < "$data/output" > "$out/equations"
-    '';
+    tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
+      inherit (defs.isaplanner) isaplanner;
+    };
   };
 }

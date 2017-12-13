@@ -3,7 +3,7 @@
 
 with lib;
 rec {
-  isacosy-nat =
+  isacosy-nat-eqs =
     with rec {
       theoryName = "IsaCoSyNat";
       theory = writeScript "${theoryName}.thy" ''
@@ -69,7 +69,7 @@ rec {
         echo 'use_thy "${theoryName}";' | isaplanner
       '';
     };
-    runCommand "isacosy-nat"
+    runCommand "isacosy-nat-eqs"
       {
         inherit theory theoryName;
         buildInputs = [ isacosy-untested ];
@@ -109,7 +109,7 @@ rec {
     (allDrvsIn {
       natSampleFindsEqs = runCommand "nat-sample-finds-eqs"
         {
-          result = isacosy-nat;
+          result      = isacosy-nat-eqs;
           buildInputs = [
             isacosy-untested
             te-benchmark.tools
@@ -227,44 +227,4 @@ rec {
         replace "DATATYPES"   "$datatypes"
         mv ./temp "$out"
       '';
-
-  isacosy-from-sample = { names, rep, size }:
-    with rec {
-      functions = runCommand "functions-${size}-${rep}"
-        {
-          buildInputs = [ jq ];
-          data        = tebenchmark-data;
-        }
-        ''
-          set -e
-          set -o pipefail
-
-          function namesTypes {
-            # This assumes there are no spaces in the names, but that's a pretty
-            # safe assumption given that they're Isabelle identifiers, and (if
-            # they came from TIP) they'll be hex encoded as well.
-            for NAME in ${concatStringsSep " " names}
-            do
-              jq -e --arg name "$NAME" '.types | has($name)' < "$data" 1>&2 || {
-                echo "Name '$NAME' is needed but wasn't found in '$data'" 1>&2
-                exit 1
-              }
-              TYPE=$(jq -r --arg name "$NAME" '.types | .[$name]' < "$data")
-
-              # We assume the definition comes from A.thy
-              echo "@{term \"A.$NAME :: $TYPE\"}" | jq -R '.'
-            done
-          }
-
-          namesTypes | jq -rs 'join(", ")' > "$out"
-        '';
-      theory = isacosy-theory {
-        name        = "sample-${size}-${rep}";
-        datatypes   = writeScript "fixme" "";
-        definitions = writeScript "fixme" "";
-        inherit functions;
-        undefined   = writeScript "fixme" "";
-      };
-    };
-    theory;
 }
