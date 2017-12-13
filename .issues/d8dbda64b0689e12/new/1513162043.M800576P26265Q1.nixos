@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 13 Dec 2017 10:47:13 +0000
+Subject: Re: Fix let bindings
+Message-Id: <d8dbda64b0689e12-fd90bcf789f9cc7e-artemis@nixos>
+References: <d8dbda64b0689e12-0-artemis@nixos>
+In-Reply-To: <d8dbda64b0689e12-0-artemis@nixos>
+
+Fixed by patching tip tools

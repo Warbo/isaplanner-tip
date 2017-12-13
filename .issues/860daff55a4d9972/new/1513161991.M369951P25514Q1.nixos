@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Wed, 13 Dec 2017 10:46:01 +0000
+Subject: Re: Turn standalone tests into inline dependencies
+Message-Id: <860daff55a4d9972-f87c8c0a95b13194-artemis@nixos>
+References: <860daff55a4d9972-0-artemis@nixos>
+In-Reply-To: <860daff55a4d9972-0-artemis@nixos>
+
+Done for the isacosy exploration of nat (+ and *). ALl of the others
+were obsolete.

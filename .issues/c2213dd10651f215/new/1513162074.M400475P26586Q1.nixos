@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 13 Dec 2017 10:47:41 +0000
+Subject: Re: Get types of generated Isabelle functions
+Message-Id: <c2213dd10651f215-b41b16f20d0ea5af-artemis@nixos>
+References: <c2213dd10651f215-0-artemis@nixos>
+In-Reply-To: <c2213dd10651f215-0-artemis@nixos>
+
+We now extract these using a Racket script
