@@ -40,7 +40,11 @@ rec {
 
   isacosy-from-sample = { names, rep, size }:
     with rec {
-      functions = runCommand "functions-${size}-${rep}"
+      definitions = writeScript "definitions-${size}-${rep}"
+        (concatStringsSep ", " (map (name: ''@{thms "A.${name}.simps"}'')
+                                    names));
+
+      functions   = runCommand "functions-${size}-${rep}"
         {
           buildInputs = [ jq ];
           data        = tebenchmark-data;
@@ -70,10 +74,9 @@ rec {
         '';
     };
     isacosy-theory {
-      inherit functions;
+      inherit definitions functions;
       name        = "sample-${size}-${rep}";
       datatypes   = writeScript "fixme" "";
-      definitions = writeScript "fixme" "";
       undefined   = writeScript "fixme" "";
     };
 
