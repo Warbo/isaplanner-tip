@@ -114,4 +114,20 @@ rec {
                                '';
                              })))
                            known-theories;
+  runner-test = runCommand "runner-test"
+    {
+      # This sample contains addition, multiplication and exponentiation for
+      # natural numbers, which should be easy for IsaCoSy to find conjectures
+      # for. The fact that the indices approximate pi is purely a coincidence!
+      script = known-runners.ce9c9478."3"."14";
+    }
+    ''
+      set -e
+      echo "Running IsaCoSy on plus, times and exp" 1>&2
+      "$script" | grep -c '=' || {
+        echo "No conjectures found" 1>&2
+        exit 1
+      }
+      mkdir "$out"
+    '';
 }
