@@ -1,16 +1,27 @@
-with builtins;
-with (import <nixpkgs> {}).lib;
+with import ./pkgs.nix;
+with stable.lib;
 with rec {
-  # Remove 'helpers', as it's just an API to private implementation details
-  trimTests = v: removeAttrs v [ "helpers" "defs" ];
+  onlyDrvs = x:
+    if isAttrs x
+       then if isDerivation x
+               then x
+               else with { result = filterAttrs (_: y: y != null)
+                                                (mapAttrs (_: onlyDrvs) x); };
+                    if result == {} then null else result
+       else null;
 
-  # Don't try to build functions, etc.
-  derivationsIn = filterAttrs (_: isDerivation);
+  unwantedPaths = [
+    [ "defs" "haskell-te"           "haskell-te"      ]
+    [ "defs" "tebenchmark-isabelle" "haskellPackages" ]
+    [ "defs" "tebenchmark-isabelle" "nixpkgs1703"     ]
+    [ "defs" "tebenchmark-isabelle" "te-benchmark"    ]
+  ];
 
-  # Collect up definitions and tests
-  fromPkgs = pkgs:
-    with { withTests = import ./tests.nix pkgs; };
-    derivationsIn withTests.defs // { tests = trimTests withTests.tests; };
+  stripUnwanted = mapAttrsRecursive (path: _: v: if elem path unwantedPaths
+                                                    then null
+                                                    else v);
+
+  all = mapAttrs (_: pkgs: stripUnwanted (import ./. { inherit pkgs; }))
+                 { inherit stable unstable; };
 };
-
-mapAttrs (_: fromPkgs) (import ./pkgs.nix)
+onlyDrvs all
