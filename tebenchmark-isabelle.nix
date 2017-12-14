@@ -66,17 +66,18 @@ rec {
     src  = parserSrc;
   };
 
+  # Note: to comply with Isabelle's naming conventions, the output of this
+  # derivation should be copied to a file called 'A.thy' before importing.
   tebenchmark-isabelle = runCommand "tebenchmark-isabelle"
     {
-      buildInputs  = [ (haskellPackages.ghcWithPackages (h: [
-                         (h.callPackage tip-lib {}) ]))
-                       isaplanner jq perl ];
-      smtdata      = te-benchmark.tip-benchmark-smtlib;
-      FIXES        = ./fixes.json;
-      preprocess   = ./preprocess.sh;
+      buildInputs = [ (haskellPackages.ghcWithPackages (h: [
+                        (h.callPackage tip-lib {}) ]))
+                      isaplanner jq perl ];
+      smtdata     = te-benchmark.tip-benchmark-smtlib;
+      FIXES       = ./fixes.json;
+      preprocess  = ./preprocess.sh;
     }
     ''
-      source $stdenv/setup
       set -e
       set -o pipefail
 
@@ -95,8 +96,7 @@ rec {
       fi
       echo "Passed" 1>&2
 
-      mkdir -p "$out"
-      mv A.thy "$out/"
+      cp A.thy "$out"
     '';
 
   tebenchmark-data = runCommand "tebenchmark-data.json"

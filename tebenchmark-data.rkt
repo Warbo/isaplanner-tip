@@ -51,8 +51,7 @@
 
 ;; String containing Isabelle definitions, and nothing else
 (define isabelle-defs-string
-  (let* ((raw (file->string (string-append (getenv "tebIsabelle")
-                                           "/A.thy")))
+  (let* ((raw (file->string (getenv "tebIsabelle")))
          (pre (string-replace raw         #rx".*begin" "" #:all? #f))
          (rev (string-replace (strev pre) #rx"dne"     "" #:all? #f)))
     (strev rev)))

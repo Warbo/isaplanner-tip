@@ -1,5 +1,5 @@
-{ bash, get-haskell-te, isacosy, isacosy-theory, jq, lib, runCommand,
-  tebenchmark-data, wrap, writeScript }:
+{ attrsToDirs, bash, get-haskell-te, isacosy, isacosy-theory, jq, lib,
+  runCommand, tebenchmark-data, tebenchmark-isabelle, wrap, writeScript }:
 
 with lib;
 rec {
@@ -94,11 +94,19 @@ rec {
                              wrap {
                                name   = "isacosy-runner-${rev}-${size}-${rep}";
                                paths  = [ bash isacosy ];
-                               vars   = { inherit theory; };
+                               vars   = {
+                                 workingDir = attrsToDirs {
+                                   "A.thy"       = tebenchmark-isabelle;
+                                   "ISACOSY.thy" = theory;
+                                 };
+                               };
                                script = ''
                                  #!/usr/bin/env bash
                                  set -e
-                                 cp "$theory" ISACOSY.thy
+                                 cd "$workingDir" || {
+                                   echo "Couldn't cd to '$workingDir'" 1>&2
+                                   exit 1
+                                 }
                                  isacosy ISACOSY.thy
                                '';
                              })))
