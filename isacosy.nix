@@ -1,109 +1,102 @@
-{ allDrvsIn, isaplanner, jq, lib, makeWrapper, runCommand, stdenv, te-benchmark,
-  tebenchmark-data, tebenchmark-isabelle, withDeps, writeScript }:
+{ allDrvsIn, attrsToDirs, isaplanner, jq, lib, mkBin, runCommand, stdenv,
+  te-benchmark, tebenchmark-data, withDeps, writeScript }:
 
 with lib;
 rec {
-  isacosy-nat-eqs =
-    with rec {
-      theoryName = "IsaCoSyNat";
-      theory = writeScript "${theoryName}.thy" ''
-        theory ${theoryName}
-
-        imports Main IsaP IsaCoSy Orderings Set Pure List
-        begin
-
-        ML {*
-          val functions = map Term.dest_Const
-            [@{term "Groups.plus_class.plus :: nat => nat => nat"},
-             @{term "Groups.minus_class.minus :: nat => nat => nat"},
-             @{term "Groups.times_class.times :: nat => nat => nat"}];
-
-          val def_thrms = [@{thms "Nat.plus_nat.simps"},
-                           @{thms "Nat.minus_nat.simps"},
-                           @{thms "Nat.times_nat.simps"}];
-
-          val fundefs = functions ~~ def_thrms;
-
-          (* set constraint params *)
-          val cparams0 = ConstraintParams.empty
-            |> ThyConstraintParams.add_eq        @{context}
-            |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
-            |>    ConstraintParams.add_consts    functions;
-
-          (* Perform the exploration *)
-          val (_, nw_ctxt) = SynthInterface.thm_synth
-                             SynthInterface.rippling_prover
-                             SynthInterface.quickcheck
-                             SynthInterface.wave_rule_config
-                             SynthInterface.var_allowed_in_lhs
-                             { max_size = 8,
-                               min_size = 3,
-                               max_vars = 3,
-                               max_nesting = SOME 2 }
-                             (Constant.mk "HOL.eq")
-                             (cparams0, @{context});
-
-          (* Extract the results *)
-          val result_context = SynthOutput.Ctxt.get nw_ctxt;
-
-          val found_conjectures = map (Trm.pretty nw_ctxt)
-                                      (SynthOutput.get_conjs result_context);
-
-          val found_theorems    = map (fn (_, thm) =>
-                                        Trm.pretty nw_ctxt
-                                          (Trm.change_frees_to_fresh_vars
-                                            (Thm.full_prop_of thm)))
-                                      (SynthOutput.get_thms result_context);
-
-          (* Write output, delimited to ease chopping off Isabelle noise *)
-          PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
-            ([Pretty.str "BEGIN OUTPUT"] @
-             found_theorems              @
-             found_conjectures           @
-             [Pretty.str "END OUTPUT"])));
-        *}
-        end
-      '';
-
-      explore = writeScript "explore.sh" ''
-        echo 'use_thy "${theoryName}";' | isaplanner
-      '';
-    };
-    runCommand "isacosy-nat-eqs"
-      {
-        inherit theory theoryName;
-        buildInputs = [ isacosy-untested ];
-      }
-      ''
-        source $stdenv/setup
-        set -x
-
-        # Theory name must match file name; 'tip' uses the name "A"
-        cp "$theory" "$theoryName.thy"
-
-        isacosy "$theoryName.thy" > "$out"
-      '';
-
-  isacosy-untested = runCommand "isacosy"
+  isacosy-nat-eqs = runCommand "isacosy-nat-eqs"
     {
-      buildInputs = [ makeWrapper ];
-      raw = writeScript "isacosy-raw" ''
-        #!/usr/bin/env bash
-        set -e
-        set -o pipefail
+      buildInputs = [ isacosy-untested ];
+      dir         = attrsToDirs {
+        "IsaCoSyNat.thy" = writeScript "IsaCoSyNat.thy" ''
+          theory IsaCoSyNat
 
-        [[ -n "$1" ]] || {
-          echo "No file given, aborting" 1>&2
-          exit 1
-        }
-        THY=$(basename "$1" .thy)
-        echo "use_thy \"$THY\";" | isaplanner | "${./extract_eqs.sh}"
-      '';
+          imports Main IsaP IsaCoSy Orderings Set Pure List
+          begin
+
+          ML {*
+            val functions = map Term.dest_Const
+              [@{term "Groups.plus_class.plus :: nat => nat => nat"},
+               @{term "Groups.minus_class.minus :: nat => nat => nat"},
+               @{term "Groups.times_class.times :: nat => nat => nat"}];
+
+            val def_thrms = [@{thms "Nat.plus_nat.simps"},
+                             @{thms "Nat.minus_nat.simps"},
+                             @{thms "Nat.times_nat.simps"}];
+
+            val fundefs = functions ~~ def_thrms;
+
+            (* set constraint params *)
+            val cparams0 = ConstraintParams.empty
+              |> ThyConstraintParams.add_eq        @{context}
+              |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
+              |>    ConstraintParams.add_consts    functions;
+
+            (* Perform the exploration *)
+            val (_, nw_ctxt) = SynthInterface.thm_synth
+                               SynthInterface.rippling_prover
+                               SynthInterface.quickcheck
+                               SynthInterface.wave_rule_config
+                               SynthInterface.var_allowed_in_lhs
+                               { max_size = 8,
+                                 min_size = 3,
+                                 max_vars = 3,
+                                 max_nesting = SOME 2 }
+                               (Constant.mk "HOL.eq")
+                               (cparams0, @{context});
+
+            (* Extract the results *)
+            val result_context = SynthOutput.Ctxt.get nw_ctxt;
+
+            val found_conjectures = map (Trm.pretty nw_ctxt)
+                                        (SynthOutput.get_conjs result_context);
+
+            val found_theorems    = map (fn (_, thm) =>
+                                          Trm.pretty nw_ctxt
+                                            (Trm.change_frees_to_fresh_vars
+                                              (Thm.full_prop_of thm)))
+                                        (SynthOutput.get_thms result_context);
+
+            (* Write output, delimited to ease chopping off Isabelle noise *)
+            PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
+              ([Pretty.str "BEGIN OUTPUT"] @
+               found_theorems              @
+               found_conjectures           @
+               [Pretty.str "END OUTPUT"])));
+          *}
+          end
+        '';
+      };
     }
-  ''
-    mkdir -p "$out/bin"
-    makeWrapper "$raw" "$out/bin/isacosy" --prefix PATH : "${isaplanner}/bin"
-  '';
+    ''
+      set -e
+      set -o pipefail
+
+      # Theory name must match file name; 'tip' uses the name "A"
+      cd "$dir" || {
+        echo "Couldn't cd to '$dir'" 1>&2
+        exit 1
+      }
+
+      isacosy "IsaCoSyNat.thy" | tee "$out"
+    '';
+
+  isacosy-untested = mkBin {
+    name   = "isacosy";
+    paths  = [ isaplanner ];
+    vars   = { extract = ./extract_eqs.sh; };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
+
+      [[ -n "$1" ]] || {
+        echo "No file given, aborting" 1>&2
+        exit 1
+      }
+      THY=$(basename "$1" .thy)
+      echo "use_thy \"$THY\";" | isaplanner | "$extract"
+    '';
+  };
 
   isacosy = withDeps
     (allDrvsIn {
