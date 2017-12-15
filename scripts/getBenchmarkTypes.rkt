@@ -1,3 +1,4 @@
+#!/usr/bin/env racket
 #lang racket
 
 ;; To make 'lib' available, add TEBenchmark's 'script' dir to PLTCOLLECT env var
@@ -223,8 +224,16 @@
            `(extras-in-isabelle    . ,(set-subtract from-isabelle from-tip)))))
 
 (define data
-  `((types . ,isabelle-types-map)))
+  (make-immutable-hash `((types . ,isabelle-types-map))))
 
-;; Write out a JSON object, so jq can look up data for sampled names
+;; Write out a JSON object, so jq can look up data for sampled names. If we have
+;; an env var called "out" we use that as our output path (this allows us to use
+;; this script as a Nix builder); otherwise we use stdout.
 
-(write-json (make-immutable-hash data))
+(define out-file
+  (getenv "out"))
+
+(if out-file
+    (call-with-output-file out-file
+      (curry write-json data))
+    (write-json data))

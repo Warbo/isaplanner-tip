@@ -99,17 +99,12 @@ rec {
       cp A.thy "$out"
     '';
 
-  tebenchmark-data = runCommand "tebenchmark-data.json"
-    (te-benchmark.cache  // {
-      buildInputs = [ te-benchmark.env ];
-      FIXES       = ./fixes.json;
-      PLTCOLLECTS = ":${te-benchmark-src}/scripts";
-      script      = ./tebenchmark-data.rkt;
-      smtlib      = te-benchmark.tip-benchmark-smtlib;
-      tebIsabelle = tebenchmark-isabelle;
-    })
-    ''racket "$script" > "$out"'';
-
+  tebenchmark-data = stdenv.mkDerivation {
+    name    = "tebenchmark-data.json";
+    builder = getBenchmarkTypes {
+      inherit te-benchmark te-benchmark-src tebenchmark-isabelle;
+    };
+  };
 
   # namesFile contains newline-separated names to include in a sample
   tebenchmark-sample = { namesFile }: abort "FIXME";
