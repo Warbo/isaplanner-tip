@@ -79,8 +79,8 @@ rec {
 
   isacosy-from-sample = { names, rep, size }:
     with rec {
-      datatypes   = runCommand "datatypes-${size}-${rep}"
-    {
+      datatypes = runCommand "datatypes-${size}-${rep}"
+        {
           buildInputs = [ argsOf jq ];
           data        = tebenchmark-data;
           pre         = "ThyConstraintParams.add_datatype' @{context} @{typ \"";
@@ -103,16 +103,24 @@ rec {
           }
 
           # Output arguments of a function type e.g. 'a => b => c' gives a and b
-          function argsOf {
-
+          function allArgs {
+            completeTypes | while read -r TYPE
+            do
+              echo "$TYPE" | argsOf
+            done | sort -u
           }
+
+          allArgs | while read -r ARG
+          do
+            echo "|> ThyConstraintParams.add_datatype' @{context} @{typ \"$ARG\"}"
+          done > "$out"
         '';
 
       definitions = writeScript "definitions-${size}-${rep}"
         (concatStringsSep ", " (map (name: ''@{thms "A.${name}.simps"}'')
                                     names));
 
-      functions   = runCommand "functions-${size}-${rep}"
+      functions = runCommand "functions-${size}-${rep}"
         {
           buildInputs = [ jq ];
           data        = tebenchmark-data;
@@ -142,10 +150,9 @@ rec {
         '';
     };
     isacosy-theory {
-      inherit definitions functions;
-      name        = "sample-${size}-${rep}";
-      datatypes   = writeScript "fixme" "";
-      undefined   = writeScript "fixme" "";
+      inherit datatypes definitions functions;
+      name      = "sample-${size}-${rep}";
+      undefined = writeScript "fixme" "";
     };
 
   known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
@@ -181,7 +188,8 @@ rec {
                                  isacosy ISACOSY.thy
                                '';
                              })))
-                           known-theories;
+                               known-theories;
+
   runner-test = runCommand "runner-test"
     {
       # This sample contains addition, multiplication and exponentiation for
@@ -192,7 +200,7 @@ rec {
     ''
       set -e
       echo "Running IsaCoSy on plus, times and exp" 1>&2
-      "$script" | grep -c '=' || {
+      "$script" | tee >(cat 1>&2) | grep -c '=' || {
         echo "No conjectures found" 1>&2
         exit 1
       }
