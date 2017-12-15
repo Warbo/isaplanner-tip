@@ -1,6 +1,7 @@
 # TEBenchmark converted to an Isabelle theory
-{ bash, callPackage, fetchFromGitHub, fetchgit, gcc, haskell, isaplanner, jq,
-  perl, runCommand, writeScript }:
+{ bash, callPackage, fetchFromGitHub, fetchgit, gcc, getBenchmarkTypes,
+  getPreprocessed, haskell, isaplanner, jq, perl, runCommand, stdenv,
+  writeScript }:
 
 rec {
   te-benchmark-src = fetchgit {
@@ -70,19 +71,18 @@ rec {
   # derivation should be copied to a file called 'A.thy' before importing.
   tebenchmark-isabelle = runCommand "tebenchmark-isabelle"
     {
-      buildInputs = [ (haskellPackages.ghcWithPackages (h: [
-                        (h.callPackage tip-lib {}) ]))
-                      isaplanner jq perl ];
-      smtdata     = te-benchmark.tip-benchmark-smtlib;
-      FIXES       = ./fixes.json;
-      preprocess  = ./preprocess.sh;
+      buildInputs = [
+        (haskellPackages.ghcWithPackages (h: [ (h.callPackage tip-lib {}) ]))
+        isaplanner
+      ];
+      getPreprocessed = getPreprocessed { inherit te-benchmark; };
     }
     ''
       set -e
       set -o pipefail
 
-      echo "Converting smtlib data in '$smtdata' into isabelle code" 1>&2
-      "$preprocess" < "$smtdata" | tip --isabelle > A.thy
+      echo "Converting smtlib data into isabelle code" 1>&2
+      "$getPreprocessed" | tip --isabelle > A.thy
 
       echo "Testing" 1>&2
       OUTPUT=$(echo 'use_thy "A";' | isaplanner)
