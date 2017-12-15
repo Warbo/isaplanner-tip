@@ -1,5 +1,5 @@
-{ allDrvsIn, attrsToDirs, isaplanner, jq, lib, mkBin, runCommand, stdenv,
-  te-benchmark, tebenchmark-data, withDeps, writeScript }:
+{ allDrvsIn, attrsToDirs, isaplanner, jq, lib, mkBin, python, runCommand,
+  stdenv, te-benchmark, tebenchmark-data, wrap, withDeps, writeScript }:
 
 with lib;
 rec {
@@ -80,10 +80,16 @@ rec {
       isacosy "IsaCoSyNat.thy" | tee "$out"
     '';
 
+  extract = wrap {
+    name  = "extract_eqs.py";
+    paths = [ python ];
+    file  = ./extract_eqs.py;
+  };
+
   isacosy-untested = mkBin {
     name   = "isacosy";
     paths  = [ isaplanner ];
-    vars   = { extract = ./extract_eqs.sh; };
+    vars   = { inherit extract; };
     script = ''
       #!/usr/bin/env bash
       set -e
