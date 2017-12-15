@@ -1,6 +1,6 @@
-{ attrsToDirs, bash, get-haskell-te, haskellPackages, isacosy, isacosy-theory,
-  jq, lib, mkBin, runCommand, tebenchmark-data, tebenchmark-isabelle, withDeps,
-  wrap, writeScript }:
+{ attrsToDirs, bash, get-haskell-te, haskellPackages, isabelleTypeArgs, isacosy,
+  isacosy-theory, jq, lib, mkBin, runCommand, tebenchmark-data,
+  tebenchmark-isabelle, withDeps, wrap, writeScript }:
 
 with lib;
 rec {
@@ -39,49 +39,12 @@ rec {
         echo "$nixExpr" > "$out/default.nix"
       '';
 
-  argsOf-untested = mkBin {
-    name  = "argsOf";
-    paths = [ (haskellPackages.ghcWithPackages (h: [ h.parsec ])) ];
-    file  = ./IsabelleTypeArgs.hs;
-  };
-
-  argsOf = withDeps
-    [
-      (runCommand "argsOf-tests"
-        { buildInputs = [ argsOf-untested ]; }
-        ''
-          set -e
-          set -o pipefail
-
-          function check {
-             GOT=$(echo "$1" | argsOf)
-            WANT=$(echo -e "$2")
-
-            [[ "x$GOT" = "x$WANT" ]] || {
-              echo "Got '$GOT' for '$1' instead of '$WANT'" 1>&2
-              exit 1
-            }
-          }
-
-          check "nat"                  ""
-          check "nat => nat"           "nat"
-          check "nat => nat => nat"    "nat"
-          check "nat => int => bool"   "nat\nint"
-          check "(nat => int) => bool" "nat => int\nnat"
-
-          check "(a => (b => c => d) => e) => f => g" \
-                 "a => (b => c => d) => e\nf\na\nb => c => d\nb\nc"
-
-          mkdir "$out"
-        '')
-    ]
-    argsOf-untested;
-
   isacosy-from-sample = { names, rep, size }:
     with rec {
       datatypes = runCommand "datatypes-${size}-${rep}"
         {
-          buildInputs = [ argsOf jq ];
+          inherit isabelleTypeArgs;
+          buildInputs = [ jq ];
           data        = tebenchmark-data;
           pre         = "ThyConstraintParams.add_datatype' @{context} @{typ \"";
           post        = "\"}";
@@ -106,7 +69,7 @@ rec {
           function allArgs {
             completeTypes | while read -r TYPE
             do
-              echo "$TYPE" | argsOf
+              echo "$TYPE" | "$isabelleTypeArgs"
             done | sort -u
           }
 
