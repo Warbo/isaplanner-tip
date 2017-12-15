@@ -85,7 +85,7 @@ rec {
       "$preprocess" < "$smtdata" | tip --isabelle > A.thy
 
       echo "Testing" 1>&2
-      OUTPUT=$(echo 'use_thy "A";' | isaplanner -o quick_and_dirty)
+      OUTPUT=$(echo 'use_thy "A";' | isaplanner)
 
       if echo "$OUTPUT" |  grep -i -C 10 'error' > /dev/null
       then

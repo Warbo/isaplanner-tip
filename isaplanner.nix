@@ -61,7 +61,10 @@ rec {
       #    read-only directories, like Nix store paths, for our HOME.
       # -d tells Isabelle where to find its the base theories.
       # -l tells Isabelle which base theory we want to use.
-      isabelle console -n -d "$ISAPLANNER_DIR" -l HOL-IsaPlannerSession "$@"
+      # quick_and_dirty mode allows proofs to be skipped with "sorry".
+      isabelle console -n -d "$ISAPLANNER_DIR"     \
+                          -l HOL-IsaPlannerSession \
+                          -o quick_and_dirty "$@"
     '';
 
     ISABELLE_JDK_HOME = jdk;
