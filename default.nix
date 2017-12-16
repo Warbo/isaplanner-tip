@@ -12,8 +12,8 @@ rec {
     isaplanner = callPackage ./isaplanner.nix {};
     isacosy    = callPackage ./isacosy.nix {
       inherit (defs.isaplanner          ) isaplanner;
-      inherit (defs.scripts             ) extractEqs;
-      inherit (defs.tebenchmark-isabelle) te-benchmark tebenchmark-data;
+      inherit (defs.scripts             ) eqsToJson extractEqs;
+      inherit (defs.tebenchmark-isabelle) te-benchmark;
     };
     sampling = callPackage ./sampling.nix {
       inherit (defs.haskell-te          ) get-haskell-te;

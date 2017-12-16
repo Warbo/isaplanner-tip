@@ -1,6 +1,17 @@
-{ bash, haskellPackages, jq, mkBin, python, runCommand, withDeps, wrap }:
+{ bash, haskell, haskellPackages, jq, mkBin, python, runCommand, withDeps, wrap }:
 
 rec {
+  eqsToJson = wrap {
+    name = "eqsToJson.hs";
+    file = ./eqsToJson.hs;
+
+    # We pick GHC 8.0.1 since the default package set was failing to build Aeson
+    # due to missing fail and semigroups dependencies.
+    paths = [ (haskell.packages.ghc801.ghcWithPackages (h: [
+      h.aeson h.parsec
+    ])) ];
+  };
+
   extractEqs = wrap {
     name  = "extractEqs.py";
     file  = ./extractEqs.py;
@@ -32,8 +43,8 @@ rec {
 
   isabelleTypeArgs-untested = wrap {
     name  = "isabelleTypeArgs";
-    paths = [ (haskellPackages.ghcWithPackages (h: [ h.parsec ])) ];
     file  = ./IsabelleTypeArgs.hs;
+    paths = [ (haskellPackages.ghcWithPackages (h: [ h.parsec ])) ];
   };
 
   isabelleTypeArgs = withDeps

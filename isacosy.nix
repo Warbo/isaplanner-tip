@@ -1,5 +1,5 @@
-{ allDrvsIn, attrsToDirs, extractEqs, isaplanner, jq, lib, mkBin, runCommand,
-  stdenv, te-benchmark, tebenchmark-data, withDeps, writeScript }:
+{ allDrvsIn, attrsToDirs, eqsToJson, extractEqs, isaplanner, lib, mkBin,
+  runCommand, te-benchmark, withDeps, writeScript }:
 
 with lib;
 rec {
@@ -83,7 +83,7 @@ rec {
   isacosy-untested = mkBin {
     name   = "isacosy";
     paths  = [ isaplanner ];
-    vars   = { inherit extractEqs; };
+    vars   = { inherit eqsToJson extractEqs; };
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -94,7 +94,7 @@ rec {
         exit 1
       }
       THY=$(basename "$1" .thy)
-      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs"
+      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs" | "$eqsToJson"
     '';
   };
 
