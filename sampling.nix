@@ -114,8 +114,7 @@ rec {
     };
     isacosy-theory {
       inherit datatypes definitions functions;
-      name      = "sample-${size}-${rep}";
-      undefined = writeScript "fixme" "";
+      name = "sample-${size}-${rep}";
     };
 
   known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {

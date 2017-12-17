@@ -8,6 +8,7 @@ rec {
       buildInputs = [ isacosy-untested ];
       dir         = attrsToDirs {
         "ISACOSY.thy" = isacosy-theory-strings {
+          name        = "nat-example";
           datatypes   = ''|> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}'';
           definitions = ''
             @{thms "Nat.plus_nat.simps"},
@@ -20,7 +21,6 @@ rec {
             @{term "Groups.times_class.times :: nat => nat => nat"}
           '';
           imports   = "";
-          undefined = "";
         };
       };
     }
@@ -97,18 +97,12 @@ rec {
 
       val fundefs = functions ~~ def_thrms;
 
-      (* Undefined terms, eg. Trm.change_frees_to_fresh_vars @{term "hd([])"} *)
-      val constr_trms = [
-        (*TEMPLATE_REPLACE_ME_WITH_UNDEFINED*)
-      ];
-
       (* Add variables for each datatype, e.g.
            ThyConstraintParams.add_datatype' @{context} @{typ "nat"} *)
       val cparams = ConstraintParams.empty
                   |> ThyConstraintParams.add_eq @{context}
                   (*TEMPLATE_REPLACE_ME_WITH_DATATYPES*)
                   |> ConstraintParams.add_consts functions
-                  |> ConstraintParams.add_arb_terms @{context} constr_trms
 
       (* Perform the exploration *)
       val (_, nw_ctxt) = SynthInterface.thm_synth
@@ -141,14 +135,13 @@ rec {
   '';
 
   isacosy-theory-strings =
-    { datatypes, definitions, functions, imports ? "A", name, undefined }:
+    { datatypes, definitions, functions, imports ? "A", name }:
       isacosy-theory {
         inherit name;
-        datatypes   = writeScript "datatypes"   (writeScript datatypes  );
-        definitions = writeScript "definitions" (writeScript definitions);
-        functions   = writeScript "functions"   (writeScript functions  );
-        imports     = writeScript "imports"     (writeScript imports    );
-        undefined   = writeScript "undefined"   (writeScript undefined  );
+        datatypes   = writeScript "datatypes"   datatypes;
+        definitions = writeScript "definitions" definitions;
+        functions   = writeScript "functions"   functions;
+        imports     = writeScript "imports"     imports;
       };
 
   isacosy-theory = {
@@ -157,11 +150,10 @@ rec {
     functions,
     imports ? (writeScript "imports" "A"),
     name,
-    undefined
   }: runCommand "isacosy-theory-${name}"
        {
-         inherit datatypes definitions functions imports undefined;
          template = isacosy-template;
+         inherit datatypes definitions functions imports;
        }
        ''
          set -e
@@ -189,11 +181,10 @@ rec {
 
          cp "$template" ./temp
 
-         replace "DATATYPES"   "$datatypes"
-         replace "DEFINITIONS" "$definitions"
-         replace "FUNCTIONS"   "$functions"
-         replace "IMPORTS"     "$imports"
-         replace "UNDEFINED"   "$undefined"
+         doReplace "DATATYPES"   "$datatypes"
+         doReplace "DEFINITIONS" "$definitions"
+         doReplace "FUNCTIONS"   "$functions"
+         doReplace "IMPORTS"     "$imports"
 
          mv ./temp "$out"
        '';
