@@ -153,20 +153,27 @@ rec {
                              })))
                                known-theories;
 
-  runner-test = runCommand "runner-test"
-    {
-      # This sample contains addition, multiplication and exponentiation for
-      # natural numbers, which should be easy for IsaCoSy to find conjectures
-      # for. The fact that the indices approximate pi is purely a coincidence!
-      script = known-runners.ce9c9478."3"."14";
-    }
-    ''
-      set -e
-      echo "Running IsaCoSy on plus, times and exp" 1>&2
-      "$script" | tee >(cat 1>&2) | grep -c '=' || {
-        echo "No conjectures found" 1>&2
-        exit 1
-      }
-      mkdir "$out"
-    '';
+  runner-tests = mapAttrs (n: script: runCommand "${n}-runner-test"
+                                        { inherit n script; }
+                                        ''
+                                          set -e
+                                          echo "Exploring ${n} theory" 1>&2
+                                          "$script" | tee >(cat 1>&2) |
+                                                      grep -c '=' || {
+                                            echo "No conjectures found" 1>&2
+                                            exit 1
+                                          }
+                                          mkdir "$out"
+                                        '')
+                          {
+                            # Contains plus, times and exp for nats, which
+                            # should be easy for IsaCoSy to find conjectures
+                            # for. The fact that the indices approximate pi is
+                            # purely a coincidence!
+                            nat = known-runners.ce9c9478."3"."14";
+
+                            # Contains list reverse, which we can use to test
+                            # parameterised types.
+                            list = known-runners.ce9c9478."1"."22";
+                          };
 }
