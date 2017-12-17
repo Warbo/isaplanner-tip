@@ -1,5 +1,5 @@
 { allDrvsIn, attrsToDirs, eqsToJson, extractEqs, isaplanner, lib, mkBin,
-  runCommand, te-benchmark, withDeps, writeScript }:
+  replace, runCommand, te-benchmark, withDeps, writeScript }:
 
 with lib;
 rec {
@@ -152,29 +152,22 @@ rec {
     name,
   }: runCommand "isacosy-theory-${name}"
        {
-         template = isacosy-template;
          inherit datatypes definitions functions imports;
+         template    = isacosy-template;
+         buildInputs = [ replace ];
        }
        ''
          set -e
 
-         function pre {
-           grep -B 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | head -n-1
-         }
-
-         function post {
-           grep -A 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | tail -n+2
-         }
-
-         function replace {
+         function doReplace {
            [[ -f ./temp ]] || {
              echo "No ./temp file found, aborting" 1>&2
              exit 1
            }
-           echo "Setting '$1' to '$2'" 1>&2
-           pre  "$1" >  ./temp2
-           cat  "$2" >> ./temp2
-           post "$1" >> ./temp2
+
+           VAL=$(cat "$2")
+           replace "(*TEMPLATE_REPLACE_ME_WITH_$1*)" "$VAL" < ./temp > ./temp2
+
            rm ./temp
            mv ./temp2 ./temp
          }
