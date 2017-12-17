@@ -1,12 +1,12 @@
-{ allDrvsIn, attrsToDirs, eqsToJson, extractEqs, isaplanner, lib, mkBin,
-  replace, runCommand, te-benchmark, withDeps, writeScript }:
+{ allDrvsIn, attrsToDirs, bash, eqsToJson, extractEqs, isaplanner, lib, mkBin,
+  replace, runCommand, te-benchmark, withDeps, wrap, writeScript }:
 
 with lib;
 rec {
-  isacosy-nat-eqs = runCommand "isacosy-nat-eqs"
+  findNatEqs = runCommand "isacosy-nat-eqs"
     {
-      buildInputs = [ isacosy-untested ];
-      dir         = attrsToDirs {
+      raw = isacosy-untested;
+      dir = attrsToDirs {
         "ISACOSY.thy" = isacosy-theory-strings {
           name        = "nat-example";
           datatypes   = ''|> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}'';
@@ -16,7 +16,7 @@ rec {
             @{thms "Nat.times_nat.simps"}
           '';
           functions = ''
-            @{term "Groups.plus_class.plus :: nat => nat => nat"},
+            @{term "Groups.plus_class.plus   :: nat => nat => nat"},
             @{term "Groups.minus_class.minus :: nat => nat => nat"},
             @{term "Groups.times_class.times :: nat => nat => nat"}
           '';
@@ -34,13 +34,21 @@ rec {
         exit 1
       }
 
-      isacosy "ISACOSY.thy" | tee "$out"
+      OUTPUT=$("$raw" "ISACOSY.thy")
+
+      EQS=$(echo "$OUTPUT" | grep -c '=')
+      [[ "$EQS" -gt 2 ]] || {
+        echo "$OUTPUT" 1>&2
+        echo "Didn't find equations for +, - and *:" 1>&2
+        exit 1
+      }
+      mkdir "$out"
     '';
 
-  isacosy-untested = mkBin {
-    name   = "isacosy";
+  isacosy-untested = wrap {
+    name   = "isacosy-raw";
     paths  = [ isaplanner ];
-    vars   = { inherit eqsToJson extractEqs; };
+    vars   = { inherit extractEqs; };
     script = ''
       #!/usr/bin/env bash
       set -e
@@ -51,88 +59,25 @@ rec {
         exit 1
       }
       THY=$(basename "$1" .thy)
-      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs" | "$eqsToJson"
+      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs"
     '';
   };
 
-  isacosy = withDeps
-    (allDrvsIn {
-      natSampleFindsEqs = runCommand "nat-sample-finds-eqs"
-        {
-          result      = isacosy-nat-eqs;
-          buildInputs = [
-            isacosy-untested
-            te-benchmark.tools
-          ];
-        }
-        ''
-          set -e
-          EQS=$(grep -c '=' < "$result")
-          [[ "$EQS" -gt 2 ]] || {
-            echo "Didn't find equations for +, - and *:" 1>&2
-            cat "$result" 1>&2
-            exit 1
-          }
-          mkdir "$out"
-        '';
-    })
-    isacosy-untested;
-
-  isacosy-template = writeScript "isacosy-template" ''
-    theory ISACOSY
-
-    imports Main IsaP IsaCoSy Orderings Set Pure List (*TEMPLATE_REPLACE_ME_WITH_IMPORTS*)
-    begin
-
-    ML {*
-      (* Example: @{term "Groups.plus_class.plus :: nat => nat => nat"} *)
-      val functions = map Term.dest_Const [
-        (*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS*)
-      ];
-
-      (* Example: @{thms "Nat.plus_nat.simps"} *)
-      val def_thrms = [
-        (*TEMPLATE_REPLACE_ME_WITH_DEFINITIONS*)
-      ];
-
-      val fundefs = functions ~~ def_thrms;
-
-      (* Add variables for each datatype, e.g.
-           ThyConstraintParams.add_datatype' @{context} @{typ "nat"} *)
-      val cparams = ConstraintParams.empty
-                  |> ThyConstraintParams.add_eq @{context}
-                  (*TEMPLATE_REPLACE_ME_WITH_DATATYPES*)
-                  |> ConstraintParams.add_consts functions
-
-      (* Perform the exploration *)
-      val (_, nw_ctxt) = SynthInterface.thm_synth
-        SynthInterface.rippling_prover
-        SynthInterface.quickcheck
-        SynthInterface.wave_rule_config
-        SynthInterface.var_allowed_in_lhs
-        {max_size = 8, min_size = 3, max_vars = 3, max_nesting = SOME 2}
-        (Constant.mk "HOL.eq") (cparams, @{context});
-
-      (* Extract the results *)
-      val show           = Trm.pretty nw_ctxt;
-      val result_context = SynthOutput.Ctxt.get nw_ctxt;
-
-      val found_conjectures = map show
-                                  (SynthOutput.get_conjs result_context);
-
-      val found_theorems    = map (fn (_, thm) =>
-                                     show (Thm.full_prop_of thm))
-                                  (SynthOutput.get_thms result_context);
-
-      (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
-      PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
-        ([Pretty.str "BEGIN OUTPUT"] @
-         found_theorems              @
-         found_conjectures           @
-         [Pretty.str "END OUTPUT"])));
-    *}
-    end
-  '';
+  isacosy = withDeps (allDrvsIn { inherit findNatEqs; })
+                     (mkBin {
+                       name  = "isacosy";
+                       paths = [ bash ];
+                       vars  = {
+                         inherit eqsToJson;
+                         raw = isacosy-untested;
+                       };
+                       script = ''
+                         #!/usr/bin/env bash
+                         set -e
+                         set -o pipefail
+                         "$raw" "$@" | "$eqsToJson"
+                       '';
+                     });
 
   isacosy-theory-strings =
     { datatypes, definitions, functions, imports ? "A", name }:
@@ -153,7 +98,7 @@ rec {
   }: runCommand "isacosy-theory-${name}"
        {
          inherit datatypes definitions functions imports;
-         template    = isacosy-template;
+         template    = ./isacosy-template.thy;
          buildInputs = [ replace ];
        }
        ''
