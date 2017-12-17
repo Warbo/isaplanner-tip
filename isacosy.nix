@@ -7,64 +7,21 @@ rec {
     {
       buildInputs = [ isacosy-untested ];
       dir         = attrsToDirs {
-        "IsaCoSyNat.thy" = writeScript "IsaCoSyNat.thy" ''
-          theory IsaCoSyNat
-
-          imports Main IsaP IsaCoSy Orderings Set Pure List
-          begin
-
-          ML {*
-            val functions = map Term.dest_Const
-              [@{term "Groups.plus_class.plus :: nat => nat => nat"},
-               @{term "Groups.minus_class.minus :: nat => nat => nat"},
-               @{term "Groups.times_class.times :: nat => nat => nat"}];
-
-            val def_thrms = [@{thms "Nat.plus_nat.simps"},
-                             @{thms "Nat.minus_nat.simps"},
-                             @{thms "Nat.times_nat.simps"}];
-
-            val fundefs = functions ~~ def_thrms;
-
-            (* set constraint params *)
-            val cparams0 = ConstraintParams.empty
-              |> ThyConstraintParams.add_eq        @{context}
-              |> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}
-              |>    ConstraintParams.add_consts    functions;
-
-            (* Perform the exploration *)
-            val (_, nw_ctxt) = SynthInterface.thm_synth
-                               SynthInterface.rippling_prover
-                               SynthInterface.quickcheck
-                               SynthInterface.wave_rule_config
-                               SynthInterface.var_allowed_in_lhs
-                               { max_size = 8,
-                                 min_size = 3,
-                                 max_vars = 3,
-                                 max_nesting = SOME 2 }
-                               (Constant.mk "HOL.eq")
-                               (cparams0, @{context});
-
-            (* Extract the results *)
-            val result_context = SynthOutput.Ctxt.get nw_ctxt;
-
-            val found_conjectures = map (Trm.pretty nw_ctxt)
-                                        (SynthOutput.get_conjs result_context);
-
-            val found_theorems    = map (fn (_, thm) =>
-                                          Trm.pretty nw_ctxt
-                                            (Trm.change_frees_to_fresh_vars
-                                              (Thm.full_prop_of thm)))
-                                        (SynthOutput.get_thms result_context);
-
-            (* Write output, delimited to ease chopping off Isabelle noise *)
-            PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
-              ([Pretty.str "BEGIN OUTPUT"] @
-               found_theorems              @
-               found_conjectures           @
-               [Pretty.str "END OUTPUT"])));
-          *}
-          end
-        '';
+        "ISACOSY.thy" = isacosy-theory-strings {
+          datatypes   = ''|> ThyConstraintParams.add_datatype' @{context} @{typ "nat"}'';
+          definitions = ''
+            @{thms "Nat.plus_nat.simps"},
+            @{thms "Nat.minus_nat.simps"},
+            @{thms "Nat.times_nat.simps"}
+          '';
+          functions = ''
+            @{term "Groups.plus_class.plus :: nat => nat => nat"},
+            @{term "Groups.minus_class.minus :: nat => nat => nat"},
+            @{term "Groups.times_class.times :: nat => nat => nat"}
+          '';
+          imports   = "";
+          undefined = "";
+        };
       };
     }
     ''
@@ -77,7 +34,7 @@ rec {
         exit 1
       }
 
-      isacosy "IsaCoSyNat.thy" | tee "$out"
+      isacosy "ISACOSY.thy" | tee "$out"
     '';
 
   isacosy-untested = mkBin {
@@ -124,7 +81,7 @@ rec {
   isacosy-template = writeScript "isacosy-template" ''
     theory ISACOSY
 
-    imports Main IsaP IsaCoSy Orderings Set Pure List A
+    imports Main IsaP IsaCoSy Orderings Set Pure List (*TEMPLATE_REPLACE_ME_WITH_IMPORTS*)
     begin
 
     ML {*
@@ -183,41 +140,61 @@ rec {
     end
   '';
 
-  isacosy-theory = { datatypes, definitions, functions, name, undefined }:
-    runCommand "isacosy-theory-${name}"
-      {
-        inherit datatypes definitions functions undefined;
-        template = isacosy-template;
-      }
-      ''
-        set -e
+  isacosy-theory-strings =
+    { datatypes, definitions, functions, imports ? "A", name, undefined }:
+      isacosy-theory {
+        inherit name;
+        datatypes   = writeScript "datatypes"   (writeScript datatypes  );
+        definitions = writeScript "definitions" (writeScript definitions);
+        functions   = writeScript "functions"   (writeScript functions  );
+        imports     = writeScript "imports"     (writeScript imports    );
+        undefined   = writeScript "undefined"   (writeScript undefined  );
+      };
 
-        function pre {
-          grep -B 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | head -n-1
-        }
+  isacosy-theory = {
+    datatypes,
+    definitions,
+    functions,
+    imports ? (writeScript "imports" "A"),
+    name,
+    undefined
+  }: runCommand "isacosy-theory-${name}"
+       {
+         inherit datatypes definitions functions imports undefined;
+         template = isacosy-template;
+       }
+       ''
+         set -e
 
-        function post {
-          grep -A 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | tail -n+2
-        }
+         function pre {
+           grep -B 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | head -n-1
+         }
 
-        function replace {
-          [[ -f ./temp ]] || {
-            echo "No ./temp file found, aborting" 1>&2
-            exit 1
-          }
-          echo "Setting '$1' to '$2'" 1>&2
-          pre  "$1" >  ./temp2
-          cat  "$2" >> ./temp2
-          post "$1" >> ./temp2
-          rm ./temp
-          mv ./temp2 ./temp
-        }
+         function post {
+           grep -A 9999999 "TEMPLATE_REPLACE_ME_WITH_$1" < ./temp | tail -n+2
+         }
 
-        cp "$template" ./temp
-        replace "FUNCTIONS"   "$functions"
-        replace "DEFINITIONS" "$definitions"
-        replace "UNDEFINED"   "$undefined"
-        replace "DATATYPES"   "$datatypes"
-        mv ./temp "$out"
-      '';
+         function replace {
+           [[ -f ./temp ]] || {
+             echo "No ./temp file found, aborting" 1>&2
+             exit 1
+           }
+           echo "Setting '$1' to '$2'" 1>&2
+           pre  "$1" >  ./temp2
+           cat  "$2" >> ./temp2
+           post "$1" >> ./temp2
+           rm ./temp
+           mv ./temp2 ./temp
+         }
+
+         cp "$template" ./temp
+
+         replace "DATATYPES"   "$datatypes"
+         replace "DEFINITIONS" "$definitions"
+         replace "FUNCTIONS"   "$functions"
+         replace "IMPORTS"     "$imports"
+         replace "UNDEFINED"   "$undefined"
+
+         mv ./temp "$out"
+       '';
 }
