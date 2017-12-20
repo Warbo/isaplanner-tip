@@ -22,6 +22,6 @@ with rec {
                                                     else v);
 
   all = mapAttrs (_: pkgs: stripUnwanted (import ./. { inherit pkgs; }))
-                 { inherit stable unstable; };
+                 { inherit stable /* FIXME (issue dd19449ea2ab8317) unstable*/; };
 };
 onlyDrvs all

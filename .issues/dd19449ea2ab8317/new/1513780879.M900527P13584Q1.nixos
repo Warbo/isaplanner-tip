@@ -1,0 +1,161 @@
+From: Chris Warburton
+Date: Wed, 20 Dec 2017 14:37:42 +0000
+State: new
+Subject: Unstable broken due to missing 'weigh' dependency
+Message-Id: <dd19449ea2ab8317-0-artemis@nixos>
+
+From Hydra:
+
+  hydra-eval-jobs returned exit code 1:
+  error: anonymous function at
+  /nix/store/vv69fbh2a33fn1s73gizq3yhw2sxzl8n-nixedHsPkg/default.nix:1:1
+  called without required argument ‘weigh’, at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:56:12
+  (use ‘--show-trace’ to show detailed location information)
+
+From laptop:
+
+  $ nix-instantiate -E 'with import ./release.nix {}; unstable'
+  --show-trace
+  error: while evaluating the file
+  ‘/home/chris/Programming/Isabelle/IsaPlannerTip/release.nix’:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:27:1:
+  while evaluating ‘filterAttrs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:115:23, called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:37:
+  while evaluating ‘concatMap’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/lists.nix:79:18, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:18:
+  while evaluating anonymous function at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:29, called from
+  undefined position:
+  while evaluating anonymous function at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:53,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:62:
+  while evaluating the attribute ‘stable’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating ‘filterAttrs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:115:23, called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:37:
+  while evaluating ‘concatMap’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/lists.nix:79:18, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:18:
+  while evaluating anonymous function at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:29, called from
+  undefined position:
+  while evaluating anonymous function at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:53,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:62:
+  while evaluating the attribute ‘defs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating ‘filterAttrs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:115:23, called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:37:
+  while evaluating ‘concatMap’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/lists.nix:79:18, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:18:
+  while evaluating anonymous function at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:29, called from
+  undefined position:
+  while evaluating anonymous function at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:53,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:62:
+  while evaluating the attribute ‘haskell-te’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating ‘filterAttrs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:115:23, called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:37:
+  while evaluating ‘concatMap’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/lists.nix:79:18, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:18:
+  while evaluating anonymous function at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:29, called from
+  undefined position:
+  while evaluating anonymous function at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:53,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:62:
+  while evaluating the attribute ‘haskell-te’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating ‘filterAttrs’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:115:23, called from
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:37:
+  while evaluating ‘concatMap’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/lists.nix:79:18, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:18:
+  while evaluating anonymous function at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:29, called from
+  undefined position:
+  while evaluating anonymous function at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:8:53,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:116:62:
+  while evaluating the attribute ‘ML4HSFE’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘onlyDrvs’ at
+  /home/chris/Programming/Isabelle/IsaPlannerTip/release.nix:4:14,
+  called from /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating the attribute ‘ML4HSFE’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:44:
+  while evaluating ‘g’ at
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:266:19, called from
+  /nix/store/9g590dxx3xmsafbac07kq1hcjrqdxj78-nixpkgs-16.09-src/lib/attrsets.nix:199:52:
+  while evaluating the attribute ‘ML4HSFE’ at
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/defs.nix:83:3:
+  while evaluating anonymous function at
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/callPackage.nix:6:4,
+  called from
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/defs.nix:83:27:
+  while evaluating ‘callPackageWith’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:93:35, called
+  from /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/callPackage.nix:8:14:
+  while evaluating ‘makeOverridable’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:54:24, called
+  from /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:97:8:
+  while evaluating anonymous function at
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/ML4HSFE.nix:2:1, called
+  from /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:56:12:
+  while evaluating anonymous function at
+  /nix/store/32apb7hx70wf679yb4m6225blq8hy0jz-nix-config-aeab724-src/custom/local/withDeps.nix:8:7,
+  called from
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/ML4HSFE.nix:25:1:
+  while evaluating ‘overrideDerivation’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:36:29, called
+  from
+  /nix/store/32apb7hx70wf679yb4m6225blq8hy0jz-nix-config-aeab724-src/custom/local/withDeps.nix:8:12:
+  while evaluating ‘addPassthru’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:117:22, called
+  from /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:39:8:
+  while evaluating the attribute ‘ML4HSFE’ at
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/hsOverride.nix:39:5:
+  while evaluating ‘callPackage’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/pkgs/development/haskell-modules/default.nix:47:26,
+  called from
+  /nix/store/ncfaw8r574kj6mv9fpr4lx5kl4fl3g9j-haskell-te-7a4cc07/nix-support/hsOverride.nix:39:15:
+  while evaluating ‘callPackageWithScope’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/pkgs/development/haskell-modules/default.nix:41:42,
+  called from
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/pkgs/development/haskell-modules/default.nix:47:32:
+  while evaluating ‘callPackageWith’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:93:35, called
+  from
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/pkgs/development/haskell-modules/default.nix:41:49:
+  while evaluating ‘makeOverridable’ at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:54:24, called
+  from /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:97:8:
+  anonymous function at /nix/store/73bjkmyh79743zhj64qsxl50nxl3pf9i-nixedHsPkg/default.nix:1:1 called
+  without required argument ‘weigh’, at
+  /nix/store/hh0icli1w1m8rpgsj16256xwpy4iwq15-nixpkgs-16.03-src/lib/customisation.nix:56:12
