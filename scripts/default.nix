@@ -1,4 +1,5 @@
-{ bash, haskell, haskellPackages, jq, mkBin, python, runCommand, withDeps, wrap }:
+{ bash, haskell, haskellPackages, jq, mkBin, python, runCommand, withDeps,
+  wrap }:
 
 rec {
   eqsToJson = wrap {
@@ -78,4 +79,13 @@ rec {
         '')
     ]
     isabelleTypeArgs-untested;
+
+  stripConstructorsDestructors = { te-benchmark, te-benchmark-src }: wrap {
+    name  = "stripConstructorsDestructors";
+    file  = ./stripConstructorsDestructors.rkt;
+    paths = [ te-benchmark.env ];
+    vars  = te-benchmark.cache // {
+      PLTCOLLECTS = ":${te-benchmark-src}/scripts";
+    };
+  };
 }
