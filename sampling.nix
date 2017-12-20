@@ -1,6 +1,6 @@
-{ attrsToDirs, bash, get-haskell-te, haskellPackages, isabelleTypeArgs, isacosy,
-  isacosy-theory, jq, lib, mkBin, runCommand, tebenchmark-data,
-  tebenchmark-isabelle, withDeps, wrap, writeScript }:
+{ attrsToDirs, bash, fail, get-haskell-te, handleConstructors, haskellPackages,
+  isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, mkBin, runCommand,
+  tebenchmark-data, tebenchmark-isabelle, withDeps, wrap, writeScript }:
 
 with lib;
 rec {
@@ -133,8 +133,16 @@ rec {
   known-runners = mapAttrs (rev: mapAttrs (size: mapAttrs (rep: theory:
                              wrap {
                                name   = "isacosy-runner-${rev}-${size}-${rep}";
-                               paths  = [ bash isacosy ];
+                               paths  = [ bash fail isacosy ];
                                vars   = {
+                                 inherit handleConstructors;
+                                 SAMPLE     = concatStringsSep "\n" (attrByPath
+                                                [ rev size rep ]
+                                                (abort (toJSON {
+                                                  inherit rep rev size;
+                                                  err = "Sample not found";
+                                                }))
+                                                known-samples);
                                  workingDir = attrsToDirs {
                                    "A.thy"       = tebenchmark-isabelle;
                                    "ISACOSY.thy" = theory;
@@ -143,28 +151,35 @@ rec {
                                script = ''
                                  #!/usr/bin/env bash
                                  set -e
-                                 cd "$workingDir" || {
-                                   echo "Couldn't cd to '$workingDir'" 1>&2
-                                   exit 1
-                                 }
-                                 isacosy ISACOSY.thy
+                                 set -o pipefail
+                                 cd "$workingDir" ||
+                                   fail "Couldn't cd to '$workingDir'"
+
+                                 isacosy ISACOSY.thy | "$handleConstructors"
                                '';
                              })))
-                               known-theories;
+                           known-theories;
 
-  runner-tests = mapAttrs (n: script: runCommand "${n}-runner-test"
+  runner-tests = mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
                             {
                               inherit n script;
-                              buildInputs = [ jq ];
+                              c           = toString count;
+                              buildInputs = [ fail jq ];
                             }
                             ''
                               set -e
-                              echo "Exploring ${n} theory" 1>&2
-                              "$script" | tee >(cat 1>&2) |
-                                          jq -e 'length | . > 0' || {
-                                echo "No conjectures found" 1>&2
-                                exit 1
-                              }
+                              echo "Exploring $n theory" 1>&2
+                              OUTPUT=$("$script" | tee >(cat 1>&2))
+
+                              if [[ -n "$c" ]]
+                              then
+                                echo "$OUTPUT" |
+                                  jq -e 'length | tostring | . == env["c"]' ||
+                                    fail "Should have found $c conjectures"
+                              else
+                                echo "$OUTPUT" | jq -e 'length | . >0 ' ||
+                                  fail "No conjectures found"
+                              fi
                               mkdir "$out"
                             '')
                           {
@@ -172,10 +187,19 @@ rec {
                             # should be easy for IsaCoSy to find conjectures
                             # for. The fact that the indices approximate pi is
                             # purely a coincidence!
-                            nat = known-runners.ce9c9478."3"."14";
+                            nat = {
+                              count  = "";  # Find at least one conjecture
+                              script = known-runners.ce9c9478."3"."14";
+                            };
 
                             # Contains list reverse, which we can use to test
                             # parameterised types.
-                            list = known-runners.ce9c9478."1"."22";
+                            list = {
+                              # We should only find 'rev (rev x) ~= x', since
+                              # anything else requires constructors, which we
+                              # should be stripping out
+                              count  = 1;
+                              script = known-runners.ce9c9478."1"."22";
+                            };
                           };
 }

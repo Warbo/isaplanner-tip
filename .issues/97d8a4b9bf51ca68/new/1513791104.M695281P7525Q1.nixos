@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 20 Dec 2017 17:31:23 +0000
+Subject: Re: Make standalone equation-filtering command
+Message-Id: <97d8a4b9bf51ca68-cca82f226abdab90-artemis@nixos>
+References: <97d8a4b9bf51ca68-0-artemis@nixos>
+In-Reply-To: <97d8a4b9bf51ca68-0-artemis@nixos>
+
+This can be found as ./scripts/stripConstructorsDestructors.rkt

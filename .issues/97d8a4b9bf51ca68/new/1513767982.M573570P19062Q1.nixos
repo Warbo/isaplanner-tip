@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 20 Dec 2017 11:01:32 +0000
-State: new
+State: resolved
 Subject: Make standalone equation-filtering command
 Message-Id: <97d8a4b9bf51ca68-0-artemis@nixos>
+resolution: fixed
 
 IsaCoSy includes constructors, even if they're not in the sample. This
 will skew its precision/recall scores, so we should take this into

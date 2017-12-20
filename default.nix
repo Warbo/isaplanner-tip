@@ -19,12 +19,14 @@ rec {
       inherit (defs.haskell-te          ) get-haskell-te;
       inherit (defs.isacosy             ) isacosy isacosy-theory;
       inherit (defs.scripts             ) isabelleTypeArgs;
-      inherit (defs.tebenchmark-isabelle) tebenchmark-data tebenchmark-isabelle;
+      inherit (defs.tebenchmark-isabelle) handleConstructors tebenchmark-data
+                                          tebenchmark-isabelle;
     };
     scripts              = callPackage ./scripts {};
     tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
       inherit (defs.isaplanner) isaplanner;
-      inherit (defs.scripts   ) getBenchmarkTypes getPreprocessed;
+      inherit (defs.scripts   ) getBenchmarkTypes getPreprocessed
+                                stripConstructorsDestructors;
     };
   };
 }
