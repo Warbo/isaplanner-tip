@@ -14,7 +14,9 @@
 ;; FIXME: This is redundant once we're on newer tebenchmarks which exposes it
 (require/expose lib/tip (toplevel-function-names-in))
 
-(require/expose lib/conjectures (parse-json-equation parse-json-equations))
+(require/expose lib/conjectures (equation-to-jsexpr
+                                 parse-json-equation
+                                 parse-json-equations))
 
 (define given-eqs
   (parse-json-equations (port->string)))
@@ -88,7 +90,49 @@
 (define normalised-eqs
   (map normalise-expr given-eqs))
 
-;; FIXME: Also strip out any equations where both sides turn out to be the same
-;; after normalising constructors/destructors
+(define (all-names-in-syms expr)
+  (match expr
+    [(list '~=    l r)    (append (all-names-in-syms l) (all-names-in-syms r))]
+    [(list 'apply l r)    (append (all-names-in-syms l) (all-names-in-syms r))]
+    [(list 'constant n _) (list n)]
+    [(list 'variable _ _) '()]
+    [(cons l r)           (append (all-names-in-syms l) (all-names-in-syms r))]
+    [_                    '()]))
 
-(write normalised-eqs)
+(define (all-names-in expr)
+  (map symbol->string (all-names-in-syms expr)))
+
+(define (equation-allowed eq)
+  (subset? (all-names-in eq) allowed-names))
+
+;; Remove equations involving non-sampled names; in practice, this will be
+;; constructors whose wrappers aren't in the sample.
+(define allowed-equations
+  (filter equation-allowed normalised-eqs))
+
+;; Whether or not the sides of an equation are equivalent. This can happen if
+;; IsaCoSy spots that a constructor function is equal to its corresponding
+;; constructor. Since this is an artefact of our benchmarking methodology, we
+;; strip these out to avoid penalising IsaCoSy's precision and recall.
+(define (sides-distinct? eq)
+  (match eq
+    [(list '~= lhs rhs) (exprs-distinct? lhs rhs)]))
+
+(define (exprs-distinct? x y)
+  (match (list x y)
+    [(list (list 'constant n1 _)
+           (list 'constant n2 _)) #f]
+    [(list (list 'variable i1 _)
+           (list 'variable i2 _)) #f]
+    [(list (list 'apply l1 r1)
+           (list 'apply l2 r2))   (or (exprs-distinct? l1 l2)
+                                      (exprs-distinct? r1 r2))]
+    [(list (cons a1 b1)
+           (cons a2 b2))          (or (exprs-distinct? a1 a2)
+                                      (exprs-distinct? b1 b2))]
+    [_                            (not (equal? x y))]))
+
+(define distinct-eqs
+  (filter sides-distinct? allowed-equations))
+
+(write-json (map equation-to-jsexpr distinct-eqs))
