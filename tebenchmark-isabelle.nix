@@ -1,7 +1,7 @@
 # TEBenchmark converted to an Isabelle theory
 { bash, callPackage, fetchFromGitHub, fetchgit, gcc, getBenchmarkTypes,
   getPreprocessed, haskell, isaplanner, jq, perl, runCommand, stdenv,
-  writeScript }:
+  stripConstructorsDestructors, writeScript }:
 
 rec {
   te-benchmark-src = fetchgit {
@@ -106,6 +106,11 @@ rec {
     };
   };
 
-  # namesFile contains newline-separated names to include in a sample
-  tebenchmark-sample = { namesFile }: abort "FIXME";
+  # IsaCoSy will include constructors in its exploration, even if they're not
+  # in the sample. This artificially lowers the precision, which is unfair. To
+  # counteract this, the following script can be used to discard problematic
+  # equations before they reach the precision/recall stage.
+  handleConstructors = stripConstructorsDestructors {
+    inherit te-benchmark te-benchmark-src;
+  };
 }
