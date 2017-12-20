@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Wed, 20 Dec 2017 11:00:53 +0000
+Subject: Re: Put sampled names into IsaCoSy signature
+Message-Id: <b3d4c59d4490e2d8-af1d2c9ebc7a5229-artemis@nixos>
+References: <b3d4c59d4490e2d8-0-artemis@nixos>
+In-Reply-To: <b3d4c59d4490e2d8-0-artemis@nixos>
+
+Filling in the gaps seems to work, tested on a sample of nat functions
+(monomorphic) and list functions (polymorphic). Both find equations.

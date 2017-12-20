@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 01 Dec 2017 19:42:19 +0000
-State: new
+State: resolved
 Subject: Put sampled names into IsaCoSy signature
 Message-Id: <b3d4c59d4490e2d8-0-artemis@nixos>
+resolution: fixed
 
 Fill in the gaps in isacosy-template.
 

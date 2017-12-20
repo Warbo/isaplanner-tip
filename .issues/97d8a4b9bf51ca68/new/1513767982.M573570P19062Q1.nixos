@@ -1,0 +1,20 @@
+From: Chris Warburton
+Date: Wed, 20 Dec 2017 11:01:32 +0000
+State: new
+Subject: Make standalone equation-filtering command
+Message-Id: <97d8a4b9bf51ca68-0-artemis@nixos>
+
+IsaCoSy includes constructors, even if they're not in the sample. This
+will skew its precision/recall scores, so we should take this into
+account: look through all of the resulting equations and, if they
+contain any constants which don't appear in the sample, then either:
+
+ - If the sample contains "constructor-" or "destructor-" names
+   (possibly encoded), then see if these unknown names match those
+   sampled names, modulo the "constructor-" or "destructor-" prefix. If
+   so, replace these unknown names with the corresponding sampled ones.
+ - Otherwise, drop that equation.
+
+IsaCoSy output should be piped into this filter when benchmarking, but
+it shouldn't be hard-coded into the isacosy command itself, since it
+would be nice to run that command and see all of the equations.

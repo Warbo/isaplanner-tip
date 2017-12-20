@@ -49,7 +49,7 @@ instance Show (Expr String) where
 main = B.interact (encode . stringToEqs . B.unpack)
 
 stringToEqs :: String -> [Eq Int]
-stringToEqs = map stringToEq . lines
+stringToEqs = map stringToEq . filter (/= "") . lines
 
 stringToEq :: String -> Eq Int
 stringToEq s = case (parse parseExpr "lhs" lhs, parse parseExpr "rhs" rhs) of

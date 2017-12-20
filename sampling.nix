@@ -153,17 +153,20 @@ rec {
                                known-theories;
 
   runner-tests = mapAttrs (n: script: runCommand "${n}-runner-test"
-                                        { inherit n script; }
-                                        ''
-                                          set -e
-                                          echo "Exploring ${n} theory" 1>&2
-                                          "$script" | tee >(cat 1>&2) |
-                                                      grep -c '=' || {
-                                            echo "No conjectures found" 1>&2
-                                            exit 1
-                                          }
-                                          mkdir "$out"
-                                        '')
+                            {
+                              inherit n script;
+                              buildInputs = [ jq ];
+                            }
+                            ''
+                              set -e
+                              echo "Exploring ${n} theory" 1>&2
+                              "$script" | tee >(cat 1>&2) |
+                                          jq -e 'length | . > 0' || {
+                                echo "No conjectures found" 1>&2
+                                exit 1
+                              }
+                              mkdir "$out"
+                            '')
                           {
                             # Contains plus, times and exp for nats, which
                             # should be easy for IsaCoSy to find conjectures
