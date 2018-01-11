@@ -136,6 +136,7 @@ rec {
                                paths  = [ bash fail isacosy ];
                                vars   = {
                                  inherit handleConstructors;
+                                 SHOW_RAW   = "true";
                                  SAMPLE     = concatStringsSep "\n" (attrByPath
                                                 [ rev size rep ]
                                                 (abort (toJSON {
@@ -160,46 +161,51 @@ rec {
                              })))
                            known-theories;
 
-  runner-tests = mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
-                            {
-                              inherit n script;
-                              c           = toString count;
-                              buildInputs = [ fail jq ];
-                            }
-                            ''
-                              set -e
-                              echo "Exploring $n theory" 1>&2
-                              OUTPUT=$("$script" | tee >(cat 1>&2))
+  runner-tests =
+    with mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
+                    {
+                      inherit n script;
+                      c           = toString count;
+                      buildInputs = [ fail jq ];
+                    }
+                    ''
+                      set -e
+                      echo "Exploring $n theory" 1>&2
+                      OUTPUT=$("$script" | tee >(cat 1>&2))
 
-                              if [[ -n "$c" ]]
-                              then
-                                echo "$OUTPUT" |
-                                  jq -e 'length | tostring | . == env["c"]' ||
-                                    fail "Should have found $c conjectures"
-                              else
-                                echo "$OUTPUT" | jq -e 'length | . >0 ' ||
-                                  fail "No conjectures found"
-                              fi
-                              mkdir "$out"
-                            '')
-                          {
-                            # Contains plus, times and exp for nats, which
-                            # should be easy for IsaCoSy to find conjectures
-                            # for. The fact that the indices approximate pi is
-                            # purely a coincidence!
-                            nat = {
-                              count  = "";  # Find at least one conjecture
-                              script = known-runners.ce9c9478."3"."14";
-                            };
+                      if [[ -n "$c" ]]
+                      then
+                        echo "$OUTPUT" |
+                          jq -e 'length | tostring | . == env["c"]' ||
+                            fail "Should have found $c conjectures"
+                      else
+                        echo "$OUTPUT" | jq -e 'length | . >0 ' ||
+                          fail "No conjectures found"
+                      fi
+                      mkdir "$out"
+                    '')
+                  {
+                    # Contains plus, times and exp for nats, which
+                    # should be easy for IsaCoSy to find conjectures
+                    # for. The fact that the indices approximate pi is
+                    # purely a coincidence!
+                    nat = {
+                      count  = "";  # Find at least one conjecture
+                      script = known-runners.ce9c9478."3"."14";
+                    };
 
-                            # Contains list reverse, which we can use to test
-                            # parameterised types.
-                            list = {
-                              # We should only find 'rev (rev x) ~= x', since
-                              # anything else requires constructors, which we
-                              # should be stripping out
-                              count  = 1;
-                              script = known-runners.ce9c9478."1"."22";
-                            };
-                          };
+                    # Contains list reverse, which we can use to test
+                    # parameterised types.
+                    list = {
+                      # We should only find 'rev (rev x) ~= x', since
+                      # anything else requires constructors, which we
+                      # should be stripping out
+                      count  = 1;
+                      script = known-runners.ce9c9478."1"."22";
+                    };
+                  };
+    # Try to avoid running multiple isacosy processes in parallel, since they're
+    # resource-hungry and include a timeout. We make nat run first, since it's
+    # monomorphic and therefore more 'basic' than the polymorphic list test.
+    withDeps [ nat ] list;
 }

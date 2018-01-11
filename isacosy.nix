@@ -58,8 +58,19 @@ rec {
         echo "No file given, aborting" 1>&2
         exit 1
       }
+
+      function maybeShowRaw {
+        if [[ -n "$SHOW_RAW" ]]
+        then
+          echo "Sending raw equations to stderr" 1>&2
+          tee >(cat 1>&2)
+        else
+          cat
+        fi
+      }
+
       THY=$(basename "$1" .thy)
-      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs"
+      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs" | maybeShowRaw
     '';
   };
 
@@ -75,6 +86,7 @@ rec {
                          #!/usr/bin/env bash
                          set -e
                          set -o pipefail
+
                          "$raw" "$@" | "$eqsToJson"
                        '';
                      });
