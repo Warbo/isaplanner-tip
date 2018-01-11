@@ -6,8 +6,8 @@
 rec {
   te-benchmark-src = fetchgit {
     url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
-    rev    = "ccf838d";
-    sha256 = "1isbzv29903fh3m1sikj6gyaylq6wcw042wxna1g6k8wnlac9xjb";
+    rev    = "481b722";
+    sha256 = "0jl7f5s983sxz9g58pf80iywzkcn74m1ns2w21f3x81xpkcqspaw";
   };
 
   te-benchmark = callPackage "${te-benchmark-src}" {

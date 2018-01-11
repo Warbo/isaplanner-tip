@@ -1,0 +1,96 @@
+From: Chris Warburton
+Date: Thu, 21 Dec 2017 18:20:59 +0000
+State: new
+Subject: Remove IsaCoSy's builtin-in timeout
+Message-Id: <abd2134c072100c9-0-artemis@nixos>
+
+Not sure where this is coming from, but we don't want it to bail out
+early. Here's an example output, caused by the 'nat' and 'list' tests
+running simultaneously:
+
+Exploring list theory
+Sending raw equations to stderr
+Exploring nat theory
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### Using bulky 64bit version of Poly/ML instead
+No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/3cgfvw3lqas8v9mx70cmjakafcvxpff3-polyml-5.5.2/bin/libsha1.so> : /nix/store/3cgfvw3lqas8v9mx70cmjakafcvxpff3-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/3cgfvw3lqas8v9mx70cmjakafcvxpff3-polyml-5.5.2/bin/libsha1.so> : /nix/store/3cgfvw3lqas8v9mx70cmjakafcvxpff3-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 355.109s elapsed time, 217.558s cpu time, 112.766s GC time
+Loading theory "ISACOSY"
+Testing conjecture with Quickcheck-exhaustive...
+Testing conjecture with Quickcheck-exhaustive...
+Testing conjecture with Quickcheck-exhaustive...
+Testing conjecture with Quickcheck-exhaustive...
+Synth Conjecture:
+"global697361706c616e6e65722f70726f705f35322e736d7432726576
+  Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c =
+ Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c"
+Exception trace - Timeout
+List.mapPartial(2)()
+DB_SynthInterface.thm_synth(11)synth_one_size(3)
+DB_SynthInterface.thm_synth(11)
+<top level>
+CODETREE().genCode(3)(1)
+COMPILER_BODY().baseCompiler(3)executeCode(1)
+val functions =
+   [(A.global697361706c616e6e65722f70726f705f35322e736d7432726576,
+     "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374")]:
+   (string * typ) list
+val def_thrms =
+   [["global697361706c616e6e65722f70726f705f35322e736d7432726576
+       Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c =
+      Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c",
+     "global697361706c616e6e65722f70726f705f35322e736d7432726576
+       (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+         ?local3.0 ?local4.0) =
+      global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+       (global697361706c616e6e65722f70726f705f35322e736d7432726576
+         ?local4.0)
+       (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+         ?local3.0
+         Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c)"]]:
+   thm list list
+val fundefs =
+   [((A.global697361706c616e6e65722f70726f705f35322e736d7432726576,
+      "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+       => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+     ["global697361706c616e6e65722f70726f705f35322e736d7432726576
+        Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c =
+       Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c",
+      "global697361706c616e6e65722f70726f705f35322e736d7432726576
+        (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+          ?local3.0 ?local4.0) =
+       global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+        (global697361706c616e6e65722f70726f705f35322e736d7432726576
+          ?local4.0)
+        (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+          ?local3.0
+          Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c)"])]:
+   ((string * typ) * thm list) list
+Exception trace - Timeout
+
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 50.861s elapsed time, 13.157s cpu time, 5.280s GC time
+*** Timeout
+***
+*** At command "ML" (line 6 of "/nix/store/hvhp7scm161034rcpvlwy6h8nj1dl084-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
+
+[]builder for ‘/nix/store/spq7wv63vd67zf1wk2czc066fr2qmf19-list-runner-test.drv’ failed with exit code 1
+cannot build derivation ‘/nix/store/d5wzdar8y4qa6fdqa00i0azmwq3knl15-python-2.7.12-env.drv’: 1 dependencies couldn't be built

@@ -1,0 +1,22 @@
+From: Chris Warburton
+Date: Thu, 21 Dec 2017 19:00:39 +0000
+Subject: Re: Remove IsaCoSy's builtin-in timeout
+Message-Id: <abd2134c072100c9-a1936997a6815da3-artemis@nixos>
+References: <abd2134c072100c9-0-artemis@nixos>
+In-Reply-To: <abd2134c072100c9-0-artemis@nixos>
+
+Looking for "timeout" in the isaplanner output directory, we also find
+"timelimit" and some potential other avenues.
+
+It looks like isabelle_dir/src/Pure/Concurrent/time_limit.ML defines a
+"timeLimit" function which throws a "TimeOut" exception. This exception
+gives rise to the "Timeout" error message, via a mapping in
+isabelle_dir/src/Pure/Isar/runtime.ML
+
+It looks lime some external tools are time-limited (e.g. Sledgehammer,
+SMT and ATP solvers, E, Nitpick, quickcheck, etc.).
+
+It looks like quickcheck might be of particular relevance, given that it
+litters the IsaCoSy output. However, it looks like it's being invoked by
+isabelle_dir/contrib/IsaPlanner/src/cinfos/counterex_cinfo.ML which is
+handling the exception (returning a "NONE" result).
