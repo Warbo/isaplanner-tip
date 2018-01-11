@@ -2,13 +2,19 @@
   isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, mkBin, runCommand,
   tebenchmark-data, tebenchmark-isabelle, withDeps, wrap, writeScript }:
 
+with builtins;
 with lib;
 rec {
   choose_sample = { size, rep }: runCommand "choose_sample-${size}-${rep}"
-  {}
-  ''
-    FIXME: choose_sample > "$out"
-  '';
+    {
+      REP         = toString rep;
+      SIZE        = toString size;
+      buildInputs = [ te-benchmark.tools ];
+    }
+    ''
+      set -e
+      choose_sample "$SIZE" "$REP" > "$out"
+    '';
 
   # Using the same samples as haskell-te lets us directly compare Isabelle and
   # Haskell results. Outputs '{"1": {"2":["foo"], ...}, ...}' where "1" is a
