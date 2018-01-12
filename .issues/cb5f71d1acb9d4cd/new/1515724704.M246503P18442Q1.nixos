@@ -1,0 +1,38 @@
+From: Chris Warburton
+Date: Fri, 12 Jan 2018 02:29:50 +0000
+State: new
+Subject: Stop UNDEF exceptions
+Message-Id: <cb5f71d1acb9d4cd-0-artemis@nixos>
+
+We're seeing output like this from Isabelle:
+
+> ...
+>    Global437573746f6d5a =
+>   Global437573746f6d53 Global437573746f6d5a,
+>   global70726f642f70726f705f33332e736d74326d756c74 Global437573746f6d5a
+>    Global437573746f6d5a =
+>   Global437573746f6d5a,
+>   global697361706c616e6e65722f70726f705f30322e736d7432706c7573
+>    Global437573746f6d5a Global437573746f6d5a =
+>   Global437573746f6d5a,
+>   END OUTPUT]:
+>    string
+> Exception trace - exception UNDEF raised (line 453 of "Isar/toplevel.ML")
+> Exception trace - exception UNDEF raised (line 412 of "Isar/toplevel.ML")
+> Exception trace - exception UNDEF raised (line 393 of "Isar/toplevel.ML")
+> ### theory "ISACOSY"
+> ### 571.591s elapsed time, 548.379s cpu time, 64.739s GC time
+> val it = (): unit
+> ML>
+
+Annoyingly, this is spat to stdout rather than stderr. However, we're
+still getting equations produced. We're not managing to parse anything
+though, which may be due to the Isabelle process exiting with a failure
+code, and 'pipefail' causing the whole pipeline to abort.
+
+I'll try ignoring Isabelle errors for now, but it's better in the long
+term to solve this.
+
+This may be what the constr_trms stuff is for in commit 0b47d7cb3db4,
+since that looks like it's saying 'ignore 'head([])', which we might
+otherwise imagine would cause an 'UNDEF' exception.

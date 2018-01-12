@@ -7,11 +7,6 @@
 (require json)
 (require racket/hash)
 (require racket/set)
-(require rackunit)
-(require syntax/macro-testing)
-
-;; FIXME: This is redundant once we're on newer tebenchmarks which exposes it
-(require/expose lib/tip (toplevel-function-names-in))
 
 ;; Test data
 
