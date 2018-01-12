@@ -1,36 +1,78 @@
-# Write the benchmarking functions here.
-# See "Writing benchmarks" in the asv docs for more information.
+#!/usr/bin/env python
 
+from os           import getenv, getpgid, killpg, setsid
+from json         import loads
+from signal       import SIGTERM
+from subprocess32 import check_output, PIPE, Popen, TimeoutExpired
+from timeit       import default_timer
 
-class TimeSuite:
-    """
-    An example benchmark that times the performance of various kinds
-    of iterating over dictionaries in Python.
-    """
-    def setup(self):
-        self.d = {}
-        for x in range(500):
-            self.d[x] = None
+missing = [var for var in ['runners', 'timeout_secs'] if not getenv(var)]
+if missing:
+    raise Exception('Missing environment variables: ' + repr(missing))
+del(missing)
 
-    def time_keys(self):
-        for key in self.d.keys():
-            pass
+timeout_secs = int(getenv('timeout_secs'))
 
-    def time_iterkeys(self):
-        for key in self.d.iterkeys():
-            pass
+def run(cmd, stdin=None):
+    proc = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE, stderr=PIPE)
+    (stdout, stderr) = proc.communicate(input=stdin)
+    return {'stdout': stdout, 'stderr': stderr}
 
-    def time_range(self):
-        d = self.d
-        for key in range(500):
-            x = d[key]
+def run_timed(cmd, stdin=None, timeout=None):
+    '''Run the given command 'cmd', with optional stdin, and return its stdout,
+    stderr and the time it took to run (in seconds). Also report whether or not
+    the command was killed by going over the (optional) timeout.'''
+    start = default_timer()
+    proc  = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE, stderr=PIPE,
+                  preexec_fn=setsid)
 
-    def time_xrange(self):
-        d = self.d
-        for key in xrange(500):
-            x = d[key]
+    try:
+        (stdout, stderr) = proc.communicate(input=stdin, timeout=timeout)
+        result = {'stdout': stdout, 'stderr': stderr, 'killed': False}
+    except TimeoutExpired:
+        # Kill the process group, which will include all children
+        killpg(getpgid(proc.pid), SIGTERM)
+        result = {'stdout': None, 'stderr': None, 'killed': True}
 
+    proc.wait()  # Reaps zombies
 
-class MemSuite:
-    def mem_list(self):
-        return [0] * 256
+    end = default_timer()
+    result['time'] = end - start
+    return result
+
+def setup_cache():
+    cache = loads(getenv('runners'))
+    for size in cache:
+        for rep in cache[size]:
+            rep = int(rep)
+            runner   = cache[size][rep]['runner']
+            result   = run_timed(runner, timeout=timeout_secs)
+            analysis = {'analysed': False}
+            if not result['killed']:
+                try:
+                    analysis = run([cache[size][rep]['analyser']],
+                                   stdin=result['stdout']);
+                    analysis['analysed'] = True
+                except:
+                    analysis = {'analysed':       False,
+                                'analysis error': repr(exc_info())}
+
+                if analysis['analysed']:
+                    try:
+                        parsed             = loads(analysis['stdout'])
+                        parsed['analysed'] = True
+                        analysis           = parsed
+                    except:
+                        analysis['analysed']       = False,
+                        analysis['analysis error'] = repr(exc_info()),
+            cache[size][rep]['result']   = result
+            cache[size][rep]['analysis'] = analysis
+
+    return cache
+setup_cache.timeout = max(3600,
+                          timeout_secs                  * \
+                          len(loads(getenv('runners'))) * \
+                          len(loads(getenv('runners')).popitem()[1]))
+
+def track_data(cache, _):
+    return cache
