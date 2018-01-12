@@ -45,9 +45,9 @@ rec {
         echo "$nixExpr" > "$out/default.nix"
       '';
 
-  isacosy-from-sample = { names, rep, size }:
+  isacosy-from-sample = { label, names }:
     with rec {
-      datatypes = runCommand "datatypes-${size}-${rep}"
+      datatypes = runCommand "datatypes-${label}"
         {
           inherit isabelleTypeArgs;
           buildInputs = [ jq ];
@@ -85,11 +85,11 @@ rec {
           done > "$out"
         '';
 
-      definitions = writeScript "definitions-${size}-${rep}"
+      definitions = writeScript "definitions-${label}"
         (concatStringsSep ", " (map (name: ''@{thms "A.${name}.simps"}'')
                                     names));
 
-      functions = runCommand "functions-${size}-${rep}"
+      functions = runCommand "functions-${label}"
         {
           buildInputs = [ jq ];
           data        = tebenchmark-data;
@@ -120,7 +120,7 @@ rec {
     };
     isacosy-theory {
       inherit datatypes definitions functions;
-      name = "sample-${size}-${rep}";
+      name = "sample-${label}";
     };
 
   known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
@@ -132,40 +132,36 @@ rec {
     };
   };
 
-  known-theories = mapAttrs (_: mapAttrs (size: mapAttrs (rep: names:
-                              isacosy-from-sample { inherit names size rep; })))
-                            known-samples;
+  runnerFor = { label, names }: wrap {
+    name  = "isacosy-runner-${label}";
+    paths = [ bash fail isacosy ];
+    vars  = {
+      inherit handleConstructors;
+      SHOW_RAW   = "true";
+      SAMPLE     = concatStringsSep "\n" names;
+      workingDir = attrsToDirs {
+        "A.thy"       = tebenchmark-isabelle;
+        "ISACOSY.thy" = isacosy-from-sample { inherit label names; };
+      };
+    };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      set -o pipefail
+      cd "$workingDir" || fail "Couldn't cd to '$workingDir'"
 
-  known-runners = mapAttrs (rev: mapAttrs (size: mapAttrs (rep: theory:
-                             wrap {
-                               name   = "isacosy-runner-${rev}-${size}-${rep}";
-                               paths  = [ bash fail isacosy ];
-                               vars   = {
-                                 inherit handleConstructors;
-                                 SHOW_RAW   = "true";
-                                 SAMPLE     = concatStringsSep "\n" (attrByPath
-                                                [ rev size rep ]
-                                                (abort (toJSON {
-                                                  inherit rep rev size;
-                                                  err = "Sample not found";
-                                                }))
-                                                known-samples);
-                                 workingDir = attrsToDirs {
-                                   "A.thy"       = tebenchmark-isabelle;
-                                   "ISACOSY.thy" = theory;
-                                 };
-                               };
-                               script = ''
-                                 #!/usr/bin/env bash
-                                 set -e
-                                 set -o pipefail
-                                 cd "$workingDir" ||
-                                   fail "Couldn't cd to '$workingDir'"
+      isacosy ISACOSY.thy | "$handleConstructors"
+    '';
+  };
 
-                                 isacosy ISACOSY.thy | "$handleConstructors"
-                               '';
-                             })))
-                           known-theories;
+  known-runners = mapAttrs
+                    (rev: mapAttrs
+                            (size: mapAttrs
+                                     (rep: names: runnerFor {
+                                       inherit names;
+                                       label = "${rev}-${size}-${rep}";
+                                     })))
+                    known-samples;
 
   runner-tests =
     with mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
