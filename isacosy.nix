@@ -70,7 +70,7 @@ rec {
       }
 
       THY=$(basename "$1" .thy)
-      echo "use_thy \"$THY\";" | isaplanner | "$extractEqs" | maybeShowRaw
+      echo "use_thy \"$THY\";" | isaplanner | maybeShowRaw | "$extractEqs"
     '';
   };
 
