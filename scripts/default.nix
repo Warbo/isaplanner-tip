@@ -80,6 +80,15 @@ rec {
     ]
     isabelleTypeArgs-untested;
 
+  listUndefined = { te-benchmark }: wrap {
+    name  = "listUndefined";
+    file  = ./listUndefined.rkt;
+    paths = [ te-benchmark.env ];
+    vars  = te-benchmark.cache // {
+      tipBenchmark = te-benchmark.tip-benchmark-smtlib;
+    };
+  };
+
   stripConstructorsDestructors = { te-benchmark, te-benchmark-src }: wrap {
     name  = "stripConstructorsDestructors";
     file  = ./stripConstructorsDestructors.rkt;
