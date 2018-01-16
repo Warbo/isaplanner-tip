@@ -16,12 +16,18 @@ ML {*
 
   val fundefs = functions ~~ def_thrms;
 
+  (* Undefined terms, eg. Trm.change_frees_to_fresh_vars @{term "hd([])"} *)
+  val constr_trms = [
+    (*TEMPLATE_REPLACE_ME_WITH_UNDEFINED*)
+  ];
+
   (* Add variables for each datatype, e.g.
        ThyConstraintParams.add_datatype' @{context} @{typ "nat"} *)
   val cparams = ConstraintParams.empty
               |> ThyConstraintParams.add_eq @{context}
               (*TEMPLATE_REPLACE_ME_WITH_DATATYPES*)
               |> ConstraintParams.add_consts functions
+              |> ConstraintParams.add_arb_terms @{context} constr_trms
 
   (* Perform the exploration *)
   val (_, nw_ctxt) = SynthInterface.thm_synth

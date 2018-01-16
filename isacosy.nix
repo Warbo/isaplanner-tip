@@ -21,6 +21,7 @@ rec {
             @{term "Groups.times_class.times :: nat => nat => nat"}
           '';
           imports   = "";
+          undefined = "";
         };
       };
     }
@@ -92,13 +93,14 @@ rec {
                      });
 
   isacosy-theory-strings =
-    { datatypes, definitions, functions, imports ? "A", name }:
+    { datatypes, definitions, functions, imports ? "A", name, undefined }:
       isacosy-theory {
         inherit name;
         datatypes   = writeScript "datatypes"   datatypes;
         definitions = writeScript "definitions" definitions;
         functions   = writeScript "functions"   functions;
         imports     = writeScript "imports"     imports;
+        undefined   = writeScript "undefined"   undefined;
       };
 
   isacosy-theory = {
@@ -107,9 +109,10 @@ rec {
     functions,
     imports ? (writeScript "imports" "A"),
     name,
+    undefined
   }: runCommand "isacosy-theory-${name}"
        {
-         inherit datatypes definitions functions imports;
+         inherit datatypes definitions functions imports undefined;
          template    = ./isacosy-template.thy;
          buildInputs = [ replace ];
        }
@@ -135,6 +138,7 @@ rec {
          doReplace "DEFINITIONS" "$definitions"
          doReplace "FUNCTIONS"   "$functions"
          doReplace "IMPORTS"     "$imports"
+         doReplace "UNDEFINED"   "$undefined"
 
          mv ./temp "$out"
        '';
