@@ -50,7 +50,37 @@ rec {
         echo "$nixExpr" > "$out/default.nix"
       '';
 
-  isacosy-from-sample = { label, names }:
+  isacosy-from-sample =
+    with {
+      filter-check = runCommand "filter-test"
+        {
+          buildInputs = [ jq ];
+
+          theory = isacosy-from-sample-untested {
+            label = "filter-test";
+            names = choose_sample { size = "200"; rep = "0"; };
+          };
+
+          fixes = ./scripts/fixes.json;
+        }
+        ''
+          set -e
+
+          while read -r TERM
+          do
+            if grep -F "$TERM" < "$theory"
+            then
+              fail "Should have stripped '$TERM' from theory '$theory'"
+            fi
+          done < <(jq -r '[.nontypes, .dependents] | .[] |
+                                          .encoded | .[]' < "$fixes")
+
+          mkdir "$out"
+        '';
+    };
+    args: withDeps [ filter-check ] (isacosy-from-sample-untested args);
+
+  isacosy-from-sample-untested = { label, names, teb ? te-benchmark }:
     with rec {
       namesFile = if isList names
                      then writeScript "names-${label}"
