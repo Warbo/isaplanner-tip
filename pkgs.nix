@@ -6,11 +6,15 @@ with rec {
 
   stableCfg   = (import <nixpkgs> {}).fetchgit {
     url    = http://chriswarbo.net/git/nix-config.git;
-    rev    = "76d441a";
-    sha256 = "047vqfyb7qbl49hyi93vfz5dkqpz89jjscs1w5kc29hn6881v0w8";
+    rev    = "044d894";
+    sha256 = "0s9jw6mna8qpl5s5phd9qx1im2pcclr43fmbm40i72v95nn8q8xh";
   };
 
-  unstableCfg = pkgsWithCfg.latestNixCfg;
+  unstableCfg =
+    with builtins.tryEval <nixpkgs>;
+    if success
+       then value
+       else pkgsWithCfg.latestNixCfg;
 };
 {
   # A known-good version of our configuration; this is "production"
