@@ -216,11 +216,15 @@ rec {
                       if [[ -n "$c" ]]
                       then
                         echo "$OUTPUT" |
-                          jq -e 'length | tostring | . == env["c"]' ||
+                          jq -e 'length | tostring | . == env["c"]' || {
+                            echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
                             fail "Should have found $c conjectures"
+                        }
                       else
-                        echo "$OUTPUT" | jq -e 'length | . >0 ' ||
+                        echo "$OUTPUT" | jq -e 'length | . > 0' || {
+                          echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
                           fail "No conjectures found"
+                        }
                       fi
                       mkdir "$out"
                     '')
