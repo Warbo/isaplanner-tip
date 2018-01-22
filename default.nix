@@ -18,9 +18,11 @@ rec {
     sampling = callPackage ./sampling.nix {
       inherit (defs.haskell-te          ) get-haskell-te;
       inherit (defs.isacosy             ) isacosy isacosy-theory;
-      inherit (defs.scripts             ) isabelleTypeArgs;
-      inherit (defs.tebenchmark-isabelle) handleConstructors tebenchmark-data
-                                          tebenchmark-isabelle;
+      inherit (defs.scripts             ) isabelleTypeArgs listUndefined;
+      inherit (defs.tebenchmark-isabelle) handleConstructors
+                                          make-tebenchmark-data
+                                          make-tebenchmark-isabelle
+                                          te-benchmark;
     };
     scripts              = callPackage ./scripts {};
     tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {

@@ -1,0 +1,18 @@
+From: Chris Warburton
+Date: Fri, 19 Jan 2018 23:10:48 +0000
+State: new
+Subject: Skip polyrec, etc. when templating from a sample
+Message-Id: <fa003deeba52d9c7-0-artemis@nixos>
+
+We can choose a sample and turn it into a template, with functions,
+datatypes, etc. but we'll get errors if we try to look up the type of
+functions that we've filtered out, e.g.
+
+> Couldn't get type of 'global746970323031352f706f6c797265635f7365715f696e6465782e736d743266726f6d4c697374'
+> Name 'global746970323031352f706f6c797265635f7365715f696e6465782e736d743266726f6d4c697374' is needed but wasn't found in '/nix/store/9mxryfmwmm2lxkhzs1m99a0flkn368wr-tebenchmark-data.json'
+> builder for ‘/nix/store/xdwx6h3q9zz4pk1cpm7l8m5vkfhvf6m7-functions-choose-100-0.drv’ failed with exit code 1
+
+This decodes to:
+
+    $ echo 'global746970323031352f706f6c797265635f7365715f696e6465782e736d743266726f6d4c697374' | decode
+    tip2015/polyrec_seq_index.smt2fromList

@@ -1,0 +1,16 @@
+From: Chris Warburton
+Date: Tue, 16 Jan 2018 15:02:01 +0000
+Subject: Re: Stop UNDEF exceptions
+Message-Id: <cb5f71d1acb9d4cd-82830f86d087307d-artemis@nixos>
+References: <cb5f71d1acb9d4cd-0-artemis@nixos>
+In-Reply-To: <cb5f71d1acb9d4cd-0-artemis@nixos>
+
+Commit 808042f restores the 'undefined' template stuff, and we have a
+new script 'listUndefined.rkt' which look through the sample for
+destructor-functions, finds the type which defines the associated
+destructor, finds all of its constructors, discards the one that's
+handled by that destructor-function, and turns all of the others into
+patterns suitable for inserting into the template.
+
+So far we don't actually know that these patterns should look like, so
+we need to do some trial and error, and update the script accordingly.

@@ -4,8 +4,12 @@
   stripConstructorsDestructors, writeScript }:
 
 rec {
-  te-benchmark-src = fetchgit {
-    url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+  get-te-benchmark = { rev, sha256 }: fetchgit {
+    inherit rev sha256;
+    url = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+  };
+
+  te-benchmark-src = get-te-benchmark {
     rev    = "481b722";
     sha256 = "0jl7f5s983sxz9g58pf80iywzkcn74m1ns2w21f3x81xpkcqspaw";
   };
@@ -67,9 +71,12 @@ rec {
     src  = parserSrc;
   };
 
+  tebenchmark-isabelle = make-tebenchmark-isabelle { inherit te-benchmark; };
+
   # Note: to comply with Isabelle's naming conventions, the output of this
   # derivation should be copied to a file called 'A.thy' before importing.
-  tebenchmark-isabelle = runCommand "tebenchmark-isabelle"
+  make-tebenchmark-isabelle = { te-benchmark }: runCommand
+    "tebenchmark-isabelle"
     {
       buildInputs = [
         (haskellPackages.ghcWithPackages (h: [ (h.callPackage tip-lib {}) ]))
@@ -99,18 +106,22 @@ rec {
       cp A.thy "$out"
     '';
 
-  tebenchmark-data = stdenv.mkDerivation {
-    name    = "tebenchmark-data.json";
-    builder = getBenchmarkTypes {
-      inherit te-benchmark te-benchmark-src tebenchmark-isabelle;
+  tebenchmark-data = make-tebenchmark-data { inherit te-benchmark; };
+
+  make-tebenchmark-data = { te-benchmark }:
+    stdenv.mkDerivation {
+      name    = "tebenchmark-data.json";
+      builder = getBenchmarkTypes {
+        inherit te-benchmark;
+        tebenchmark-isabelle = make-tebenchmark-isabelle {
+          inherit te-benchmark;
+        };
+      };
     };
-  };
 
   # IsaCoSy will include constructors in its exploration, even if they're not
   # in the sample. This artificially lowers the precision, which is unfair. To
   # counteract this, the following script can be used to discard problematic
   # equations before they reach the precision/recall stage.
-  handleConstructors = stripConstructorsDestructors {
-    inherit te-benchmark te-benchmark-src;
-  };
+  handleConstructors = stripConstructorsDestructors { inherit te-benchmark; };
 }
