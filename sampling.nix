@@ -1,6 +1,7 @@
 { attrsToDirs, bash, fail, get-haskell-te, handleConstructors, haskellPackages,
-  isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, mkBin, runCommand,
-  tebenchmark-data, tebenchmark-isabelle, withDeps, wrap, writeScript }:
+  isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, listUndefined,
+  make-tebenchmark-data, make-tebenchmark-isabelle, mkBin, runCommand, stdenv,
+  te-benchmark, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -16,18 +17,22 @@ rec {
       choose_sample "$SIZE" "$REP" > "$out"
     '';
 
+  runnerForSample = { size, rep }: runnerFor {
+    inherit te-benchmark;
+    label = "choose-${size}-${rep}";
+    names = choose_sample { inherit size rep; };
+  };
+
   # Using the same samples as haskell-te lets us directly compare Isabelle and
   # Haskell results. Outputs '{"1": {"2":["foo"], ...}, ...}' where "1" is a
   # sample size, "2" is a repetition (0, 1, 2, ...) and ["foo"] is the sample.
-  samples-from-haskell-te = { filename, machine, rev, sha256 }:
-    with rec {
-      src = get-haskell-te { inherit rev sha256; };
-    };
+  samples-from-haskell-te = { filename, machine, rev }:
+    with get-haskell-te rev;
     runCommand "samples-from-${filename}"
       {
         buildInputs = [ jq ];
-        file        = "${src}/benchmarks/results/${machine}/${filename}";
-        nixExpr     = ''
+        file    = "${haskell-te-src}/benchmarks/results/${machine}/${filename}";
+        nixExpr = ''
           with builtins;
           fromJSON (readFile ./samples.json)
         '';
@@ -123,12 +128,15 @@ rec {
       name = "sample-${label}";
     };
 
+  # The attribute names (e.g. ce9c9478) are the haskell-te revisions defining
+  # the code which got benchmarked. The inner 'rev' values are the haskell-te
+  # revisions which contain the benchmark data (which must, of course, be
+  # added in a new commit after the code which got benchmarked).
   known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
     ce9c9478 = {
       filename = "ce9c9478-nix-py-dirnull.json.gz";
       machine  = "desktop";
       rev      = "334d529";
-      sha256   = "109g8hkpggjjlw7ksd7l157jknp4wkg9lbjlyiqqvqzah2kl65jf";
     };
   };
 
