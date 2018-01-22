@@ -155,17 +155,25 @@ rec {
     };
   };
 
-  runnerFor = { label, names }: wrap {
+  runnerFor = { label, names, te-benchmark }: wrap {
     name  = "isacosy-runner-${label}";
     paths = [ bash fail isacosy ];
     vars  = {
       inherit handleConstructors;
       SHOW_RAW   = "true";
-      SAMPLE     = concatStringsSep "\n" names;
+
       workingDir = attrsToDirs {
-        "A.thy"       = tebenchmark-isabelle;
-        "ISACOSY.thy" = isacosy-from-sample { inherit label names; };
+        "A.thy"       = make-tebenchmark-isabelle { inherit te-benchmark; };
+        "ISACOSY.thy" = isacosy-from-sample {
+          inherit label names;
+          teb = te-benchmark;
+        };
       };
+
+      sampleFile = if isList names
+                      then writeScript "sampleFile"
+                                       (concatStringsSep "\n" names)
+                      else names;
     };
     script = ''
       #!/usr/bin/env bash
@@ -173,18 +181,25 @@ rec {
       set -o pipefail
       cd "$workingDir" || fail "Couldn't cd to '$workingDir'"
 
+      SAMPLE=$(cat "$sampleFile")
+      export SAMPLE
+
       isacosy ISACOSY.thy | "$handleConstructors"
     '';
   };
 
-  known-runners = mapAttrs
-                    (rev: mapAttrs
-                            (size: mapAttrs
-                                     (rep: names: runnerFor {
-                                       inherit names;
-                                       label = "${rev}-${size}-${rep}";
-                                     })))
-                    known-samples;
+  known-runners =
+    mapAttrs
+      (rev: mapAttrs
+              (size: mapAttrs
+                       (rep: names: runnerFor {
+                         inherit names;
+                         label        = "${rev}-${size}-${rep}";
+                         te-benchmark =
+                           with get-haskell-te rev;
+                           haskell-te.tipBenchmarks;
+                       })))
+      known-samples;
 
   runner-tests =
     with mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
