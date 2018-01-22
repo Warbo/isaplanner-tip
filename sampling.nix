@@ -131,9 +131,15 @@ rec {
 
           namesTypes | jq -rs 'join(", ")' > "$out"
         '';
+
+      undefined = stdenv.mkDerivation {
+        inherit namesFile;
+        name         = "undefined-${label}";
+        buildCommand = listUndefined { te-benchmark = teb; };
+      };
     };
     isacosy-theory {
-      inherit datatypes definitions functions;
+      inherit datatypes definitions functions undefined;
       name = "sample-${label}";
     };
 
