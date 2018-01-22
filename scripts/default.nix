@@ -1,6 +1,39 @@
-{ bash, haskell, haskellPackages, jq, mkBin, python, runCommand, withDeps,
-  wrap }:
+{ bash, fail, haskell, haskellPackages, jq, lib, mkBin, python, runCommand,
+  withDeps, wrap }:
 
+with builtins;
+with lib;
+with {
+  # These need to work for any old revisions in known-samples
+
+  cacheFrom = te-benchmark:
+    te-benchmark.cache or (filterAttrs (n: _: hasPrefix "BENCHMARK" n)
+                                       te-benchmark.tools);
+
+  envFrom = te-benchmark:
+    te-benchmark.env or
+    (head (filter (x: x.name == "tip-bench-env")
+                  (concatLists (map (n: getAttr n te-benchmark.tools) [
+                    "buildInputs" "propagatedNativeBuildInputs"
+                    "propagatedBuildInputs" "nativeBuildInputs"
+                  ]))));
+
+  scriptsFrom = te-benchmark:
+    with rec {
+      # Older way: read source of env var derivation
+      smtlib = te-benchmark.tip-benchmark-smtlib;
+      asVar  = smtlib.BENCHMARKS_FINAL_BENCHMARK_DEFS;
+
+      # Newer way: read PLTCOLLECTS of compiled builder
+      bldr   = elemAt smtlib.args 1;
+      varNm  = head (attrNames (filterAttrs (n: v: v == "PLTCOLLECTS") bldr));
+      valNm  = replaceStrings [ "Names" ] [ "Vals" ] varNm;
+      asDep  = removePrefix ":" (getAttr valNm bldr);
+    };
+    if hasAttr "BENCHMARKS_FINAL_BENCHMARK_DEFS" smtlib
+       then asVar.src
+       else asDep;
+};
 rec {
   eqsToJson = wrap {
     name = "eqsToJson.hs";
@@ -29,18 +62,17 @@ rec {
     };
   };
 
-  getBenchmarkTypes = { te-benchmark, te-benchmark-src, tebenchmark-isabelle }:
-    wrap {
-      name  = "getBenchmarkTypes.rkt";
-      file  = ./getBenchmarkTypes.rkt;
-      paths = [ te-benchmark.env ];
-      vars  = te-benchmark.cache // {
-        FIXES       = ./fixes.json;
-        PLTCOLLECTS = ":${te-benchmark-src}/scripts";
-        smtlib      = te-benchmark.tip-benchmark-smtlib;
-        tebIsabelle = tebenchmark-isabelle;
-      };
+  getBenchmarkTypes = { te-benchmark, tebenchmark-isabelle }: wrap {
+    name  = "getBenchmarkTypes.rkt";
+    file  = ./getBenchmarkTypes.rkt;
+    paths = [ (envFrom te-benchmark) ];
+    vars  = cacheFrom te-benchmark // {
+      FIXES       = ./fixes.json;
+      PLTCOLLECTS = ":${scriptsFrom te-benchmark}";
+      smtlib = te-benchmark.tip-benchmark-smtlib;
+      tebIsabelle = tebenchmark-isabelle;
     };
+  };
 
   isabelleTypeArgs-untested = wrap {
     name  = "isabelleTypeArgs";
@@ -82,19 +114,27 @@ rec {
 
   listUndefined = { te-benchmark }: wrap {
     name  = "listUndefined";
-    file  = ./listUndefined.rkt;
-    paths = [ te-benchmark.env ];
-    vars  = te-benchmark.cache // {
-      tipBenchmark = te-benchmark.tip-benchmark-smtlib;
+    paths = [ (envFrom te-benchmark) fail ];
+    vars  = cacheFrom te-benchmark // {
+      listUndefined = ./listUndefined.rkt;
+      tipBenchmark  = te-benchmark.tip-benchmark-smtlib;
     };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+      [[ -e "$namesFile" ]] || fail "No namesFile given"
+      SAMPLE=$(cat "$namesFile")
+      export SAMPLE
+      "$listUndefined" "$@"
+    '';
   };
 
-  stripConstructorsDestructors = { te-benchmark, te-benchmark-src }: wrap {
+  stripConstructorsDestructors = { te-benchmark }: wrap {
     name  = "stripConstructorsDestructors";
     file  = ./stripConstructorsDestructors.rkt;
-    paths = [ te-benchmark.env ];
-    vars  = te-benchmark.cache // {
-      PLTCOLLECTS = ":${te-benchmark-src}/scripts";
+    paths = [ (envFrom te-benchmark) ];
+    vars  = cacheFrom te-benchmark // {
+      PLTCOLLECTS = ":${scriptsFrom te-benchmark}";
     };
   };
 }
