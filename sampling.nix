@@ -52,28 +52,33 @@ rec {
 
   isacosy-from-sample = { label, names }:
     with rec {
+      namesFile = if isList names
+                     then writeScript "names-${label}"
+                                      (concatStringsSep "\n" names)
+                     else names;
+
+      data = make-tebenchmark-data { te-benchmark = teb; };
+
       datatypes = runCommand "datatypes-${label}"
         {
-          inherit isabelleTypeArgs;
+          inherit data isabelleTypeArgs namesFile;
           buildInputs = [ jq ];
-          data        = tebenchmark-data;
           pre         = "ThyConstraintParams.add_datatype' @{context} @{typ \"";
           post        = "\"}";
-
         }
         ''
           set -e
 
           # The type of each sampled name, e.g. 'nat => nat => nat' for plus
           function completeTypes {
-            for NAME in ${concatStringsSep " " names}
+            while read -r NAME
             do
               jq -e --arg name "$NAME" '.types | has($name)' < "$data" || {
                 echo "Couldn't get type of '$NAME'" 1>&2
                 exit 1
               }
               jq -r --arg name "$NAME" '.types | .[$name]' < "$data"
-            done
+            done < "$namesFile"
           }
 
           # Output arguments of a function type e.g. 'a => b => c' gives a and b
@@ -90,14 +95,18 @@ rec {
           done > "$out"
         '';
 
-      definitions = writeScript "definitions-${label}"
-        (concatStringsSep ", " (map (name: ''@{thms "A.${name}.simps"}'')
-                                    names));
+      definitions = runCommand "definitions-${label}"
+        { inherit namesFile; }
+        ''
+          set -e
+          awk '{ print "@{thms \"A."$0".simps\"}"}' < "$namesFile" |
+            paste -sd ", " - > "$out"
+        '';
 
       functions = runCommand "functions-${label}"
         {
+          inherit data namesFile;
           buildInputs = [ jq ];
-          data        = tebenchmark-data;
         }
         ''
           set -e
@@ -107,7 +116,7 @@ rec {
             # This assumes there are no spaces in the names, but that's a pretty
             # safe assumption given that they're Isabelle identifiers, and (if
             # they came from TIP) they'll be hex encoded as well.
-            for NAME in ${concatStringsSep " " names}
+            while read -r NAME
             do
               jq -e --arg name "$NAME" '.types | has($name)' < "$data" 1>&2 || {
                 echo "Name '$NAME' is needed but wasn't found in '$data'" 1>&2
@@ -117,7 +126,7 @@ rec {
 
               # We assume the definition comes from A.thy
               echo "@{term \"A.$NAME :: $TYPE\"}" | jq -R '.'
-            done
+            done < "$namesFile"
           }
 
           namesTypes | jq -rs 'join(", ")' > "$out"
