@@ -3,6 +3,7 @@
 
 ;; To make 'lib' available, add TEBenchmark's 'script' dir to PLTCOLLECT env var
 (require json)
+(require lib/impure)
 (require lib/normalise)
 (require lib/tip)
 (require lib/util)
@@ -70,6 +71,9 @@
          (hash)
          destructor-functions))
 
+(define (replace-with-range f lst)
+  (map f (range 0 (length lst))))
+
 (define patterns
   (foldl (lambda (func result)
            (define (contains-destructor? x)
@@ -91,18 +95,37 @@
              (filter (compose not contains-destructor?)
                      all-constructor-defs))
 
-           ;; FIXME: Not sure what pattern must be given to Isabelle. Once we
-           ;; find out, update this to generate it.
+           ;; Patterns look like this:
+           ;;   destructor-foo(Constructor1(free1, free2))
            (define (constructor->pattern c)
-             (cons (car c)
-                   (map (lambda (destructor) '_)
-                        (cdr c))))
+
+             ;; Replace any constructor args with free variables. We assume that
+             ;; there's nothing in context called 'free0', 'free1', etc., which
+             ;; is a safe assumption if we're dealing with hex-encoded names.
+             (define constructor-args
+               (string-join (replace-with-range (lambda (n) (format "free~s" n))
+                                                (rest c))
+                            ", "))
+
+             ;; If the constructor is nullary, don't call it
+             (define constructor-call
+               (if (equal? 1 (length c))
+                   (format "~s"     (first c))
+                   (format "~s(~s)" (first c) constructor-args)))
+
+             (define destructor-call
+               (format "~s(~s)" func constructor-call))
+
+             ;; The final result, for splicing into IsaCoSy calls
+             (format "Trm.change_frees_to_fresh_vars @{term \"~s\"}"
+                     destructor-call))
 
            (hash-set result func
                      (map constructor->pattern other-constructors)))
          (hash)
          destructor-functions))
 
-(eprintf "PATTERNS ARE ~a\n" patterns)
+(define pattern-list
+  (append-map (lambda (func) (hash-ref patterns func)) destructor-functions))
 
-(exit 1)
+(write-to-out (string-join pattern-list ",\n"))
