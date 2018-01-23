@@ -182,8 +182,8 @@ rec {
 
       undefined = stdenv.mkDerivation {
         inherit namesFile;
-        name         = "undefined-${label}";
-        buildCommand = listUndefined { te-benchmark = teb; };
+        name    = "undefined-${label}";
+        builder = listUndefined { te-benchmark = teb; };
       };
     };
     isacosy-theory {
