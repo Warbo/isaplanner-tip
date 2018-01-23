@@ -1,5 +1,5 @@
-{ bash, fail, haskell, haskellPackages, jq, lib, mkBin, python, runCommand,
-  withDeps, wrap }:
+{ bash, coreutils, fail, haskell, haskellPackages, jq, lib, mkBin, python,
+  runCommand, withDeps, wrap }:
 
 with builtins;
 with lib;
@@ -114,7 +114,7 @@ rec {
 
   listUndefined = { te-benchmark }: wrap {
     name  = "listUndefined";
-    paths = [ (envFrom te-benchmark) fail ];
+    paths = [ coreutils (envFrom te-benchmark) fail ];
     vars  = cacheFrom te-benchmark // {
       listUndefined = ./listUndefined.rkt;
       tipBenchmark  = te-benchmark.tip-benchmark-smtlib;

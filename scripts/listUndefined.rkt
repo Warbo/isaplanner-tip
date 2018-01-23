@@ -21,6 +21,8 @@
           sample))
 
 (when (null? destructor-functions)
+  (eprintf "No destructor functions; short-circuiting\n")
+  (write-to-out "")
   (exit))
 
 (eprintf "Finding undefined cases for destructors ~a\n" destructor-functions)
@@ -35,8 +37,6 @@
                                   (string-length "destructor-"))))))
          (hash)
          destructor-functions))
-
-(eprintf "DESTRUCTORS ARE ~a\n" destructors)
 
 ;; This should come from the te-benchmark version used to gather these samples
 ;; (otherwise the sampled names might not exist, e.g. if different canonical
@@ -128,4 +128,7 @@
 (define pattern-list
   (append-map (lambda (func) (hash-ref patterns func)) destructor-functions))
 
+(eprintf (format "Writing ~a patterns to output ~a\n"
+                 (length pattern-list)
+                 (getenv "out")))
 (write-to-out (string-join pattern-list ",\n"))
