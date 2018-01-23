@@ -82,10 +82,28 @@ rec {
 
   isacosy-from-sample-untested = { label, names, teb ? te-benchmark }:
     with rec {
-      namesFile = if isList names
-                     then writeScript "names-${label}"
-                                      (concatStringsSep "\n" names)
-                     else names;
+      namesFile = runCommand "filtered-names-${label}"
+        {
+          source = if isList names
+                      then writeScript "names-${label}"
+                                       (concatStringsSep "\n" names)
+                      else names;
+          buildInputs = [ jq ];
+          fixes       = ./scripts/fixes.json;
+        }
+        ''
+          set -e
+          cp "$source" tmp
+
+          while read -r NAME
+          do
+            grep -v -x -F "$NAME" < tmp > tmp2
+            mv tmp2 tmp
+          done < <(jq -r '(.dependents.encoded +
+                           .nontypes.encoded) | .[]' < "$fixes")
+
+          mv tmp "$out"
+        '';
 
       data = make-tebenchmark-data { te-benchmark = teb; };
 
