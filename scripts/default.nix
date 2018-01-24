@@ -74,28 +74,33 @@ rec {
     };
   };
 
-  isabelleTypeArgs-untested = wrap {
-    name  = "isabelleTypeArgs";
-    file  = ./IsabelleTypeArgs.hs;
-    paths = [ (haskellPackages.ghcWithPackages (h: [ h.parsec ])) ];
-  };
+  isabelleTypeArgs =
+    with rec {
+      untested = wrap {
+        name  = "isabelleTypeArgs";
+        file  = ./IsabelleTypeArgs.hs;
+        paths = [ (haskellPackages.ghcWithPackages (h: [
+          h.parsec h.QuickCheck
+        ])) ];
+      };
 
-  isabelleTypeArgs = withDeps
-    [
-      (runCommand "isabelleTypeArgs-tests"
-        { script = isabelleTypeArgs-untested; }
+      test = runCommand "isabelleTypeArgs-tests"
+        {
+          buildInputs = [ fail ];
+          script      = untested;
+        }
         ''
           set -e
           set -o pipefail
 
+          RUN_TESTS=1 "$script" || fail "Self-test failed"
+
           function check {
-             GOT=$(echo "$1" | "$script")
+            GOT=$(echo "$1" | "$script")
             WANT=$(echo -e "$2")
 
-            [[ "x$GOT" = "x$WANT" ]] || {
-              echo "Got '$GOT' for '$1' instead of '$WANT'" 1>&2
-              exit 1
-            }
+            [[ "x$GOT" = "x$WANT" ]] ||
+              fail "Got '$GOT' for '$1' instead of '$WANT'"
           }
 
           check "nat"                  ""
@@ -105,12 +110,12 @@ rec {
           check "(nat => int) => bool" "nat => int\nnat"
 
           check "(a => (b => c => d) => e) => f => g" \
-                 "a => (b => c => d) => e\nf\na\nb => c => d\nb\nc"
+                "a => (b => c => d) => e\nf\na\nb => c => d\nb\nc"
 
           mkdir "$out"
-        '')
-    ]
-    isabelleTypeArgs-untested;
+        '';
+    };
+    withDeps [ test ] untested;
 
   listUndefined = { te-benchmark }: wrap {
     name  = "listUndefined";
