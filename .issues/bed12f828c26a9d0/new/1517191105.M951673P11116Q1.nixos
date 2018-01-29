@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 01:58:15 +0000
+Subject: Re: Fix IsabelleTypeArgs parser
+Message-Id: <bed12f828c26a9d0-ddbb36710248140d-artemis@nixos>
+References: <bed12f828c26a9d0-0-artemis@nixos>
+In-Reply-To: <bed12f828c26a9d0-0-artemis@nixos>
+
+Seems to work with real samples.

@@ -1,0 +1,21 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 01:58:29 +0000
+State: new
+Subject: Get args from multiple types at once
+Message-Id: <c935cbcee548b759-0-artemis@nixos>
+
+We're currently looping through each type in our sample, e.g.
+
+    function allArgs {
+      completeTypes | while read -r TYPE
+      do
+        echo "$TYPE" | "$isabelleTypeArgs"
+      done | sort -u
+    }
+
+The problem is that "$isabelleTypeArgs" takes a little time to warm up,
+which happens for every single name. This accumulates to become pretty
+slow.
+
+To fight this, we should read in and write out JSON array of types. That
+way, it only has to be invoked once per sample.

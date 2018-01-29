@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 02:58:42 +0000
+State: new
+Subject: Remove 'local datatypes
+Message-Id: <fa3787e8a923d21d-0-artemis@nixos>
+
+Remove datatypes which are just 'local1', 'local2', etc. (i.e. those
+without 'Global')

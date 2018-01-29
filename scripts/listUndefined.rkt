@@ -110,14 +110,14 @@
              ;; If the constructor is nullary, don't call it
              (define constructor-call
                (if (equal? 1 (length c))
-                   (format "~s"     (first c))
-                   (format "~s(~s)" (first c) constructor-args)))
+                   (format "~a"     (first c))
+                   (format "~a(~a)" (first c) constructor-args)))
 
              (define destructor-call
-               (format "~s(~s)" func constructor-call))
+               (format "~a(~a)" func constructor-call))
 
              ;; The final result, for splicing into IsaCoSy calls
-             (format "Trm.change_frees_to_fresh_vars @{term \"~s\"}"
+             (format "Trm.change_frees_to_fresh_vars @{term \"~a\"}"
                      destructor-call))
 
            (hash-set result func
