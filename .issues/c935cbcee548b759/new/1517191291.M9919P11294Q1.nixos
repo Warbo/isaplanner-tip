@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Mon, 29 Jan 2018 01:58:29 +0000
-State: new
+State: resolved
 Subject: Get args from multiple types at once
 Message-Id: <c935cbcee548b759-0-artemis@nixos>
+resolution: fixed
 
 We're currently looping through each type in our sample, e.g.
 

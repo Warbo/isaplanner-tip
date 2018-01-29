@@ -80,7 +80,7 @@ rec {
         name  = "isabelleTypeArgs";
         file  = ./IsabelleTypeArgs.hs;
         paths = [ (haskellPackages.ghcWithPackages (h: [
-          h.parsec h.QuickCheck
+          h.aeson h.bytestring h.parsec h.QuickCheck
         ])) ];
       };
 
@@ -103,14 +103,14 @@ rec {
               fail "Got '$GOT' for '$1' instead of '$WANT'"
           }
 
-          check "nat"                  ""
-          check "nat => nat"           "nat"
-          check "nat => nat => nat"    "nat"
-          check "nat => int => bool"   "nat\nint"
-          check "(nat => int) => bool" "nat => int\nnat"
+          check '["nat"]'                  '[]'
+          check '["nat => nat"]'           '["nat"]'
+          check '["nat => nat => nat"]'    '["nat"]'
+          check '["nat => int => bool"]'   '["nat","int"]'
+          check '["(nat => int) => bool"]' '["nat => int","nat"]'
 
-          check "(a => (b => c => d) => e) => f => g" \
-                "a => (b => c => d) => e\nf\na\nb => c => d\nb\nc"
+          check '["(a => (b => c => d) => e) => f => g"]' \
+                '["a => (b => c => d) => e","f","a","b => c => d","b","c"]'
 
           mkdir "$out"
         '';

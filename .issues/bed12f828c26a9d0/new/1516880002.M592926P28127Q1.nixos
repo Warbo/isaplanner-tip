@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 25 Jan 2018 11:30:33 +0000
-State: new
+State: resolved
 Subject: Fix IsabelleTypeArgs parser
 Message-Id: <bed12f828c26a9d0-0-artemis@nixos>
+resolution: fixed
 
 Hit this error:
 

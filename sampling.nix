@@ -121,20 +121,17 @@ rec {
           function completeTypes {
             while read -r NAME
             do
-              jq -e --arg name "$NAME" '.types | has($name)' < "$data" || {
-                echo "Couldn't get type of '$NAME'" 1>&2
-                exit 1
-              }
-              jq -r --arg name "$NAME" '.types | .[$name]' < "$data"
-            done < "$namesFile"
+              jq -e --arg name "$NAME" '.types | has($name)' < "$data" \
+                                                             > /dev/null ||
+                fail "Couldn't get type of '$NAME'"
+
+              jq --arg name "$NAME" '.types | .[$name]' < "$data"
+            done < "$namesFile" | jq -s '.'
           }
 
           # Output arguments of a function type e.g. 'a => b => c' gives a and b
           function allArgs {
-            completeTypes | while read -r TYPE
-            do
-              echo "$TYPE" | "$isabelleTypeArgs"
-            done | sort -u
+            completeTypes | "$isabelleTypeArgs" | jq -r '.[]' | sort -u
           }
 
           allArgs | while read -r ARG
@@ -154,7 +151,7 @@ rec {
       functions = runCommand "functions-${label}"
         {
           inherit data namesFile;
-          buildInputs = [ jq ];
+          buildInputs = [ fail jq ];
         }
         ''
           set -e
@@ -166,10 +163,10 @@ rec {
             # they came from TIP) they'll be hex encoded as well.
             while read -r NAME
             do
-              jq -e --arg name "$NAME" '.types | has($name)' < "$data" 1>&2 || {
-                echo "Name '$NAME' is needed but wasn't found in '$data'" 1>&2
-                exit 1
-              }
+              jq -e --arg name "$NAME" '.types | has($name)' < "$data" \
+                                                             > /dev/null ||
+                fail "Name '$NAME' is needed but wasn't found in '$data'"
+
               TYPE=$(jq -r --arg name "$NAME" '.types | .[$name]' < "$data")
 
               # We assume the definition comes from A.thy

@@ -1,6 +1,8 @@
 #!/usr/bin/env runhaskell
 
 import           Control.Applicative           ((<|>))
+import qualified Data.Aeson                    as Aeson
+import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Char
 import           Data.List                     (intercalate, nub, sort)
 import           Data.Maybe                    (catMaybes)
@@ -642,10 +644,10 @@ testArgsOfNested = ("get args from nested functions",
 
 ---
 
-renderArgsOf :: String -> String
-renderArgsOf s = unlines (map renderType (nub (argsOf (case stringToType s of
-                                                         Left  e -> error e
-                                                         Right t -> t))))
+renderArgsOf :: String -> [String]
+renderArgsOf s = map renderType (nub (argsOf (case stringToType s of
+                                                   Left  e -> error e
+                                                   Right t -> t)))
 
 main = do mode <- lookupEnv "RUN_TESTS"
           case mode of
@@ -657,9 +659,17 @@ main = do mode <- lookupEnv "RUN_TESTS"
                         []   -> msg   "Tests passed"
                         errs -> mapM_ msg errs >> error "Tests failed"
 
-        runParser = do s <- fmap trim getContents
-                       msg ("Getting args of '" ++ s ++ "'")
-                       putStr (renderArgsOf s)
+        runParser = do raw <- BS.getContents
+                       let ts = case Aeson.eitherDecode raw of
+                                  Left err -> error (show (
+                                                "message", "Failed parsing",
+                                                "error",   err,
+                                                "stdin",   raw))
+                                  Right ts -> ts
+                       msg ("Getting args of " ++ show (length ts) ++ " types")
+                       let args = concatMap (renderArgsOf . trim)
+                                            (ts :: [String])
+                       BS.putStr (Aeson.encode args)
 
 msg = hPutStrLn stderr
 
