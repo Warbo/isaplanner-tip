@@ -39,9 +39,9 @@ rec {
     name = "eqsToJson.hs";
     file = ./eqsToJson.hs;
 
-    # We pick GHC 8.0.1 since the default package set was failing to build Aeson
-    # due to missing fail and semigroups dependencies.
-    paths = [ (haskell.packages.ghc801.ghcWithPackages (h: [
+    # We pick GHC 7.10.3 since the 8.x was failing to build Aeson due to missing
+    # constructors in GHC.Generics.
+    paths = [ (haskell.packages.ghc7103.ghcWithPackages (h: [
       h.aeson h.parsec
     ])) ];
   };
