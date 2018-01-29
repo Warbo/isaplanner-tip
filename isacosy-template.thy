@@ -9,7 +9,12 @@ ML {*
     (*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS*)
   ];
 
-  (* Example: @{thms "Nat.plus_nat.simps"} *)
+  (* The 'theorems' (equations) which define each of our terms. For things which
+     use the 'function' keyword, try adding a '.simps' suffix. For things which
+     use the 'definition' keyword, try adding a '_def' suffix.
+
+     Examples: @{thms "Nat.zero_def"}
+               @{thms "Nat.plus_nat.simps"} *)
   val def_thrms = [
     (*TEMPLATE_REPLACE_ME_WITH_DEFINITIONS*)
   ];

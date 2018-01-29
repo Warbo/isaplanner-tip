@@ -1,7 +1,7 @@
 { attrsToDirs, bash, fail, get-haskell-te, handleConstructors, haskellPackages,
   isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, listUndefined,
-  make-tebenchmark-data, make-tebenchmark-isabelle, mkBin, runCommand, stdenv,
-  te-benchmark, withDeps, wrap, writeScript }:
+  make-tebenchmark-data, make-tebenchmark-isabelle, mkBin, python, runCommand,
+  stdenv, te-benchmark, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -107,10 +107,12 @@ rec {
 
       data = make-tebenchmark-data { te-benchmark = teb; };
 
+      theory = make-tebenchmark-isabelle { te-benchmark = teb; };
+
       datatypes = runCommand "datatypes-${label}"
         {
           inherit data isabelleTypeArgs namesFile;
-          buildInputs = [ jq ];
+          buildInputs = [ fail jq ];
           pre         = "ThyConstraintParams.add_datatype' @{context} @{typ \"";
           post        = "\"}";
         }
@@ -130,8 +132,11 @@ rec {
           }
 
           # Output arguments of a function type e.g. 'a => b => c' gives a and b
+          # We grep for 'global' to avoid standalone parameters like "'local1",
+          # e.g. from "cons :: 'local1 => 'local1 list => 'local1 list".
           function allArgs {
-            completeTypes | "$isabelleTypeArgs" | jq -r '.[]' | sort -u
+            completeTypes | "$isabelleTypeArgs" | jq -r '.[]' | grep -i global |
+                            sort -u
           }
 
           allArgs | while read -r ARG
@@ -141,11 +146,59 @@ rec {
         '';
 
       definitions = runCommand "definitions-${label}"
-        { inherit namesFile; }
+        {
+          inherit namesFile python theory;
+          commaSep = wrap {
+            name   = "commaSep";
+            paths  = [ python ];
+            script = ''
+              #!/usr/bin/env python
+              import sys
+              lines    = sys.stdin.readlines()
+              nonempty = [l.strip() for l in lines if l.strip() != ""]
+              print(', '.join(nonempty))
+            '';
+          };
+        }
         ''
           set -e
-          awk '{ print "@{thms \"A."$0".simps\"}"}' < "$namesFile" |
-            paste -sd ", " - > "$out"
+
+          function trimSpaces {
+            # From https://unix.stackexchange.com/a/205854/63735
+            awk '{$1=$1};1'
+          }
+
+          DEFS=$(grep -o '^definition[^:]*' < "$theory" |
+                 sed -e 's/^definition//g' | trimSpaces)
+
+          FUNS=$(grep -o '^function[^:]*' < "$theory" |
+                 sed -e 's/^function//g' | trimSpaces)
+
+          function onlyDefs {
+            grep -x -F -f <(echo "$DEFS") < "$namesFile"
+          }
+
+          function onlyFuns {
+            grep -x -F -f <(echo "$FUNS") < "$namesFile"
+          }
+
+          function isaDefs {
+            # Suffix each "definition" with '_def'
+            onlyDefs | awk '{printf("\n\n@{thms \"A.%s_def\"}\n\n", $0)}'
+          }
+
+          function isaFunctions {
+            # Suffix each "function" with '.simps'
+            onlyFuns | awk '{printf("\n\n@{thms \"A.%s.simps\"}\n\n", $0)}'
+          }
+
+          function isaAll {
+            isaDefs
+            isaFunctions
+          }
+
+          # Process each name on a separate line then combine with commas
+          isaAll | "$commaSep" > "$out"
         '';
 
       functions = runCommand "functions-${label}"

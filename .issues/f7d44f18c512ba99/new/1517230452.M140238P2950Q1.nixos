@@ -1,0 +1,24 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 12:47:53 +0000
+Subject: Re: "Undeclared fact" for nullary definitions
+Message-Id: <f7d44f18c512ba99-8cc86e2f8b26a575-artemis@nixos>
+References: <f7d44f18c512ba99-0-artemis@nixos>
+In-Reply-To: <f7d44f18c512ba99-0-artemis@nixos>
+
+I've added a 'show_theory' command which will load a given theory into
+Isabelle and print out its content, including all of the automatically
+defined/derived things like induction principles, etc.
+
+Looking through this output, I can see that 'globalFOO.simps' (which we
+use for things defined via 'function') appear in the 'theorems:'
+section.
+
+In this section, the only entries which appear for things defined via
+'definition' (like 'global70726f642f70726f705f33332e736d74326f6e65') are
+suffixed with '_def', e.g.
+
+  global70726f642f70726f705f33332e736d74326f6e65_def:
+    global70726f642f70726f705f33332e736d74326f6e65 =
+    Global437573746f6d53 Global437573746f6d5a
+
+I'll try using these instead of '.simps' for nullary definitions.
