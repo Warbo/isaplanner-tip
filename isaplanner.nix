@@ -1,6 +1,6 @@
 # Isabelle with Isaplanner support
-{ bash, fetchFromGitHub, fetchgit, fetchurl, file, isabelle, jdk, makeWrapper,
-  nettools, perl, polyml, stdenv, writeScript }@args:
+{ bash, fail, fetchFromGitHub, fetchgit, fetchurl, file, isabelle, jdk,
+  makeWrapper, nettools, perl, polyml, stdenv, wrap, writeScript }@args:
 
 rec {
   # The ML system Isabelle is written in
@@ -141,6 +141,59 @@ rec {
           --set ISABELLE_DIR      "$ISABELLE_DIR"      \
           --prefix PATH : "${perl}/bin"
       done
+    '';
+  };
+
+  show_theory = wrap {
+    name   = "show_theory";
+    paths  = [ bash fail isaplanner ];
+    vars   = {
+      msg = ''
+        Starting Isabelle. Please be patient, as it can take a while. First we
+        load the theory, then we print it. Note that this is not an interactive
+        command, so ignore prompts like 'ML> '; they're just line noise from
+        Isabelle.
+      '';
+      hint = ''
+        NOTE:
+        Isabelle is very particular about theory files. We must give it files
+        with names like 'foo.thy', where 'foo' matches the name appearing in the
+        'theory' line of the file (e.g. 'theory foo').
+
+        Note that symlinks will work. For example, if you have a theory called
+        'foo' in a file '/path/to/bar' then you can appease Isabelle by making a
+        symlink like 'foo.thy' -> '/path/to/bar' and running with 'foo.thy' as
+        the input filename.
+      '';
+    };
+    script = ''
+      #!/usr/bin/env bash
+      set -e
+
+      # Loads the given Isabelle theory file and dumps out its contents
+
+      [[ -n "$1" ]] || fail "No .thy file given"
+      [[ -e "$1" ]] || fail "Couldn't find theory file '$1'"
+      echo "$1" | grep '.thy${"$"}' > /dev/null || {
+        echo "$hint" 1>&2
+        fail "ERROR: Theory filename '$1' doesn't end in '.thy'"
+      }
+
+      NAME=$(basename "$1" .thy)
+       DIR=$(dirname  "$1")
+
+      function makeCommands {
+        # Load the theory; populates some state (dependency graphs, etc.)
+        echo "use_thy \"$NAME\";"
+
+        # Look up the theory and print it
+        echo "Proof_Display.print_theory (Thy_Info.get_theory \"$NAME\");"
+      }
+
+      pushd "$DIR" > /dev/null
+        echo "$msg" 1>&2
+        makeCommands | isaplanner
+      popd > /dev/null
     '';
   };
 }

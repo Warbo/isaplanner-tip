@@ -1,0 +1,58 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 09:23:42 +0000
+State: new
+Subject: "Undeclared fact" for nullary definitions
+Message-Id: <f7d44f18c512ba99-0-artemis@nixos>
+
+We use 'function foo ...' to declare functions with at least one
+argument, and 'A.foo.simps' to refer to the resulting equations.
+
+This doesn't work for nullary definitions, so we use
+'definition foo ...', but it turns out that there is no corresponding
+'.simps' we can refer to.
+
+$ /nix/store/dmfnd7wf531h5kxav2qf9kkfsndmqjdg-isacosy-runner-choose-100-2
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 107.675s elapsed time, 111.062s cpu time, 15.925s GC time
+Loading theory "ISACOSY"
+Exception trace - Undefined fact: "A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243.simps" (line 14 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 2.759s elapsed time, 2.824s cpu time, 0.544s GC time
+*** Undefined fact: "A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243.simps" (line 14 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+*** At command "ML" (line 6 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML> No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 107.675s elapsed time, 111.062s cpu time, 15.925s GC time
+Loading theory "ISACOSY"
+Exception trace - Undefined fact: "A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243.simps" (line 14 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 2.759s elapsed time, 2.824s cpu time, 0.544s GC time
+*** Undefined fact: "A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243.simps" (line 14 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+*** At command "ML" (line 6 of "/nix/store/bn1ddqhy46q2541xhahgcqmm8cx59pyl-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
