@@ -1,0 +1,109 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 15:31:33 +0000
+State: resolved
+Subject: Unification/coercion failure
+Message-Id: <fe0094f041dc6041-0-artemis@nixos>
+resolution: fixed
+
+$ /nix/store/k3saj0h5mwh7hhnxms2l6cccvww7crgz-isacosy-runner-choose-100-2
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 110.891s elapsed time, 112.367s cpu time, 16.072s GC time
+Loading theory "ISACOSY"
+Exception trace - Type unification failed: Clash of types "_ * _" and "Global437573746f6d496e74"
+
+Type error in application: incompatible operand type
+
+Operator:
+  Global746970323031352f73756273745f5375627374467265654e6f2e736d74324c616d ::
+  Global437573746f6d496e74
+  => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+     => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+Operand:   (free0, free1) :: ??'a * ??'b
+
+Coercion Inference:
+
+Local coercion insertion on the operand failed:
+No coercion known for type constructors: "prod" and "Global437573746f6d496e74"
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 29.305s elapsed time, 39.268s cpu time, 36.876s GC time
+*** Type unification failed: Clash of types "_ * _" and "Global437573746f6d496e74"
+***
+*** Type error in application: incompatible operand type
+***
+*** Operator:
+***   Global746970323031352f73756273745f5375627374467265654e6f2e736d74324c616d ::
+***   Global437573746f6d496e74
+***   => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+***      => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+*** Operand:   (free0, free1) :: ??'a * ??'b
+***
+*** Coercion Inference:
+***
+*** Local coercion insertion on the operand failed:
+*** No coercion known for type constructors: "prod" and "Global437573746f6d496e74"
+*** At command "ML" (line 6 of "/nix/store/wm0bl9yz6fchkjm7ybny7928gwb00345-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML> No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 110.891s elapsed time, 112.367s cpu time, 16.072s GC time
+Loading theory "ISACOSY"
+Exception trace - Type unification failed: Clash of types "_ * _" and "Global437573746f6d496e74"
+
+Type error in application: incompatible operand type
+
+Operator:
+  Global746970323031352f73756273745f5375627374467265654e6f2e736d74324c616d ::
+  Global437573746f6d496e74
+  => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+     => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+Operand:   (free0, free1) :: ??'a * ??'b
+
+Coercion Inference:
+
+Local coercion insertion on the operand failed:
+No coercion known for type constructors: "prod" and "Global437573746f6d496e74"
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 29.305s elapsed time, 39.268s cpu time, 36.876s GC time
+*** Type unification failed: Clash of types "_ * _" and "Global437573746f6d496e74"
+***
+*** Type error in application: incompatible operand type
+***
+*** Operator:
+***   Global746970323031352f73756273745f5375627374467265654e6f2e736d74324c616d ::
+***   Global437573746f6d496e74
+***   => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+***      => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+*** Operand:   (free0, free1) :: ??'a * ??'b
+***
+*** Coercion Inference:
+***
+*** Local coercion insertion on the operand failed:
+*** No coercion known for type constructors: "prod" and "Global437573746f6d496e74"
+*** At command "ML" (line 6 of "/nix/store/wm0bl9yz6fchkjm7ybny7928gwb00345-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
+[]

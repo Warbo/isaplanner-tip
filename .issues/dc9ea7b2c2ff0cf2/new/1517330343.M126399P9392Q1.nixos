@@ -1,0 +1,76 @@
+From: Chris Warburton
+Date: Tue, 30 Jan 2018 16:18:07 +0000
+Subject: Re: exception not_a_datatype_exp fun raised
+Message-Id: <dc9ea7b2c2ff0cf2-bada113fcc041092-artemis@nixos>
+References: <dc9ea7b2c2ff0cf2-0-artemis@nixos>
+In-Reply-To: <dc9ea7b2c2ff0cf2-0-artemis@nixos>
+
+Looks like this comes from Isaplanner. When we add datatypes, we do
+things like:
+
+    ThyConstraintParams.add_datatype'
+       @{context}
+       @{typ "'local1 => ('local2 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374)"}
+
+This add_datatype' functions looks like this:
+
+    fun add_datatype' ctxt (Type(dn,_)) = add_datatype ctxt dn
+      | add_datatype' ctxt _ = raise ERROR "add_datatype': not a Type type";
+
+This is pattern-matching on its second argument (the '@{typ ...}' one),
+looking for a 'Type' constructor. We can see 'Type' being used
+elsewhere, e.g.
+
+    resulttyp = Type(nm, my_typargs)
+
+It looks like this constructor has a type name ('nm') as the first part
+of its argument an a collection of arguments ('my_typeargs') as the
+second.
+
+Hence "add_datatype'" is ignoring any type parameters and just picking
+out the top-most type constructor name.
+
+In the case of something like the '@{typ ...}' argument above, this will
+pick the function type constructor '=>' and ignore all of the parameters
+(argument and return types). On the one hand: that's annoying, since it
+means a lot of the stuff we include is getting discarded. On the other
+hand, it's probably the source of this exception. On the gripping hand,
+we can probably simplify this by just plucking out all 'GlobalXXX' names
+which appear in the relevant types, deduping and passing them in.
+
+If we follow the implementation of "add_datatype'", we see that the name
+is given to "add_datatype", which is defined as:
+
+    fun add_datatype ctxt dn =
+        let val (consts,rws) = get_datatype_consts_and_termrws ctxt dn
+        in add_termrws ctxt rws o add_consts consts end;
+
+The exception is coming from 'get_datatype_consts_and_termrws', which is
+defined as:
+
+    fun get_datatype_consts_and_termrws ctxt nm =
+        let val dinfo = get_dinfo_in_ctxt ctxt nm
+        in (consts_of_datatype' dinfo, termrws_of_datatype' dinfo) end;
+
+Likewise, if we look at 'get_dinfo_in_ctxt' we get:
+
+    fun get_dinfo_in_ctxt ctxt datatype_name =
+        get_dinfo_in_thy (Proof_Context.theory_of ctxt) datatype_name;
+
+Which just calls out to:
+
+    fun get_dinfo_in_thy thy datatype_name =
+        (case (Symtab.lookup (BNF_LFP_Compat.get_all thy []) datatype_name)
+         of NONE => raise not_a_datatype_exp datatype_name
+          | SOME dinfo => dinfo);
+
+Here's the exception we're getting (the line numbers match up too).
+
+From what it looks like, '=>' is some syntactic sugar for a 'fun' type
+constructor, and that doesn't appear in the theory's symbol table.
+
+We can do one of two things: get 'fun' included somehow (e.g. taking it
+from a more extensive symbol table, like from Pure or somewhere, if
+there is such a thing); just pass raw names.
+
+I think we should do the latter.

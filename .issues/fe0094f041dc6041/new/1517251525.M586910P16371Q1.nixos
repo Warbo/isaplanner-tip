@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:42:10 +0000
+Subject: Re: Unification/coercion failure
+Message-Id: <fe0094f041dc6041-da4ee8cc1db6fe4d-artemis@nixos>
+References: <fe0094f041dc6041-0-artemis@nixos>
+In-Reply-To: <fe0094f041dc6041-0-artemis@nixos>
+
+Closed. This turns out to be a problem with how we were rendering the
+'undefined cases'. We were doing things like:
+
+    destructor-foo(Bar(free1, free2))
+
+Yet this is nonsense, since Isabelle doesn't use 'f(x, y)' notation for
+calling functions; it uses juxtaposition. Hence we were forming tuples
+of free variables, which don't have the correct type.
+
+Fixed now, by ditching the commas and moving the parentheses:
+
+    destructor-foo (Bar free1 free2)

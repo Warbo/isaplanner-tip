@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:49:56 +0000
+Subject: Re: Remove 'local datatypes
+Message-Id: <fa3787e8a923d21d-b1a5ae3b04cefa25-artemis@nixos>
+References: <fa3787e8a923d21d-0-artemis@nixos>
+In-Reply-To: <fa3787e8a923d21d-0-artemis@nixos>
+
+This was as simple as putting 'grep -i global' in a pipe

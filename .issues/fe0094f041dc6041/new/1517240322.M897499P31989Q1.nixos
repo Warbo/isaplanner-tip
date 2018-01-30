@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 15:34:46 +0000
+Subject: Re: Unification/coercion failure
+Message-Id: <fe0094f041dc6041-c90234a76c3d9492-artemis@nixos>
+References: <fe0094f041dc6041-0-artemis@nixos>
+In-Reply-To: <fe0094f041dc6041-0-artemis@nixos>
+
+This may be an artefact of the way we build up the template values. It
+looks like we're getting commas inserted into type signatures, which
+Isabelle is treating as product types, e.g. '(fst, snd)'. This is
+causing the unification error we see.
+
+We're inserting commas in between each entry in our lists, e.g. each set
+of defining theorems, each datatype, etc. It's probably caused by
+getting a single entry spanning across multiple lines, which we're
+therefore treating as multiple entries and comma-separating.
+
+We should tighten this up by using properly-delimited strings, e.g. like
+JSON, instead of relying newlines.

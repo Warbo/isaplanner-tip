@@ -1,0 +1,17 @@
+From: Chris Warburton
+Date: Tue, 30 Jan 2018 14:29:46 +0000
+Subject: Re: "UnequalLengths" error
+Message-Id: <f0735cd8becf33c3-a4184a4bc9bea3e6-artemis@nixos>
+References: <f0735cd8becf33c3-0-artemis@nixos>
+In-Reply-To: <f0735cd8becf33c3-0-artemis@nixos>
+
+I've added a test to check that the names, taken in order, from the
+'functions' value match those of the 'definitions' derivation.
+
+To ensure this, I've changed the way that we calculate the
+definitions. First we calculate all definitions, up front, from the
+'A.thy' file. Then, we look up each definition in order.
+
+This has exposed a problem, that there are things in 'functions' which
+aren't in 'definitions'. It looks like these are from mutually-recursive
+definitions, e.g. 'foo :: bar and baz :: quux ...'

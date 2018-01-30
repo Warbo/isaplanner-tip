@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Mon, 29 Jan 2018 09:23:42 +0000
-State: new
+State: resolved
 Subject: "Undeclared fact" for nullary definitions
 Message-Id: <f7d44f18c512ba99-0-artemis@nixos>
+resolution: fixed
 
 We use 'function foo ...' to declare functions with at least one
 argument, and 'A.foo.simps' to refer to the resulting equations.

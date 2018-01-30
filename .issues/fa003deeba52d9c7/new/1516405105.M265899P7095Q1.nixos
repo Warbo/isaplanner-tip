@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 19 Jan 2018 23:10:48 +0000
-State: new
+State: resolved
 Subject: Skip polyrec, etc. when templating from a sample
 Message-Id: <fa003deeba52d9c7-0-artemis@nixos>
+resolution: fixed
 
 We can choose a sample and turn it into a template, with functions,
 datatypes, etc. but we'll get errors if we try to look up the type of

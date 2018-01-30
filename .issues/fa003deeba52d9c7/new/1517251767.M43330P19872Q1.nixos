@@ -1,0 +1,16 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:47:07 +0000
+Subject: Re: Skip polyrec, etc. when templating from a sample
+Message-Id: <fa003deeba52d9c7-b0955d8f5e7c6afd-artemis@nixos>
+References: <fa003deeba52d9c7-0-artemis@nixos>
+In-Reply-To: <fa003deeba52d9c7-0-artemis@nixos>
+
+We now strip these names out before generating template values.
+
+This required a little upheaval, since we were operating on Nix lists of
+Nix strings, but doing the removals required running some 'runCommand'
+calls.
+
+Since we don't want to trigger a massive load of building during
+evaluation, I've switched everything over to taking sampled names from a
+file (possibly the result of a derivation) instead.

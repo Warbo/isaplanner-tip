@@ -1,0 +1,383 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:39:25 +0000
+State: resolved
+Subject: "UnequalLengths" error
+Message-Id: <f0735cd8becf33c3-0-artemis@nixos>
+resolution: fixed
+
+Looks like an assertion being made somewhere, either in Isabelle,
+Isaplanner, IsaCoSy, etc. Track it down and see what we need to do to
+avoid it.
+
+NOTE: This may imply that some of the template values need to be in
+sync, e.g. a function and its defining equations. In which case, make
+sure this is guaranteed (e.g. based on the order of names in the sample)
+so that things don't get out of whack.
+
+Trace follows:
+
+$ /nix/store/vcpiw7v88bqhdkcckkv3j0fdvd5v7rj7-isacosy-runner-choose-100-2
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 115.133s elapsed time, 113.602s cpu time, 16.154s GC time
+Loading theory "ISACOSY"
+Exception trace - exception UnequalLengths raised (line 543 of "library.ML")
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+<top level>
+CODETREE().genCode(3)(1)
+COMPILER_BODY().baseCompiler(3)executeCode(1)
+val functions =
+   [(A.global70726f642f70726f705f32382e736d743271726576666c6174,
+     "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243,
+     "Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432546f6b"),
+    (A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258,
+     "Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432546f6b"),
+    (A.global636f6e7374727563746f722d437573746f6d53,
+     "Global437573746f6d4e6174 => Global437573746f6d4e6174"),
+    (A.global697361706c616e6e65722f70726f705f33372e736d743264656c657465,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d4e6174 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global637573746f6d2d696e63,
+     "Global437573746f6d496e74 => Global437573746f6d496e74"),
+    (A.global746970323031352f6c6973745f53656c6563745065726d75746174696f6e732e736d743264656c657465,
+     "Global437573746f6d496e74
+      => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global697361706c616e6e65722f70726f705f30362e736d74326d696e7573,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 => Global437573746f6d4e6174"),
+    (A.global70726f642f70726f705f34372e736d7432756e657175616c,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 => Global437573746f6d426f6f6c"),
+    (A.global746970323031352f736f72745f42536f7274436f756e742e736d7432737469746368,
+     "Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    ...]:
+   (string * typ) list
+val def_thrms =
+   [["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743259 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743259"],
+    ["global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743251 =
+      Global746970323031352f6573636170655f496e6a6563746976652e736d743251"],
+    ["global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743242 =
+      Global746970323031352f6573636170655f496e6a6563746976652e736d743242"],
+    ["global746970323031352f696e745f6d756c5f6964656e745f6c6566742e736d74326f6e65 =
+      Global746970323031352f696e745f6164645f6173736f632e736d743250
+       (Global437573746f6d53 Global437573746f6d5a)"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432506c =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432506c"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324559 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324559"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a41 =
+      Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a41"],
+    ["global636f6e7374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e696c =
+      Global746970323031352f736f72745f48536f7274436f756e742e736d74324e696c"],
+    ...]:
+   thm list list
+Exception trace - exception UnequalLengths raised (line 543 of "library.ML")
+
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 27.064s elapsed time, 40.987s cpu time, 38.451s GC time
+*** exception UnequalLengths raised (line 543 of "library.ML")
+***
+*** At command "ML" (line 6 of "/nix/store/ccynai5fmgbx4lhkv4xl7b4lz8nkw525-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML> No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 115.133s elapsed time, 113.602s cpu time, 16.154s GC time
+Loading theory "ISACOSY"
+Exception trace - exception UnequalLengths raised (line 543 of "library.ML")
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+Library.~~(2)
+<top level>
+CODETREE().genCode(3)(1)
+COMPILER_BODY().baseCompiler(3)executeCode(1)
+val functions =
+   [(A.global70726f642f70726f705f32382e736d743271726576666c6174,
+     "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243,
+     "Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432546f6b"),
+    (A.global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258,
+     "Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432546f6b"),
+    (A.global636f6e7374727563746f722d437573746f6d53,
+     "Global437573746f6d4e6174 => Global437573746f6d4e6174"),
+    (A.global697361706c616e6e65722f70726f705f33372e736d743264656c657465,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d4e6174 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global637573746f6d2d696e63,
+     "Global437573746f6d496e74 => Global437573746f6d496e74"),
+    (A.global746970323031352f6c6973745f53656c6563745065726d75746174696f6e732e736d743264656c657465,
+     "Global437573746f6d496e74
+      => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    (A.global697361706c616e6e65722f70726f705f30362e736d74326d696e7573,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 => Global437573746f6d4e6174"),
+    (A.global70726f642f70726f705f34372e736d7432756e657175616c,
+     "Global437573746f6d4e6174
+      => Global437573746f6d4e6174 => Global437573746f6d426f6f6c"),
+    (A.global746970323031352f736f72745f42536f7274436f756e742e736d7432737469746368,
+     "Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => Global437573746f6d496e74 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+    ...]:
+   (string * typ) list
+val def_thrms =
+   [["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743258"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743259 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743259"],
+    ["global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743251 =
+      Global746970323031352f6573636170655f496e6a6563746976652e736d743251"],
+    ["global636f6e7374727563746f722d746970323031352f6573636170655f496e6a6563746976652e736d743242 =
+      Global746970323031352f6573636170655f496e6a6563746976652e736d743242"],
+    ["global746970323031352f696e745f6d756c5f6964656e745f6c6566742e736d74326f6e65 =
+      Global746970323031352f696e745f6164645f6173736f632e736d743250
+       (Global437573746f6d53 Global437573746f6d5a)"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432506c =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d7432506c"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324559 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d74324559"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a41 =
+      Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74325a41"],
+    ["global636f6e7374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e696c =
+      Global746970323031352f736f72745f48536f7274436f756e742e736d74324e696c"],
+    ...]:
+   thm list list
+Exception trace - exception UnequalLengths raised (line 543 of "library.ML")
+
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 27.064s elapsed time, 40.987s cpu time, 38.451s GC time
+*** exception UnequalLengths raised (line 543 of "library.ML")
+***
+*** At command "ML" (line 6 of "/nix/store/ccynai5fmgbx4lhkv4xl7b4lz8nkw525-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump

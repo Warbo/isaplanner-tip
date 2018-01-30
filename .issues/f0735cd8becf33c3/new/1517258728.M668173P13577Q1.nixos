@@ -1,0 +1,23 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 20:43:35 +0000
+Subject: Re: "UnequalLengths" error
+Message-Id: <f0735cd8becf33c3-d053963fdaa912f8-artemis@nixos>
+References: <f0735cd8becf33c3-0-artemis@nixos>
+In-Reply-To: <f0735cd8becf33c3-0-artemis@nixos>
+
+Looks like this is due to zipping up functions with their definitions.
+
+The exception trace points us to Pure/library.thy, which contains this:
+
+    (*combine two lists forming a list of pairs:
+      [x1, ..., xn] ~~ [y1, ..., yn]  ===>  [(x1, y1), ..., (xn, yn)]*)
+    fun [] ~~ [] = []
+      | (x :: xs) ~~ (y :: ys) = (x, y) :: (xs ~~ ys)
+      | _ ~~ _ = raise ListPair.UnequalLengths;
+
+This is used in isacosy-template.thy in the following way:
+
+    val fundefs = functions ~~ def_thrms;
+
+Hence 'functions' and 'def_thrms' need to be the same length in order
+for the zip to work.

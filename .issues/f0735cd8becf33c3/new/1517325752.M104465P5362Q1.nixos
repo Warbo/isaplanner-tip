@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Tue, 30 Jan 2018 15:21:51 +0000
+Subject: Re: "UnequalLengths" error
+Message-Id: <f0735cd8becf33c3-d6fc9b626e7da450-artemis@nixos>
+References: <f0735cd8becf33c3-0-artemis@nixos>
+In-Reply-To: <f0735cd8becf33c3-0-artemis@nixos>
+
+Now we include mutually-recursive functions defined using 'and', and the
+error seems to have gone and the test passes.

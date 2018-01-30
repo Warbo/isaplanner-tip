@@ -105,16 +105,16 @@
              (define constructor-args
                (string-join (replace-with-range (lambda (n) (format "free~s" n))
                                                 (rest c))
-                            ", "))
+                            " "))
 
              ;; If the constructor is nullary, don't call it
              (define constructor-call
                (if (equal? 1 (length c))
-                   (format "~a"     (first c))
-                   (format "~a(~a)" (first c) constructor-args)))
+                   (format "(~a)"     (first c))
+                   (format "(~a ~a)" (first c) constructor-args)))
 
              (define destructor-call
-               (format "~a(~a)" func constructor-call))
+               (format "~a~a" func constructor-call))
 
              ;; The final result, for splicing into IsaCoSy calls
              (format "Trm.change_frees_to_fresh_vars @{term \"~a\"}"

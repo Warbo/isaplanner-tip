@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:33:59 +0000
+State: new
+Subject: Don't include A.thy loading time in benchmark
+Message-Id: <e01892e1ea9e0b9a-0-artemis@nixos>
+
+It can take a while to load the complete A.thy theory, and since it
+contains all of our (hundreds of) definitions, we shouldn't include it
+in the benchmark times for samples. We *know* that loading hundreds of
+definitions can take a while, but that's irrelevant when we're measuring
+how long it takes to explore (say) *three* definitions.
+
+Isabelle does time how long it takes to load the A.thy and the
+ISACOSY.thy theories separately. I don't think we should rely on the
+latter for our timings, but I think it's reasonable to subtract the
+former from our own (ASV-based) measurements.
+
+In any case, we should log these as part of the JSON structure, commit
+it to git, and do any calculation after the fact.

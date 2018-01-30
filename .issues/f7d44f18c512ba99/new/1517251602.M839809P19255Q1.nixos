@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Mon, 29 Jan 2018 18:46:18 +0000
+Subject: Re: "Undeclared fact" for nullary definitions
+Message-Id: <f7d44f18c512ba99-f0253746f8f3fe67-artemis@nixos>
+References: <f7d44f18c512ba99-0-artemis@nixos>
+In-Reply-To: <f7d44f18c512ba99-0-artemis@nixos>
+
+Seems to have done the trick; the errors have gone away.
