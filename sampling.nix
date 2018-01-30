@@ -1,7 +1,7 @@
-{ attrsToDirs, bash, fail, get-haskell-te, handleConstructors, haskellPackages,
-  isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, listUndefined,
-  make-tebenchmark-data, make-tebenchmark-isabelle, mkBin, python, runCommand,
-  stdenv, te-benchmark, withDeps, wrap, writeScript }:
+{ attrsToDirs, bash, fail, gawk, get-haskell-te, handleConstructors,
+  haskellPackages, isabelleTypeArgs, isacosy, isacosy-theory, jq, lib,
+  listUndefined, make-tebenchmark-data, make-tebenchmark-isabelle, mkBin,
+  nothing, runCommand, stdenv, te-benchmark, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -310,54 +310,86 @@ rec {
       known-samples;
 
   runner-tests =
-    with mapAttrs (n: { script, count }: runCommand "${n}-runner-test"
-                    {
-                      inherit n script;
-                      c           = toString count;
-                      buildInputs = [ fail jq ];
-                    }
-                    ''
-                      set -e
-                      echo "Exploring $n theory" 1>&2
-                      OUTPUT=$("$script" | tee >(cat 1>&2))
+    with rec {
+      checkConjectures = { count, name, script }: runCommand
+        "${name}-runner-test"
+        {
+          inherit n script;
+          c           = toString count;
+          buildInputs = [ fail jq ];
+        }
+        ''
+          set -e
+          echo "Exploring $n theory" 1>&2
+          OUTPUT=$("$script" | tee >(cat 1>&2))
 
-                      if [[ -n "$c" ]]
-                      then
-                        echo "$OUTPUT" |
-                          jq -e 'length | tostring | . == env["c"]' || {
-                            echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
-                            fail "Should have found $c conjectures"
-                        }
-                      else
-                        echo "$OUTPUT" | jq -e 'length | . > 0' || {
-                          echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
-                          fail "No conjectures found"
-                        }
-                      fi
-                      mkdir "$out"
-                    '')
-                  {
-                    # Contains plus, times and exp for nats, which
-                    # should be easy for IsaCoSy to find conjectures
-                    # for. The fact that the indices approximate pi is
-                    # purely a coincidence!
-                    nat = {
-                      count  = "";  # Find at least one conjecture
-                      script = known-runners.ce9c9478."3"."14";
-                    };
+          if [[ -n "$c" ]]
+          then
+            echo "$OUTPUT" |
+              jq -e 'length | tostring | . == env["c"]' || {
+                echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
+                fail "Should have found $c conjectures"
+            }
+          else
+            echo "$OUTPUT" | jq -e 'length | . > 0' || {
+              echo -e "OUTPUT:\n\n$OUTPUT\n\nEND OUTPUT" 1>&2
+              fail "No conjectures found"
+            }
+          fi
+          mkdir "$out"
+        '';
 
-                    # Contains list reverse, which we can use to test
-                    # parameterised types.
-                    list = {
-                      # We should only find 'rev (rev x) ~= x', since
-                      # anything else requires constructors, which we
-                      # should be stripping out
-                      count  = 1;
-                      script = known-runners.ce9c9478."1"."22";
-                    };
-                  };
-    # Try to avoid running multiple isacosy processes in parallel, since they're
-    # resource-hungry and include a timeout. We make nat run first, since it's
-    # monomorphic and therefore more 'basic' than the polymorphic list test.
-    withDeps [ nat ] list;
+      # Contains plus, times and exp for nats, which
+      # should be easy for IsaCoSy to find conjectures
+      # for. The fact that the indices approximate pi is
+      # purely a coincidence!
+      nat = {
+        count  = "";  # Find at least one conjecture
+        name   = "nat";
+        script = known-runners.ce9c9478."3"."14";
+      };
+
+      # Contains list reverse, which we can use to test
+      # parameterised types.
+      list = {
+        # We should only find 'rev (rev x) ~= x', since
+        # anything else requires constructors, which we
+        # should be stripping out
+        count  = 1;
+        name = "list";
+        script = known-runners.ce9c9478."1"."22";
+      };
+
+      functionDefsMatchUp = runCommand "function-defs-match-up"
+        {
+          inherit (dataForSample {
+            label = "test";
+            names = choose_sample { size = "200"; rep = "0"; };
+          }) definitions functions;
+          buildInputs = [ fail ];
+        }
+        ''
+          set -e
+          echo "Checking '$functions' matches up with '$definitions'" 1>&2
+
+          tr ',' '\n' < "$definitions" | grep -o 'A\.[^: ._]*' > defs
+          tr ',' '\n' < "$functions"   | grep -o 'A\.[^: ._]*' > funs
+
+          while read -r PAIR
+          do
+            DEF=$(echo "$PAIR" | cut -f1)
+            FUN=$(echo "$PAIR" | cut -f2)
+
+            # We stop at the first mismatched pair, since an extra/missing name
+            # would cause all subsequent pairs to mismatch.
+            [[ "x$DEF" = "x$FUN" ]] ||
+              fail "Mismatched names: function '$FUN', definition '$DEF'"
+          done < <(paste defs funs)
+
+          mkdir "$out"
+        '';
+
+      tests = [ functionDefsMatchUp ]; #[ (checkConjectures nat) (checkConjectures list) ];
+    };
+    withDeps tests nothing;
 }
