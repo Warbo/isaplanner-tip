@@ -533,53 +533,6 @@ sanitiseTree t = case t of
 
 ---
 
-type TokenParser = Parsec [Token] ()
-
-tokenParser :: TokenParser a -> [Token] -> Either ParseError a
-tokenParser p = parse p "(unknown)"
-
--- Copied from Parsec's "char" function. Looks for a token matching the
--- predicate "p", and if found returns that token modified by the function "f".
--- NOTE: We don't handle position information, so ignore line/column numbers.
-tokenThat :: (Token -> Bool) -> (Token -> a) -> TokenParser a
-tokenThat p f = tokenPrim (\t -> show [t])
-                          (\pos _ _ -> pos)
-                          (\t -> if p t then Just (f t) else Nothing)
-
-testParseConditionalToken = ("can parse tokens conditionally", go)
-  where go s = case tokenParser (tokenThat (== Name s) id) [Name s] of
-                 Left  _ -> False
-                 Right _ -> True
-
-testDontParseWrongToken = ("dont parse wrong token", go)
-  where go s = case tokenParser (tokenThat (== Name s) id) [Name ("x" ++ s)] of
-                 Left  _ -> True
-                 Right _ -> False
-
-chunk :: TokenParser Type
-chunk = tokenThat isName (\(Name n) -> Chunk n)
-  where isName (Name _) = True
-        isName _        = False
-
-group :: TokenParser Type
-group = fmap Group (between (tokenThat (== Open)  id)
-                            (tokenThat (== Close) id)
-                            (many1 parseType))
-
-arrow :: TokenParser ()
-arrow = tokenThat (== Arrow) (const ())
-
-func :: TokenParser Type
-func = do
-  x  <- group <|> chunk
-  arrow
-  xs <- sepBy1 (group <|> chunk) arrow
-  let all = (x:xs)
-  return (Func (init all) (last all))
-
-parseType :: TokenParser Type
-parseType = try func <|> group <|> chunk
-
 stringToType :: String -> Either String Type
 stringToType s = do tokens <- tokenise s
                     type'  <- tokensToType tokens
@@ -678,8 +631,6 @@ check = concat <$> sequence [go testStripMakesSane,
                              go testRawRender,
                              go testRenderParseInverse,
                              go testGroupingRegression1,
-                             go testParseConditionalToken,
-                             go testDontParseWrongToken,
                              go testParenthesiseSimple,
                              go testParenthesiseSingle,
                              go testParenthesiseNested,

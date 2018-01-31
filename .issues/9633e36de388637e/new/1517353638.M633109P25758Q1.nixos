@@ -1,0 +1,52 @@
+From: Chris Warburton
+Date: Tue, 30 Jan 2018 23:01:26 +0000
+State: new
+Subject: Bad number of arguments for type constructor
+Message-Id: <9633e36de388637e-0-artemis@nixos>
+
+/nix/store/d9lhiwbr80hgv30srsh9p3cghs50p82j-isacosy-runner-choose-100-2
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 109.847s elapsed time, 111.571s cpu time, 15.983s GC time
+Loading theory "ISACOSY"
+Exception trace - Bad number of arguments for type constructor: "A.Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 30.392s elapsed time, 39.589s cpu time, 37.223s GC time
+*** Bad number of arguments for type constructor: "A.Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"
+*** At command "ML" (line 6 of "/nix/store/frmzyblgg27yak8rijn2fvrgwkgqcc9d-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML> No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 109.847s elapsed time, 111.571s cpu time, 15.983s GC time
+Loading theory "ISACOSY"
+Exception trace - Bad number of arguments for type constructor: "A.Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 30.392s elapsed time, 39.589s cpu time, 37.223s GC time
+*** Bad number of arguments for type constructor: "A.Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"
+*** At command "ML" (line 6 of "/nix/store/frmzyblgg27yak8rijn2fvrgwkgqcc9d-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
+[]

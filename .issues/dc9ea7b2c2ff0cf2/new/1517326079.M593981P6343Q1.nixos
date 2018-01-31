@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 30 Jan 2018 15:23:23 +0000
-State: new
+State: resolved
 Subject: exception not_a_datatype_exp fun raised
 Message-Id: <dc9ea7b2c2ff0cf2-0-artemis@nixos>
+resolution: fixed
 
 chris@nixos:~/Programming/Isabelle/IsaPlannerTip$ /nix/store/bkq7g5dab8pq8d4ga6acjhi4s35pkx71-isacosy-runner-choose-100-2
 Sending raw equations to stderr

@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Tue, 30 Jan 2018 22:49:04 +0000
+Subject: Re: exception not_a_datatype_exp fun raised
+Message-Id: <dc9ea7b2c2ff0cf2-f06f9ccc13ccc74a-artemis@nixos>
+References: <dc9ea7b2c2ff0cf2-0-artemis@nixos>
+In-Reply-To: <dc9ea7b2c2ff0cf2-0-artemis@nixos>
+
+I've limited the datatypes to just global names, and this error has now
+gone.

@@ -1,0 +1,72 @@
+From: Chris Warburton
+Date: Wed, 31 Jan 2018 12:51:40 +0000
+Subject: Re: Bad number of arguments for type constructor
+Message-Id: <9633e36de388637e-9b43ed43371c9777-artemis@nixos>
+References: <9633e36de388637e-0-artemis@nixos>
+In-Reply-To: <9633e36de388637e-0-artemis@nixos>
+
+I've altered IsabelleTypeArgs.hs to spit out "components" of types, i.e.
+the argument and return types of functions, etc. This way, we don't just
+get bare names, we get e.g. "'local1 list" rather than just "list".
+
+Something's a little off at the moment though, since we're getting
+commas appearing, like:
+
+    |> ThyConstraintParams.add_datatype' @{context} @{typ "('local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374) , 'local2"}
+
+This is causing problems:
+
+$ /nix/store/h25l055g55lihv1a9p28902xvlk4nvzx-isacosy-runner-choose-100-2
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 124.796s elapsed time, 118.391s cpu time, 16.838s GC time
+Loading theory "ISACOSY"
+Exception trace - Inner syntax error (line 46 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+at ", 'local2"
+Failed to parse type
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 3.096s elapsed time, 3.039s cpu time, 0.622s GC time
+*** Inner syntax error (line 46 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+*** at ", 'local2"
+*** Failed to parse type
+*** At command "ML" (line 6 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML> No 'BEGIN OUTPUT' sentinel found. Dumping whole output:
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 124.796s elapsed time, 118.391s cpu time, 16.838s GC time
+Loading theory "ISACOSY"
+Exception trace - Inner syntax error (line 46 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+at ", 'local2"
+Failed to parse type
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 3.096s elapsed time, 3.039s cpu time, 0.622s GC time
+*** Inner syntax error (line 46 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+*** at ", 'local2"
+*** Failed to parse type
+*** At command "ML" (line 6 of "/nix/store/mrdqvwpl70x2ajd8146bbxjpx64a5hrj-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
+[]
