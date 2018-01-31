@@ -86,7 +86,7 @@ rec {
 
       test = runCommand "isabelleTypeArgs-tests"
         {
-          buildInputs = [ fail ];
+          buildInputs = [ fail jq ];
           script      = untested;
         }
         ''
@@ -96,21 +96,41 @@ rec {
           RUN_TESTS=1 "$script" || fail "Self-test failed"
 
           function check {
-            GOT=$(echo "$1" | "$script")
-            WANT=$(echo -e "$2")
+             GOT=$(echo    "$1" | "$script" | jq 'sort')
+            WANT=$(echo -e "$2"             | jq 'sort')
 
-            [[ "x$GOT" = "x$WANT" ]] ||
-              fail "Got '$GOT' for '$1' instead of '$WANT'"
+            # Check every element of GOT is in WANT and vice versa
+
+            jq -e -n --argjson got "$GOT" --argjson want "$WANT" \
+               '$got == $want' || fail "'$1' gave '$GOT' not '$WANT'"
           }
 
-          check '["nat"]'                  '[]'
-          check '["nat => nat"]'           '["nat"]'
-          check '["nat => nat => nat"]'    '["nat"]'
-          check '["nat => int => bool"]'   '["nat","int"]'
-          check '["(nat => int) => bool"]' '["nat => int","nat"]'
+          # These will accumulate the inputs and outputs, so we can check JSON
+          # containing multiple types
+          IS='[]'
+          OS='[]'
 
-          check '["(a => (b => c => d) => e) => f => g"]' \
-                '["a => (b => c => d) => e","f","a","b => c => d","b","c"]'
+          for EXAMPLE in \
+            '["nat"]                           	["nat"]'                    \
+            '["nat => nat"]                    	["nat"]'                    \
+            '["nat => nat => nat"]             	["nat"]'                    \
+            '["nat => int => bool"]            	["nat", "int", "bool"]'     \
+            '["(nat => int) => bool"]          	["nat", "int", "bool"]'     \
+            '["z => (z y x => y w)"]           	["z", "z y x", "y", "y w"]' \
+            '["(a => (b => c => d)) => e => f"]	["a", "b", "c", "d", "e", "f"]'
+          do
+            I=$(echo "$EXAMPLE" | cut -f1)
+            O=$(echo "$EXAMPLE" | cut -f2)
+
+            check "$I" "$O"
+
+            # Append this example to our accumulating input/output arrays
+            IS=$(echo "$IS" | jq --argjson i "$I" '. + $i')
+            OS=$(echo "$OS" | jq --argjson o "$O" '. + $o')
+          done
+
+          # Check that multiple inputs work
+          check "$IS" "$OS"
 
           mkdir "$out"
         '';

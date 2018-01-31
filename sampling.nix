@@ -170,25 +170,23 @@ rec {
         function completeTypes {
           while read -r NAME
           do
+            # Check we have a type for this name
             jq -e --arg name "$NAME" '.types | has($name)' < "$data" \
                                                            > /dev/null ||
               fail "Couldn't get type of '$NAME'"
 
+            # Get this name's type
             jq --arg name "$NAME" '.types | .[$name]' < "$data"
           done < "$namesFile" | jq -s '.'
         }
 
-        # Output arguments of a function type e.g. 'a => b => c' gives a and b
-        # We grep for 'global' to avoid standalone parameters like "'local1",
-        # e.g. from "cons :: 'local1 => 'local1 list => 'local1 list".
-        function allArgs {
-          completeTypes | "$isabelleTypeArgs" | jq -r '.[]' | grep -i global |
-                          sort -u
-        }
-
-        allArgs | while read -r ARG
+        completeTypes | "$isabelleTypeArgs"          |
+                        jq -r '.[]'                  |
+                        grep -i 'global[0-9a-fA-F]*' |
+                        sort -u                      |
+                        while read -r T
         do
-          echo "|> ThyConstraintParams.add_datatype' @{context} @{typ \"$ARG\"}"
+          echo "|> ThyConstraintParams.add_datatype' @{context} @{typ \"$T\"}"
         done > "$out"
       '';
 

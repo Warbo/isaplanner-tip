@@ -6,6 +6,7 @@ import qualified Data.ByteString.Lazy.Char8    as BS
 import           Data.Char
 import           Data.List                     (intercalate, nub, sort)
 import           Data.Maybe                    (catMaybes)
+import qualified Data.Set                      as Set
 import           System.Environment            (lookupEnv)
 import           System.IO
 import           Test.QuickCheck
@@ -16,7 +17,8 @@ import           Text.Parsec.String            (Parser)
 import           Text.ParserCombinators.Parsec hiding (token, (<|>))
 
 -- Isabelle types
-data Type = Chunk String | Group [Type] | Func [Type] Type deriving (Eq, Show)
+data Type = Chunk String | Group [Type] | Func [Type] Type
+  deriving (Eq, Ord, Show)
 
 renderType t = case t of
       Chunk s        -> s
@@ -581,24 +583,47 @@ trim s                    = reverse (go s "")
         go   (c:s) acc = go s (c:acc)
         go ""      acc = acc
 
-argsOf :: Type -> [Type]
-argsOf (Func args _) = args ++ concatMap argsOf args
-argsOf _             = []
+-- Pull types (nullary or fully-applied) out of functions, since functions can't
+-- be given as datatypes to IsaCoSy.
+namedOf :: Type -> [Type]
+namedOf t = case t of
+  -- Keep standalone chunks
+  Chunk _       -> [t]
 
-testArgsOfNullary = ("no args from nullary", argsOf (Chunk "nat") === [])
+  -- Recurse through function arg/return types
+  Func args ret -> namedOf ret ++ concatMap namedOf args
 
-testArtsOfFunction = ("get args of function",
-                      argsOf (Func [Chunk "i"] (Chunk "o")) === [Chunk "i"])
+  -- Assume that a group is fully-applied. Recurse into each parameter, since we
+  -- also assume they're fully-applied. Note that Isabelle types put the
+  -- constructor last, like in ML.
+  Group ts      -> t : case ts of
+                         [] -> []
+                         _  -> concatMap namedOf (init ts)
 
-testArgsOfNested = ("get args from nested functions",
-                    [Func [Chunk "nat"] (Chunk "bool"), Chunk "nat"] ===
-                    argsOf (Func [Func [Chunk "nat"] (Chunk "bool")]
-                                 (Chunk "int")))
+testNamedOfNullary = ("one name from nullary",
+                      Chunk "nat" `hasNamed` [Chunk "nat"])
+
+testNamedOfFunction = ("get named of function",
+                       Func [Chunk "i"] (Chunk "o")
+                       `hasNamed` [Chunk "i", Chunk "o"])
+
+testNamedOfNested = ("get named from nested functions",
+                     Func [Func [Chunk "nat"] (Chunk "bool")] (Chunk "int")
+                     `hasNamed` [Chunk "nat", Chunk "bool", Chunk "int"])
+
+testNamedOfParams = ("get named from parameterised types",
+                     Func [Group [Chunk "nat", Chunk "list"]] (Chunk "int")
+                     `hasNamed` [Group [Chunk "nat", Chunk "list"],
+                                 Chunk "int", Chunk "nat"])
 
 ---
 
-renderArgsOf :: String -> [String]
-renderArgsOf s = map renderType (nub (argsOf (case stringToType s of
+hasNamed t ts = namedOf t `setEq` ts
+
+setEq xs ys = Set.fromList xs === Set.fromList ys
+
+renderNamedOf :: String -> [String]
+renderNamedOf s = map renderType (nub (namedOf (case stringToType s of
                                                    Left  e -> error e
                                                    Right t -> t)))
 
@@ -619,10 +644,11 @@ main = do mode <- lookupEnv "RUN_TESTS"
                                                 "error",   err,
                                                 "stdin",   raw))
                                   Right ts -> ts
-                       msg ("Getting args of " ++ show (length ts) ++ " types")
-                       let args = concatMap (renderArgsOf . trim)
-                                            (ts :: [String])
-                       BS.putStr (Aeson.encode args)
+                       msg ("Getting named types from " ++ show (length ts)
+                                                        ++ " types")
+                       let named = concatMap (renderNamedOf . trim)
+                                             (ts :: [String])
+                       BS.putStr (Aeson.encode named)
 
 msg = hPutStrLn stderr
 
@@ -640,9 +666,10 @@ check = concat <$> sequence [go testStripMakesSane,
                              go testParseRegression1,
                              go testParseRenderInverse,
                              go testSpacesGroup,
-                             go testArgsOfNullary,
-                             go testArtsOfFunction,
-                             go testArgsOfNested,
+                             go testNamedOfNullary,
+                             go testNamedOfFunction,
+                             go testNamedOfNested,
+                             go testNamedOfParams,
                              go testGatherArgs,
                              go testTokensToValidType,
                              go testNoRemainingParens,
