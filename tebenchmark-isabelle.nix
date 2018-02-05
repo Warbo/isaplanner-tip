@@ -75,8 +75,25 @@ rec {
 
   # Note: to comply with Isabelle's naming conventions, the output of this
   # derivation should be copied to a file called 'A.thy' before importing.
-  make-tebenchmark-isabelle = { te-benchmark }: runCommand
-    "tebenchmark-isabelle"
+  make-tebenchmark-isabelle = args: runCommand "tebenchmark-isabelle"
+    { data = tip-convert args; }
+    ''
+      ln -s "$data/A.thy" "$out"
+    '';
+
+  find-undefined-cases = args: runCommand "undefined-cases"
+    {
+      buildInputs = [ haskellPackages.ghc ];
+      data        = tip-convert args;
+    }
+    ''
+      cp "$data/A.hs" ./A.hs
+      ghc -fwarn-incomplete-patterns A.hs 2>&1 | tee "$out"
+      exit 1
+    '';
+
+  tip-convert = { te-benchmark }: runCommand
+    "tip-conversion"
     {
       buildInputs = [
         (haskellPackages.ghcWithPackages (h: [ (h.callPackage tip-lib {}) ]))
@@ -89,7 +106,8 @@ rec {
       set -o pipefail
 
       echo "Converting smtlib data into isabelle code" 1>&2
-      "$getPreprocessed" | tip --isabelle > A.thy
+      "$getPreprocessed" > pp
+      tip --isabelle < pp > A.thy
 
       echo "Testing" 1>&2
       OUTPUT=$(echo 'use_thy "A";' | isaplanner)
@@ -103,7 +121,10 @@ rec {
       fi
       echo "Passed" 1>&2
 
-      cp A.thy "$out"
+      mkdir -p "$out"
+      cp A.thy "$out"/
+
+      tip --haskell < pp > "$out/A.hs"
     '';
 
   tebenchmark-data = make-tebenchmark-data { inherit te-benchmark; };
