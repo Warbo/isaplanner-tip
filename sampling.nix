@@ -309,12 +309,16 @@ rec {
 
   runner-tests =
     with rec {
-      checkConjectures = { count, name, script }: runCommand
+      checkConjectures = { count, name, names }: runCommand
         "${name}-runner-test"
         {
-          inherit n script;
+          n           = name;
           c           = toString count;
           buildInputs = [ fail jq ];
+          script      = runnerFor {
+            inherit names te-benchmark;
+            label = "test-${name}";
+          };
         }
         ''
           set -e
@@ -337,25 +341,52 @@ rec {
           mkdir "$out"
         '';
 
-      # Contains plus, times and exp for nats, which
-      # should be easy for IsaCoSy to find conjectures
-      # for. The fact that the indices approximate pi is
-      # purely a coincidence!
+      namesMatching = { label, wanted, unwanted }: runCommand
+        "names-for-${label}"
+        {
+          inherit wanted unwanted;
+          buildInputs = [ jq te-benchmark.tools ];
+          data        = make-tebenchmark-data { inherit te-benchmark; };
+        }
+        ''
+          function encodedNames {
+            jq -r '.types | keys | .[]' < "$data"
+          }
+
+          function withDecoded {
+            paste <(encodedNames) <(encodedNames | decode)
+          }
+
+          for WPAT in $wanted
+          do
+            CHOSEN=$(withDecoded | grep "$WPAT")
+            echo -e "Whittling down these names for '$WPAT':\n$CHOSEN" 1>&2
+            for UPAT in $unwanted
+            do
+              CHOSEN=$(echo "$CHOSEN" | grep -v "$UPAT")
+            done
+            echo "$CHOSEN" | cut -f1 | tee "$out"
+          done
+        '';
+
       nat = {
-        count  = "";  # Find at least one conjecture
-        name   = "nat";
-        script = known-runners.ce9c9478."3"."14";
+        count = "";  # Find at least one conjecture
+        name  = "nat";
+        names = namesMatching {
+          label    = "nat";
+          wanted   = [ "plus$"       "mult$"  ];
+          unwanted = [ "bin_distrib" "regexp" ];
+        };
       };
 
-      # Contains list reverse, which we can use to test
-      # parameterised types.
       list = {
-        # We should only find 'rev (rev x) ~= x', since
-        # anything else requires constructors, which we
-        # should be stripping out
-        count  = 1;
-        name = "list";
-        script = known-runners.ce9c9478."1"."22";
+        count = 1;
+        name  = "list";
+        names = namesMatching {
+          label    = "list";
+          wanted   = [ "rev$"          ];
+          unwanted = [ "qrev" "regexp" ];
+        };
       };
 
       functionDefsMatchUp = runCommand "function-defs-match-up"
@@ -387,7 +418,11 @@ rec {
           mkdir "$out"
         '';
 
-      tests = [ functionDefsMatchUp ]; #[ (checkConjectures nat) (checkConjectures list) ];
+      tests = [
+        functionDefsMatchUp
+        (checkConjectures nat)
+        (checkConjectures list)
+      ];
     };
     withDeps tests nothing;
 }
