@@ -6,7 +6,9 @@
 {-# LANGUAGE RecursiveDo           #-}
 
 import           Control.Applicative           ((<|>))
+import qualified Data.Aeson                    as Aeson
 import qualified Data.ByteString.Lazy.Char8    as BS
+import           Data.Text.Encoding            (decodeUtf8)
 import           Numeric.Natural
 import           System.Environment            (lookupEnv)
 import           System.IO                     (hPutStrLn, stderr)
@@ -48,7 +50,13 @@ parseAndRender x = case parseAndRender' x of
 parseAndRender' :: BS.ByteString -> Either String BS.ByteString
 parseAndRender' x = case parse parseOutput "stdin" x of
   Left err -> Left  (show err)
-  Right ts -> Right (error "NOT IMPLEMENTED")
+  Right ms -> Right (Aeson.encode (Aeson.object (map encodeMsg ms)))
+
+pair name value = (Aeson..=) (decodeUtf8 (BS.toStrict name)) value
+
+encodeMsg (Msg name pats) = pair name (Aeson.object (map encodePat pats))
+
+encodePat (Pat name arity) = pair name arity
 
 parseOutput = fmap concat (message `sepBy` spaces)
 
@@ -178,3 +186,6 @@ instance Arbitrary Hex where
                         else if even (BS.length s)
                                 then s
                                 else BS.cons '0' s
+
+instance Aeson.ToJSON Natural where
+  toJSON n = Aeson.toJSON (fromIntegral n :: Integer)

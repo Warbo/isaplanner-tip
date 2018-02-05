@@ -158,7 +158,7 @@ rec {
   nonExhaustiveScraper = wrap {
     name  = "nonExhaustiveScraper";
     paths = [ (haskellPackages.ghcWithPackages (h: [
-      h.bytestring h.parsec h.QuickCheck
+      h.aeson h.bytestring h.parsec h.QuickCheck
     ])) ];
     file  = ./NonExhaustiveScraper.hs;
   };
