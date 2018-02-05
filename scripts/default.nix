@@ -155,6 +155,14 @@ rec {
     '';
   };
 
+  nonExhaustiveScraper = wrap {
+    name  = "nonExhaustiveScraper";
+    paths = [ (haskellPackages.ghcWithPackages (h: [
+      h.bytestring h.parsec h.QuickCheck
+    ])) ];
+    file  = ./NonExhaustiveScraper.hs;
+  };
+
   stripConstructorsDestructors = { te-benchmark }: wrap {
     name  = "stripConstructorsDestructors";
     file  = ./stripConstructorsDestructors.rkt;
