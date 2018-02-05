@@ -111,12 +111,13 @@ rec {
           OS='[]'
 
           for EXAMPLE in \
-            '["nat"]                           	["nat"]'                    \
-            '["nat => nat"]                    	["nat"]'                    \
-            '["nat => nat => nat"]             	["nat"]'                    \
-            '["nat => int => bool"]            	["nat", "int", "bool"]'     \
-            '["(nat => int) => bool"]          	["nat", "int", "bool"]'     \
-            '["z => (z y x => y w)"]           	["z", "z y x", "y", "y w"]' \
+            '["nat"]                           	["nat"]'                       \
+            '["nat => nat"]                    	["nat"]'                       \
+            '["nat => nat => nat"]             	["nat"]'                       \
+            '["nat => int => bool"]            	["nat", "int", "bool"]'        \
+            '["(nat => int) => bool"]          	["nat", "int", "bool"]'        \
+            '["z => (z y x => y w)"]           	["z", "z y x", "y", "y w"]'    \
+            '["(a A, a) B => (a A, a) B"]      	["(a A, a) B", "a A", "a"]'    \
             '["(a => (b => c => d)) => e => f"]	["a", "b", "c", "d", "e", "f"]'
           do
             I=$(echo "$EXAMPLE" | cut -f1)
