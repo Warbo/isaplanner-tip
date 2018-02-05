@@ -1,0 +1,11 @@
+From: Chris Warburton
+Date: Fri, 02 Feb 2018 11:56:47 +0000
+Subject: Re: Exception- Interrupt raised
+Message-Id: <ff15e7e7eab57c26-eacae9edc8001c81-artemis@nixos>
+References: <ff15e7e7eab57c26-0-artemis@nixos>
+In-Reply-To: <ff15e7e7eab57c26-0-artemis@nixos>
+
+Closing this. This interrupt happens when we run out of memory, and it's
+a fair enough behaviour to have.
+
+I did try making it print out a different thing, but meh.

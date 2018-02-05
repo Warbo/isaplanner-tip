@@ -1,0 +1,353 @@
+From: Chris Warburton
+Date: Thu, 01 Feb 2018 10:04:06 +0000
+Subject: Re: Remove IsaCoSy's builtin-in timeout
+Message-Id: <abd2134c072100c9-fa0b9a7e8de32dec-artemis@nixos>
+References: <abd2134c072100c9-0-artemis@nixos>
+In-Reply-To: <abd2134c072100c9-0-artemis@nixos>
+
+Debugging notes:
+
+The timeout comes from 'use_thy "ISASOSY"', so I would guess it's coming
+from one of two places:
+
+ - Something inside ISACOSY is timing out, e.g. the exploration.
+ - Something inside 'use_thy' is timing out.
+
+I've had a look at the former (see previous comments), and the only
+timeout I can see is coming from QuickCheck, and that's being caught by
+the exploration and handled by returning 'None', so I don't think it's
+that.
+
+The latter looks interesting. Here's what I've found:
+
+'use_thy' is either coming from src/Pure/Thy/thy_info.ML, or
+src/Pure/ROOT.ml. They both work the same way: wrap up the given name
+(e.g. "ISACOSY") in a list and hand off to thy_info.ML's 'use_theories'.
+
+'use_theories' calls 'schedule_tasks' (which doesn't seem to be called
+from anywhere else). A thunk is given, which calls 'require_thys' with a
+suspicious-looking 'last_timing' argument.
+
+'schedule_tasks' depends on whether multithreading is enabled. If so,
+'schedule_futures' is called, otherwise 'schedule_seq'. Neither of these
+seems to be adding a timeout.
+
+'require_thys' contains 'val update_time = serial ();' and passes both
+the 'last_timing' argument and this 'update_time' value to the
+'load_thy' function.
+
+'load_thy' in thy_info.ML calls out to 'load_thy' in
+src/Pure/PIDE/resources.ML, and these are the only two functions with
+this name, so we'll look at the latter.
+
+This 'load_thy' function contains:
+
+    fun init () =
+      begin_theory master_dir header parents
+      |> Present.begin_theory update_time
+          (fn () => ...);
+
+This may or may not be the source of the timeout. A more likely
+candidate is the following:
+
+    val (results, thy) =
+      cond_timeit true ("theory " ^ quote name)
+        (fn () => excursion keywords master_dir last_timing init elements);
+
+The 'cond_timeit' function contains the following, where 'e' is the
+thunk given above:
+
+    val (t, result) = timing (Exn.interruptible_capture e) ();
+
+This 'timing' function seems to be where we get the CPU time, etc. stats
+from on the command line. It doesn't appear to timeout though.
+
+Looking at the 'interruptible_capture', this seems to catch exceptions
+and either return them as values or, if they're the 'Interrupt'
+exception (or variants, like an 'Io' with 'Interrupt' as its 'cause'),
+then it is reraised.
+
+This seems to be the mechanism for bailing out of the theory loading,
+but isn't itself the trigger.
+
+Could the timeout be coming from the 'worker pool' in
+src/Pure/Concurrent/future.ML? I've added the following line to
+isacosy-template.thy to give us more info:
+
+    Multithreading.trace := 2;
+
+With this, we get a slightly more informative backtrace:
+
+BEGIN BACKTRACE
+
+<snip>
+Testing conjecture with Quickcheck-exhaustive...
+Quickcheck found a potentially spurious counterexample due to underspecified
+functions:
+  a = Global746970323031352f736f72745f48536f7274436f756e742e736d74324e6f6465
+       Global746970323031352f736f72745f48536f7274436f756e742e736d74324e696c
+       a\<^sub>1
+       Global746970323031352f736f72745f48536f7274436f756e742e736d74324e696c
+Evaluated terms:
+  global64657374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e6f64655f30
+   a =
+    Global746970323031352f736f72745f48536f7274436f756e742e736d74324e696c
+  global64657374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e6f64655f30
+   global636f6e7374727563746f722d746970323031352f736f72745f48536f7274436f756e742e736d74324e696c =
+    ?
+Quickcheck continues to find a genuine counterexample...
+Exception trace - Timeout
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+List.mapPartial(2)()
+DB_SynthInterface.thm_synth(11)synth_one_size(3)
+DB_SynthInterface.thm_synth(11)
+<top level>
+CODETREE().genCode(3)(1)
+COMPILER_BODY().baseCompiler(3)executeCode(1)
+val it = (): unit
+val functions =
+   [(A.global70726f642f70726f705f32382e736d743271726576666c6174,
+     "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+      => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+         => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+<snip>
+    ...]:
+   (string * typ) list
+val def_thrms =
+   [["global70726f642f70726f705f32382e736d743271726576666c6174
+       Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c
+       ?local3.0 =
+      ?local3.0",
+     "global70726f642f70726f705f32382e736d743271726576666c6174
+       (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+         ?local4.0 ?local5.0)
+       ?local3.0 =
+      global70726f642f70726f705f32382e736d743271726576666c6174 ?local5.0
+       (global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+         (global697361706c616e6e65722f70726f705f35322e736d7432726576
+           ?local4.0)
+         ?local3.0)"],
+    ["global636f6e7374727563746f722d6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243 =
+      Global6772616d6d6172732f73696d705f657870725f756e616d626967312e736d743243"],
+<snip>
+    ...]:
+   thm list list
+val fundefs =
+   [((A.global70726f642f70726f705f32382e736d743271726576666c6174,
+      "'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+       => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374
+          => 'local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374"),
+     ["global70726f642f70726f705f32382e736d743271726576666c6174
+        Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c
+        ?local3.0 =
+       ?local3.0",
+      "global70726f642f70726f705f32382e736d743271726576666c6174
+        (Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432636f6e73
+          ?local4.0 ?local5.0)
+        ?local3.0 =
+       global70726f642f70726f705f32382e736d743271726576666c6174 ?local5.0
+        (global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+          (global697361706c616e6e65722f70726f705f35322e736d7432726576
+            ?local4.0)
+          ?local3.0)"]),
+<snip>
+    ...]:
+   ((string * typ) * thm list) list
+val constr_trms =
+   [Const (A.global64657374727563746f722d746970323031352f73756273745f5375627374467265654e6f2e736d74325661725f30,
+           "Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+            => Global437573746f6d496e74") $
+      (Const (A.Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072.Global746970323031352f73756273745f5375627374467265654e6f2e736d74324c616d,
+              "Global437573746f6d496e74
+               => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072
+                  => Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072") $
+        Var ((free0, 0), "Global437573746f6d496e74") $
+        Var ((free1, 0),
+             "Global746970323031352f73756273745f5375627374467265654e6f2e736d743245787072")),
+<snip>
+        ...)]:
+   Trm.T list
+Exception trace - Timeout
+
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+### theory "ISACOSY"
+### 368.839s elapsed time, 356.884s cpu time, 59.761s GC time
+*** Timeout
+***
+*** At command "ML" (line 6 of "/nix/store/3w9vn6xgmwlxjhky6wx3km58109jkika-merged/ISACOSY.thy")
+Exception- TOPLEVEL_ERROR raised
+ML>
+End of dump
+[]
+
+END BACKTRACE
+
+Judging from the 'List.mapPartial' calls, apparently from inside
+'synth_one_size', I think it's happening in the counter-example checking
+stage:
+
+    (* Counter example check *)
+    val cand_trms = map_filter (cex_finder ctxt) synth_trms
+
+Where 'map_filter' is defined in IsaPlanner as:
+
+    val map_filter = List.mapPartial;
+
+The 'cex_finder' we use is 'counter_ex_check' from
+src/synthesis/synth_prf_tools.ML in IsaPlanner, and this calls
+QuickCheck:
+
+    case (CounterExCInfo.quickcheck_term ctxt (quickcheck_params, []) trm1) of
+        NONE => SOME trm | SOME cex => NONE
+    end
+    handle ERROR _ => SOME trm;
+
+What's happening is we're looking for a counterexample: if one is found,
+then we've failed to find a valid theorem, so we return NONE. If
+quickcheck finds no counterexample, then our theorem is plausible, so we
+return 'SOME trm'. If quickcheck fails for some reason, we also remain
+confident that we have a theorem, so we also return 'SOME trm' in that
+case.
+
+A thought occurs: the 'ERROR' token is a patter-match. Does this mean
+that timeouts won't be caught?
+
+Looking at 'CounterExCInfo.quickcheck_term' we find it calls
+'quickcheck_terms', and that calls:
+
+    val result = (Quickcheck.test_terms ctxt
+                                        (true,false) (* timeout: yes, interactive: no*)
+                                        tvinsts
+                                        qc_ts )
+
+So it looks like we do time out from quickcheck after all. I thought
+this was being handled somewhere? Let's see...
+
+fun test_terms ctxt (limit_time, is_interactive) insts goals =
+  (case active_testers ctxt of
+    [] => error "No active testers for quickcheck"
+  | testers =>
+      limit (seconds (Config.get ctxt timeout)) (limit_time, is_interactive)
+        (fn () =>
+          Par_List.get_some (fn tester =>
+            tester ctxt (length testers > 1) insts goals |>
+            (fn result => if exists found_counterexample result then SOME result else NONE))
+          testers)
+        (fn () => (message ctxt "Quickcheck ran out of time"; NONE)) ());
+
+This doesn't look like it's throwing an error in the case of a timeout;
+it's just writing a message and returning 'NONE'.
+
+Interestingly, the message 'Quickcheck ran out of time' does not appear
+in the output of IsaCoSy, even though it includes things like 'Testing
+conjecture with Quickcheck-exhaustive...', 'Quickcheck found a
+potentially spurious counterexample due to underspecified functions',
+etc.
+
+The 'limit' function is this:
+
+fun limit timeout (limit_time, is_interactive) f exc () =
+  if limit_time then
+    TimeLimit.timeLimit timeout f ()
+      handle TimeLimit.TimeOut =>
+        if is_interactive then exc () else raise TimeLimit.TimeOut
+  else f ();
+
+Aha! The 'exc' argument is the thunk which writes the message
+"Quickcheck ran out of time", but that will only get called if
+'is_interactive' is true, but we're setting it to false.
+
+IsaCoSy should be handling this timeout, in the same place it handles
+'ERROR'; maybe it just hasn't happened to other users before?
+
+Let's try patching IsaCoSy...

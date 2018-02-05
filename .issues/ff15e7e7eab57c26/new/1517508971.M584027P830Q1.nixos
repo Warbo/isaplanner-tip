@@ -1,0 +1,14 @@
+From: Chris Warburton
+Date: Thu, 01 Feb 2018 18:11:14 +0000
+Subject: Re: Exception- Interrupt raised
+Message-Id: <ff15e7e7eab57c26-f58c0a6bf32a4a7e-artemis@nixos>
+References: <ff15e7e7eab57c26-0-artemis@nixos>
+In-Reply-To: <ff15e7e7eab57c26-0-artemis@nixos>
+
+We might be able to "solve" this in a similar way to the timeout issue,
+by adding a handler to 'counter_ex_check'.
+
+However, we should first try to figure out if this is a good idea. For
+example, it might be the case that killing the process gracefully will
+send interrupts to all worker threads; in which case, we shouldn't be
+ignoring them and carrying on.

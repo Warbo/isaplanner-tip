@@ -1,0 +1,38 @@
+From: Chris Warburton
+Date: Thu, 01 Feb 2018 18:17:21 +0000
+Subject: Re: Exception- Interrupt raised
+Message-Id: <ff15e7e7eab57c26-ad3407806edf2d50-artemis@nixos>
+References: <ff15e7e7eab57c26-0-artemis@nixos>
+In-Reply-To: <ff15e7e7eab57c26-0-artemis@nixos>
+
+It looks like this may be caused by running out of memory. There are two
+justifications for this:
+
+When the sample with 100 names was running, it went for quite a while
+without issue; when the interrupt occurred, the system was grinding to a
+halt, which is usually a sign that we're running low on memory.
+
+Existing (but I assume broken) code in
+IsaPlanner/benchmarks/synth_benchmarks.ML contains the following:
+
+fun bmarks_of_thy_ac (min_size, max_size) max_vars thy =
+    ....
+          val tot_timer = Timer.startCPUTimer ()
+          val (cinfo, thy') = Constraints.mk_const_infos_ac thy
+          val ((cinfo_tab2, thy2), (conjs, thrms)) =
+              Synthesis.synthesise_eq_terms (min_size, max_size)
+                                            max_vars thy' cinfo
+          val tot_time = (#usr (Timer.checkCPUTimer tot_timer))
+        in
+          write_result (cinfo_tab2, thy2) (thy_nm, synth_opt_str)
+                       (max_size, max_vars) (conjs, thrms)
+                       (!Synthesis.counter_ex_counter) tot_time
+    ...
+    handle Interrupt => write_exception "Exception Interrupt (memory issue)"
+                                        (min_size, max_size)
+                                        max_vars thy
+                                        (NameSpace.path_of (Sign.naming_of thy),"ac")
+    handle _ => write_exception "Other exception (bug?)"
+                                (min_size, max_size)
+                                max_vars thy
+                                (NameSpace.path_of (Sign.naming_of thy),"ac");

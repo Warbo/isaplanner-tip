@@ -1,0 +1,21 @@
+From: Chris Warburton
+Date: Wed, 31 Jan 2018 18:16:39 +0000
+Subject: Re: Stop UNDEF exceptions
+Message-Id: <cb5f71d1acb9d4cd-b68fc1e5c6e3fc8b-artemis@nixos>
+References: <cb5f71d1acb9d4cd-0-artemis@nixos>
+In-Reply-To: <cb5f71d1acb9d4cd-0-artemis@nixos>
+
+These seem to be fixed now. They come from the use of partial functions.
+As far as I can tell, the only partial functions we have are destructor
+functions, e.g. 'destructor-head' and 'destructor-tail' do a
+pattern-match on their argument, with a case for 'cons' but no case for
+'nil'; hence 'destructor-head nil' and 'destructor-tail nil' are both
+undefined, which is causing these exceptions.
+
+To prevent this, we can pre-populate IsaCoSy's set of constraints to
+avoid generating these terms. An example of this is in the isaplanner
+repo, where 'head([])' is added to the constraints (to avoid).
+
+It took some effort to read out all of the destructor functions, look up
+the possible constructors of their datatypes, etc. but this is now
+implemented and seems to work.

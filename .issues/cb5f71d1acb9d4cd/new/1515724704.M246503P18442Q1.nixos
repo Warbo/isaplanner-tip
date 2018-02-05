@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 12 Jan 2018 02:29:50 +0000
-State: new
+State: resolved
 Subject: Stop UNDEF exceptions
 Message-Id: <cb5f71d1acb9d4cd-0-artemis@nixos>
+resolution: fixed
 
 We're seeing output like this from Isabelle:
 

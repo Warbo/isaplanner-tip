@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Thu, 01 Feb 2018 18:05:14 +0000
+Subject: Re: Remove IsaCoSy's builtin-in timeout
+Message-Id: <abd2134c072100c9-dd8df3c9c2bb60d6-artemis@nixos>
+References: <abd2134c072100c9-0-artemis@nixos>
+In-Reply-To: <abd2134c072100c9-0-artemis@nixos>
+
+I've now patched IsaPlanner to handle timeouts during quickcheck. These
+are treated in the same way as errors: we consider it to be a lack of
+counterexample, and hence we return the given term as a candidate.
+
+Running on a sample of size 100, we no longer get a timeout; but we do
+get an 'Interrupt', which we may be able to handle in the same way.

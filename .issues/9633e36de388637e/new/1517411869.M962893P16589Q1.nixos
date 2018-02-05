@@ -1,0 +1,35 @@
+From: Chris Warburton
+Date: Wed, 31 Jan 2018 15:12:05 +0000
+Subject: Re: Bad number of arguments for type constructor
+Message-Id: <9633e36de388637e-fb8fcd168f96cd57-artemis@nixos>
+References: <9633e36de388637e-0-artemis@nixos>
+In-Reply-To: <9633e36de388637e-0-artemis@nixos>
+
+It looks like `tip` does produce `(foo, bar, ...)` tuples for types with
+multiple parameters, e.g.
+
+datatype ('local1, 'local2)
+           Global697361706c616e6e65722f70726f705f34342e736d743250616972
+           = Global697361706c616e6e65722f70726f705f34342e736d74325061697232 "'local1"
+                                                                            "'local2"
+
+This might be leading to the problems with our datatype list, because
+we're not expecting this when we're parsing.
+
+We get things like:
+
+|> ThyConstraintParams.add_datatype' @{context} @{typ "(('local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374) , 'local2) Global697361706c616e6e65722f70726f705f34342e736d743250616972"}
+
+On the face of it, this doesn't look too bad. Isabelle is complaining
+about entries like:
+
+|> ThyConstraintParams.add_datatype' @{context} @{typ "('local1 Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326c697374) , 'local2"}
+
+What is it about this line which Isabelle doesn't like? I think it's the
+fact we have a comma-separated pair without enclosing parentheses. This
+probably got picked up as a 'Group' by IsabelleTypeArgs.hs, and hence
+got unwrapped during rendering.
+
+I think the best way to handle this is to add another constructor to the
+'Type' ADT, to represent tuples. That way, they're distinct from groups
+and can be handled differently during 'named type' extraction.

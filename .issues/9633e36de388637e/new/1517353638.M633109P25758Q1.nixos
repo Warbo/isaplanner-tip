@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Tue, 30 Jan 2018 23:01:26 +0000
-State: new
+State: resolved
 Subject: Bad number of arguments for type constructor
 Message-Id: <9633e36de388637e-0-artemis@nixos>
+resolution: fixed
 
 /nix/store/d9lhiwbr80hgv30srsh9p3cghs50p82j-isacosy-runner-choose-100-2
 Sending raw equations to stderr

@@ -19,6 +19,7 @@ ML {*
     (*TEMPLATE_REPLACE_ME_WITH_DEFINITIONS*)
   ];
 
+  (* Pair up functions with their definitions. These need to be kept in sync. *)
   val fundefs = functions ~~ def_thrms;
 
   (* Undefined terms, eg. Trm.change_frees_to_fresh_vars @{term "hd([])"} *)

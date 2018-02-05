@@ -1,0 +1,26 @@
+From: Chris Warburton
+Date: Fri, 02 Feb 2018 20:21:12 +0000
+State: new
+Subject: Still getting UNDEF exceptions
+Message-Id: <83975592e2652fff-0-artemis@nixos>
+
+This time it's not from destructors. I hit this while testing a theory
+containing plus, times and exp. I think it may be because 'exp Z Z'
+isn't defined.
+
+I wonder how to solve this in general. It would be nice if Isabelle
+would automatically check for exhaustiveness (we skip the termination
+check though).
+
+I *think* that the two proof obligations for each 'function' definition
+are for exhaustiveness/compatibility and for termination. We can
+definitely stick with the 'sorry' termination proof, but what might we
+do about exhaustiveness? Is there a way for Isabelle to tell us that
+something *isn't* exhaustive; and what the unhandled cases are?
+
+The closest I can find is this:
+
+https://lists.cam.ac.uk/pipermail/cl-isabelle-users/2015-June/msg00080.html
+
+Perhaps our 'show_theory' command can help, by dumping out the theory
+contents to text we might be able to see extra undefined cases...

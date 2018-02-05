@@ -1,0 +1,46 @@
+From: Chris Warburton
+Date: Thu, 01 Feb 2018 18:08:28 +0000
+State: resolved
+Subject: Exception- Interrupt raised
+Message-Id: <ff15e7e7eab57c26-0-artemis@nixos>
+resolution: fixed
+
+Looks similar to the timeout issue abd2134c072100c9:
+
+Sending raw equations to stderr
+### Cannot execute Poly/ML in 32bit mode (missing shared libraries for C/C++)
+### Using bulky 64bit version of Poly/ML instead
+### No line editor: "rlwrap"
+> val it = (): unit
+ML> ### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+### load_lib </nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so> : /nix/store/xlw2bsclwf840asqzg9bqzggphxzk3s6-polyml-5.5.2/bin/libsha1.so: cannot open shared object file: No such file or directory
+### Using slow ML implementation of SHA1.digest
+Loading theory "A" (required by "ISACOSY")
+### theory "A"
+### 113.454s elapsed time, 113.259s cpu time, 15.901s GC time
+Loading theory "ISACOSY"
+Testing conjecture with Quickcheck-exhaustive...
+Testing conjecture with Quickcheck-exhaustive...
+<snip>
+Testing conjecture with Quickcheck-exhaustive...
+Testing conjecture with Quickcheck-exhaustive...
+Exception trace - Interrupt
+List.mapPartial(2)()
+List.mapPartial(2)()
+<snip>
+List.mapPartial(2)()
+List.mapPartial(2)()
+DB_SynthInterface.thm_synth(11)synth_one_size(3)
+DB_SynthInterface.thm_synth(11)
+<top level>
+CODETREE().genCode(3)(1)
+COMPILER_BODY().baseCompiler(3)executeCode(1)
+Exception trace - Interrupt
+Library.setmp_thread_data(5)
+ML_Context.exec(2)
+Toplevel.generic_theory(1)(1)(1)
+Exception- Interrupt raised
+ML>
+End of dump
+[]

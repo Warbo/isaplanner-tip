@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Thu, 21 Dec 2017 18:20:59 +0000
-State: new
+State: resolved
 Subject: Remove IsaCoSy's builtin-in timeout
 Message-Id: <abd2134c072100c9-0-artemis@nixos>
+resolution: fixed
 
 Not sure where this is coming from, but we don't want it to bail out
 early. Here's an example output, caused by the 'nat' and 'list' tests

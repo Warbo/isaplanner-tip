@@ -1,0 +1,12 @@
+From: Chris Warburton
+Date: Wed, 31 Jan 2018 18:12:10 +0000
+Subject: Re: Bad number of arguments for type constructor
+Message-Id: <9633e36de388637e-dbbe03d9c2908c3d-artemis@nixos>
+References: <9633e36de388637e-0-artemis@nixos>
+In-Reply-To: <9633e36de388637e-0-artemis@nixos>
+
+Done some extensive improvements to IsabelleTypeArgs.hs to support
+tupled type parameters (e.g. "('local1, 'local2) Pair") and now IsaCoSy
+seems to be running on sample size 100 rep 2 (chosen arbitrarily; I've
+been using this sample because it should be large enough to expose most
+'common' problems, e.g. mutual recursion, tuples, polymorphism, etc.)
