@@ -17,13 +17,14 @@ import           Text.Parsec.String            (Parser)
 import           Text.ParserCombinators.Parsec hiding (token, (<|>))
 
 -- Isabelle types
-data Type = Chunk String | Group [Type] | Func [Type] Type
+data Type = Chunk String | Group [Type] | Func [Type] Type | Tuple [Type]
   deriving (Eq, Ord, Show)
 
 renderType t = case t of
       Chunk s        -> s
       Group xs       -> unwords (map wrap xs)
       Func  args ret -> intercalate " => " (map wrap (args ++ [ret]))
+      Tuple xs       -> "(" ++ intercalate ", " (map renderType xs) ++ ")"
     where needParens (Group _)  = True
           needParens (Func _ _) = True
           needParens _          = False
@@ -103,24 +104,22 @@ instance Arbitrary Type where
 
 -- Tokenise: lets us ignore whitespace, punctuation, etc.
 
-data Token = Open | Close | Arrow | Name String deriving (Eq, Show)
+data Token = Open | Close | Arrow | Comma | Name String deriving (Eq, Show)
 
 instance Arbitrary Token where
-  arbitrary = oneof [return Open, return Close, return Arrow,
+  arbitrary = oneof [return Open, return Close, return Arrow, return Comma,
                      Name <$> arbitrary]
 
 token :: Parser Token
-token = open <|> close <|> arrow <|> name
-  where open  = char '(' >> return Open
-        close = char ')' >> return Close
+token = open <|> close <|> arrow <|> comma <|> name
+  where open  = char   '('  >> return Open
+        close = char   ')'  >> return Close
+        comma = char   ','  >> return Comma
         arrow = string "=>" >> return Arrow
-        name  = Name <$> many1 nonSpecial
+        name  = Name <$> many1 (noneOf "()=>, ")
 
 parseTokens :: Parser [Token]
 parseTokens = token `sepBy` spaces
-
-nonSpecial :: Parser Char
-nonSpecial = noneOf "()=> "
 
 tokenise :: String -> Either String [Token]
 tokenise s = case parse parseTokens "(unknown)" s of
@@ -218,10 +217,12 @@ checkTree t = case t of
   Node [Node _]       -> ["Redundant nesting"]
   Node (Leaf Arrow:_) -> ["Found prefix '=>'"]
   Node ts             | last ts == Leaf Arrow -> ["Found postfix '=>'"]
+  Node (Leaf Comma:_) -> ["Found prefix ','"]
+  Node ts             | last ts == Leaf Comma -> ["Found postfix ','"]
   Node ts             -> concatMap checkTree ts
 
 testParenthesiseSimple = ("handle unparenthesised types", go)
-  where go n ns = let list = stripDodgyTokens (map maybeToToken (Just n:ns))
+  where go n ns = let list = stripDodgyTokens (map seedToToken (Right n:ns))
                    in fromRight (popParens list) ===
                       unwrap (Node (map Leaf list))
 
@@ -230,7 +231,7 @@ testParenthesiseSingle = ("handle parenthesised types", go)
           let pre'   = tokens pre
               post'  = tokens post
               mid'   = tokens mid
-              tokens = stripDodgyTokens . map maybeToToken
+              tokens = stripDodgyTokens . map seedToToken
               lvs    = map Leaf
               list   = pre' ++ [Open] ++ mid' ++ [Close] ++ post'
               simpl  = Node (lvs pre' ++ [Node (lvs mid')] ++ lvs post')
@@ -258,6 +259,9 @@ testParenthesiseNested = ("handle parentheses nesting", go)
           -- If '=>' is a leaf in the tree, pop it and recurse
           (Arrow:ts, Node (Leaf Arrow:subs)) -> check ts (Node subs)
 
+          -- If ',' isa  leaf in the tree, pop it and recurse
+          (Comma:ts, Node (Leaf Comma:subs)) -> check ts (Node subs)
+
           -- If there's a '(', there should be a sub-tree; check it then recurse
           (Open:ts,   Node (Node s:ss)) -> let (e1, ts2) = check ts  (Node s)
                                                (e2, ts3) = check ts2 (Node ss)
@@ -279,7 +283,7 @@ testParenthesiseNested = ("handle parentheses nesting", go)
 ---
 
 genBalancedTokens (ns, n, is, i) = unwrapTokens . stripDodgyTokens . pad $
-                                     mkTs 0 (map maybeToToken (Just n:ns))
+                                     mkTs 0 (map seedToToken (Right n:ns))
                                             (sort os)
                                             (sort cs)
   where -- Turn ints 'is' into (an even number of) indices into 'ns'
@@ -302,13 +306,18 @@ genBalancedTokens (ns, n, is, i) = unwrapTokens . stripDodgyTokens . pad $
           (_   , _   , u:v) -> u     : mkTs (n+1) v       o        c
           (_   , _   , [] ) -> []
 
-        -- Insert 'dummy' in between '=>)', '(=>', '=>=>' and '()'
+        -- Insert 'dummy' in between '=>', ',', '(', and ')'
         dummy  = Name n
         pad ts = case ts of
           Open  : Close : us -> Open  : dummy : pad (Close : us)
           Open  : Arrow : us -> Open  : dummy : pad (Arrow : us)
+          Open  : Comma : us -> Open  : dummy : pad (Comma : us)
           Arrow : Close : us -> Arrow : dummy : pad (Close : us)
           Arrow : Arrow : us -> Arrow : dummy : pad (Arrow : us)
+          Arrow : Comma : us -> Arrow : dummy : pad (Comma : us)
+          Comma : Close : us -> Comma : dummy : pad (Close : us)
+          Comma : Arrow : us -> Comma : dummy : pad (Arrow : us)
+          Comma : Comma : us -> Comma : dummy : pad (Comma : us)
           t             : us -> t             : pad          us
           []                 -> []
 
@@ -326,14 +335,22 @@ saneTokens ts = saneSeqs   ts        ++
           []                             -> []
           [Arrow]                        -> ["Suffixed with arrow"]
           [Open]                         -> ["Suffixed with Open"]
+          [Comma]                        -> ["Suffixed with Comma"]
           (Open   : Close :          ts) -> ["Empty parens ()"]
           (Open   : Arrow :          ts) -> ["Found (=>"]
+          (Open   : Comma :          ts) -> ["Found (,"]
           (Arrow  : Close :          ts) -> ["Found =>)"]
-          (Arrow  : Arrow :          ts) -> ["Found => =>"]
+          (Arrow  : Arrow :          ts) -> ["Found =>=>"]
+          (Arrow  : Comma :          ts) -> ["Found =>,"]
+          (Comma  : Close :          ts) -> ["Found ,)"]
+          (Comma  : Arrow :          ts) -> ["Found ,=>"]
+          (Comma  : Comma :          ts) -> ["Found ,,"]
           (Name _ : Arrow : Name n : ts) -> saneSeqs (Name n:ts)
           (Name _ : Arrow : Open   : ts) -> saneSeqs (Open  :ts)
           (Close  : Arrow : Name n : ts) -> saneSeqs (Name n:ts)
           (Close  : Arrow : Open   : ts) -> saneSeqs (Open  :ts)
+          (Close  : Comma : Name n : ts) -> saneSeqs (Name n:ts)
+          (Close  : Comma : Open   : ts) -> saneSeqs (Open  :ts)
           (_      :                  ts) -> saneSeqs ts
 
         nestCount []         n = n
@@ -351,28 +368,41 @@ saneTokens ts = saneSeqs   ts        ++
         startsWell ts = case ts of
           Close:_ -> ["Closes before opening"]
           Arrow:_ -> ["Prefixed with arrow"]
+          Comma:_ -> ["Prefixed with comma"]
           _       -> []
 
         endsWell ts = case reverse ts of
           Open :_ -> ["Opens without closing"]
           Arrow:_ -> ["Suffixed with arrow"]
+          Comma:_ -> ["Suffixed with comma"]
           _       -> []
 
-maybeToToken Nothing  = Arrow
-maybeToToken (Just n) = Name n
+-- Turn easily-generated datatypes into tokens, avoiding parentheses
+seedToToken (Left  True)  = Arrow
+seedToToken (Left  False) = Comma
+seedToToken (Right n)     = Name n
 
-stripDodgyTokens ts = let stripped = go (pad 0 (dropWhile (== Arrow) ts))
+stripDodgyTokens ts = let stripped = go (pad 0 (startWell ts))
                        in if stripped == ts
                              then ts
                              else stripDodgyTokens stripped
   where go (Arrow : Arrow : ts) = go (Arrow:ts)
+        go (Arrow : Close : ts) = go (Close:ts)
+        go (Arrow : Comma : ts) = go (Comma:ts)
+        go (Comma : Arrow : ts) = go (Arrow:ts)
+        go (Comma : Close : ts) = go (Close:ts)
+        go (Comma : Comma : ts) = go (Comma:ts)
         go (Open  : Arrow : ts) = go (Open:ts)
         go (Open  : Close : ts) = go ts
-        go (Arrow : Close : ts) = go (Close:ts)
+        go (Open  : Comma : ts) = go (Open:ts)
+
         go [Arrow]              = []
+        go [Comma]              = []
         go [Open]               = error "Suffixed Open"
         go (t:ts)               = t : go ts
         go []                   = []
+
+        startWell = dropWhile (`elem` [Arrow, Comma])
 
         pad n ts = case ts of
           []       -> replicate n Close    -- Close off any remaining Opens
@@ -389,8 +419,16 @@ testStripMakesSane = ("strip to sane tokens", go)
 -- Gather up function arguments
 
 gatherArgs :: [Tree Token] -> [[Tree Token]]
-gatherArgs l = let (pre, post) = break (== Leaf Arrow) l
-                in pre : if null post then [] else gatherArgs (tail post)
+gatherArgs = splitInfix Arrow
+
+gatherTuples :: [Tree Token] -> [[Tree Token]]
+gatherTuples = splitInfix Comma
+
+splitInfix :: Token -> [Tree Token] -> [[Tree Token]]
+splitInfix token list = let (pre, post) = break (== Leaf token) list
+                         in pre : if null post
+                                     then []
+                                     else splitInfix token (tail post)
 
 testGatherArgs = ("can pick out function args", forAll genList go)
   where go ts = let ts'   = filter (Leaf Arrow `notElem`) ts
@@ -414,13 +452,9 @@ testTokensToValidType = ("tokens parse to type", go)
   where go args = let tokens      = genBalancedTokens args
                       Right tree  = popParens tokens
                       Right type' = tokensToType tokens
-                      args2       = case tree of
-                        Leaf _  -> Nothing
-                        Node ts -> Just (gatherArgs ts)
                    in validTree tree ==>
                       counterexample (show (("tokens", tokens),
                                             ("tree"  , popParens tokens),
-                                            ("args"  , args2),
                                             ("type"  , type')))
                                      (allNamesFound type' tokens .&&.
                                       notDodgy      type')
@@ -432,11 +466,13 @@ testTokensToValidType = ("tokens parse to type", go)
         inType n t = case t of
           Chunk m   -> n == m
           Group ts  -> any (inType n) ts
+          Tuple ts  -> any (inType n) ts
           Func ts t -> any (inType n) (t:ts)
 
         notDodgy t = case t of
-          Chunk n   -> n `notElem` ["Bare =>", "Bare (", "Bare )"]
+          Chunk n   -> n `notElem` ["Bare =>", "Bare (", "Bare )", "Bare ,"]
           Group ts  -> all notDodgy ts
+          Tuple ts  -> all notDodgy ts
           Func ts t -> all notDodgy (t:ts)
 
         validTree (Leaf (Name _)) = True
@@ -450,15 +486,31 @@ treeToType t = case t of
     Leaf Arrow    -> Left "Bare =>"
     Leaf Open     -> Left "Bare ("
     Leaf Close    -> Left "Bare )"
+    Leaf Comma    -> Left "Bare ,"
     Leaf (Name n) -> Right (Chunk n)
-    Node ts       -> case gatherArgs ts of
-      []  -> Left "Empty node"
-      [g] -> Group <$> mapM treeToType g
-      ts' -> do ts''  <- mapM group (init ts')
-                ts''' <- mapM treeToType ts''
-                lst   <- group (last ts')
-                lst'  <- treeToType (lst)
-                return (Func ts''' lst')
+
+    -- Tuples have precedence over functions, e.g. '(a, b => c)'
+    Node ts       -> case gatherTuples ts of
+      []  -> Left "Empty tuple node"
+
+      -- If we have a "one-tuple" then there's actually no tupling going on, so
+      -- proceed by checking for functions
+      [t] -> case gatherArgs t of
+        []  -> Left "Empty function node"
+
+        -- If we have a "nullary function" then there's no function abstraction
+        -- going on, so just treat the tree(s) as a parenthesised group
+        [g] -> Group <$> mapM treeToType g
+
+        -- If we have multiple arrow-separated types, gather them into a Func
+        -- (splitting off the last element for the return type)
+        ts' -> do ts'' <- mapM group ts' >>= mapM treeToType
+                  return (Func (init ts'') (last ts''))
+
+      -- If we spot an actual tuple (i.e. some things separated by commas), then
+      -- treat each component individually.
+      ts' -> fmap Tuple (mapM group ts' >>= mapM treeToType)
+
   where group []  = Left "Can't group []"
         group [x] = Right x
         group xs  = Right (Node xs)
@@ -489,6 +541,7 @@ testTreeToType = ("can turn trees into types", go)
 
 sanitiseTree t = case t of
     Leaf Arrow -> Just dummy
+    Leaf Comma -> Just dummy
     Leaf _     -> Just t
     Node []    -> Just (Node [dummy])
     Node ts    -> Node <$> sanitiseList ts
@@ -497,30 +550,16 @@ sanitiseTree t = case t of
           -- Base case for recursion, after popping off valid trees
           [] -> Just []
 
-          -- Arrows aren't allowed at the start or end of a list
+          -- Arrows and commas aren't allowed at the start or end of a list
           (Leaf Arrow:x)            -> (dummy:) <$> sanitiseList x
           _ | last ts == Leaf Arrow -> (++ [dummy]) <$> sanitiseList (init ts)
 
-          -- Arrows are only allowed between things
-          (Leaf (Name x):Leaf Arrow:Leaf (Name y):z) ->
-            do l <- sanitiseList (Leaf (Name y):z)
-               return (Leaf (Name x):Leaf Arrow:l)
+          (Leaf Comma:x)            -> (dummy:) <$> sanitiseList x
+          _ | last ts == Leaf Comma -> (++ [dummy]) <$> sanitiseList (init ts)
 
-          (Leaf (Name x):Leaf Arrow:Node y:z)        ->
-            do y' <- sanitiseTree (Node y)
-               l  <- sanitiseList (y':z)
-               return (Leaf (Name x):Leaf Arrow:l)
-
-          (Node x:Leaf Arrow:Leaf (Name y):z)        ->
-            do x' <- sanitiseTree (Node x)
-               l  <- sanitiseList (Leaf (Name y):z)
-               return (x':Leaf Arrow:l)
-
-          (Node x:Leaf Arrow:Node y:z)               ->
-            do x' <- sanitiseTree (Node x)
-               y' <- sanitiseTree (Node y)
-               l  <- sanitiseList (y':z)
-               return (x':Leaf Arrow:l)
+          -- Arrows and commas are only allowed between things
+          (left:Leaf Arrow:right:rest) -> sanitiseInfix Arrow left right rest
+          (left:Leaf Comma:right:rest) -> sanitiseInfix Comma left right rest
 
           -- Recurse into Nodes
           (Node x:y) -> do x' <- sanitiseTree (Node x)
@@ -531,6 +570,31 @@ sanitiseTree t = case t of
           Leaf (Name x):y -> (Leaf (Name x):) <$> sanitiseList y
 
           -- Disallow anything else
+          _ -> Nothing
+
+        -- Ensure that infix tokens ('=>' and ',') appear in between names or
+        -- sub-trees
+        sanitiseInfix token left right rest = case (left, right) of
+          (Leaf (Name x), Leaf (Name y)) ->
+            do l <- sanitiseList (Leaf (Name y):rest)
+               return (Leaf (Name x):Leaf token:l)
+
+          (Leaf (Name x), Node y)        ->
+            do y' <- sanitiseTree (Node y)
+               l  <- sanitiseList (y':rest)
+               return (Leaf (Name x):Leaf token:l)
+
+          (Node x, Leaf (Name y))        ->
+            do x' <- sanitiseTree (Node x)
+               l  <- sanitiseList (Leaf (Name y):rest)
+               return (x':Leaf token:l)
+
+          (Node x, Node y)               ->
+            do x' <- sanitiseTree (Node x)
+               y' <- sanitiseTree (Node y)
+               l  <- sanitiseList (y':rest)
+               return (x':Leaf token:l)
+
           _ -> Nothing
 
 ---
@@ -549,6 +613,10 @@ testParseParens = ("can parse parenthesised",
 testParseSpaced = ("can parse spaced",
                    stringToType "a (b) c" ===
                      Right (Group [Chunk "a", Chunk "b", Chunk "c"]))
+
+testParseTuples = ("can parse tuples",
+                   stringToType "(a, b => c)" ===
+                     Right (Tuple [Chunk "a", Func [Chunk "b"] (Chunk "c")]))
 
 testParseRegression1 = ("no parse regression",
                         stringToType "A B => (A B) B => C B" ===
@@ -572,6 +640,7 @@ simplify (Group [t]) = simplify t
 simplify (Group ts)  = Group (map simplify ts)
 simplify (Func xs y) = Func (map simplify xs) (simplify y)
 simplify (Chunk s)   = Chunk (trim s)
+simplify (Tuple ts)  = Tuple (map simplify ts)
 
 -- Strip leading/trailing whitespace and replace multiple spaces with one
 trim :: String -> String
@@ -588,7 +657,7 @@ trim s                    = reverse (go s "")
 namedOf :: Type -> [Type]
 namedOf t = case t of
   -- Keep standalone chunks
-  Chunk _       -> [t]
+  Chunk _ -> [t]
 
   -- Recurse through function arg/return types
   Func args ret -> namedOf ret ++ concatMap namedOf args
@@ -596,9 +665,13 @@ namedOf t = case t of
   -- Assume that a group is fully-applied. Recurse into each parameter, since we
   -- also assume they're fully-applied. Note that Isabelle types put the
   -- constructor last, like in ML.
-  Group ts      -> t : case ts of
-                         [] -> []
-                         _  -> concatMap namedOf (init ts)
+  Group ts -> t : case ts of
+                    [] -> []
+                    _  -> concatMap namedOf (init ts)
+
+  -- Don't include tuples themselves, but do include their components (which we
+  -- assume are fully-applied, like with Group)
+  Tuple ts -> concatMap namedOf ts
 
 testNamedOfNullary = ("one name from nullary",
                       Chunk "nat" `hasNamed` [Chunk "nat"])
@@ -615,6 +688,16 @@ testNamedOfParams = ("get named from parameterised types",
                      Func [Group [Chunk "nat", Chunk "list"]] (Chunk "int")
                      `hasNamed` [Group [Chunk "nat", Chunk "list"],
                                  Chunk "int", Chunk "nat"])
+
+testNamedOfTuples = ("get named from tupled parameters",
+                     case stringToType s of
+                       Left  e -> error e
+                       Right t -> t `hasNamed` ts)
+  where s  = "'p1 => ((('p1 A), 'p2) B) A => ((('p1 A), 'p2) B) A"
+        ts = let p1     = Chunk "'p1"
+                 p1A    = Group [p1, Chunk "A"]
+                 p1Ap2B = Group [Tuple [p1A, Chunk "'p2"], Chunk "B"]
+              in [p1, p1A, Chunk "'p2", p1Ap2B, Group [p1Ap2B, Chunk "A"]]
 
 ---
 
@@ -663,6 +746,7 @@ check = concat <$> sequence [go testStripMakesSane,
                              go testParseSimple,
                              go testParseParens,
                              go testParseSpaced,
+                             go testParseTuples,
                              go testParseRegression1,
                              go testParseRenderInverse,
                              go testSpacesGroup,
@@ -670,6 +754,7 @@ check = concat <$> sequence [go testStripMakesSane,
                              go testNamedOfFunction,
                              go testNamedOfNested,
                              go testNamedOfParams,
+                             go testNamedOfTuples,
                              go testGatherArgs,
                              go testTokensToValidType,
                              go testNoRemainingParens,
@@ -680,5 +765,4 @@ check = concat <$> sequence [go testStripMakesSane,
         handle m got = case got of
                          Success{} -> []
                          GaveUp{}  -> ["Gave up checking " ++ m]
-                         Failure{} -> [ "Failed checking " ++ m]
                          _         -> [ "Failed checking " ++ m]
