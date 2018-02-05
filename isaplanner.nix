@@ -44,10 +44,10 @@ rec {
   isaplanner = stdenv.mkDerivation {
     name = "isaplanner";
     src  = fetchFromGitHub {
-      owner  = "TheoryMine";
+      owner  = "Warbo";
       repo   = "IsaPlanner";
-      rev    = "f3f4220";
-      sha256 = "0kw1qslzv1a7fq25rhashcmnsnp16vfy92y3n0mccqs5ll2wf4f4";
+      rev    = "66d52b3";
+      sha256 = "1ym7kwi0j4i8gy90dyx8h02kjz9h2j70ivw4ggw328p82n6n23x2";
     };
 
     inherit isaplib;
