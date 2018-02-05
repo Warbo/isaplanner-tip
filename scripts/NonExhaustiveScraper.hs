@@ -129,17 +129,37 @@ data Pattern = Pat { patName :: BS.ByteString, patArgs :: Natural   }
 
 instance Arbitrary Message where
   arbitrary = Msg <$> genName <*> listOf arbitrary
-    where genName = BS.append "global" <$> genHex
+    where genName = do Hex h <- arbitrary
+                       return (BS.append "global" h)
+
+  shrink (Msg name pats) = map mkMsg (shrink (hexName, pats))
+    where mkMsg (Hex h, ps) = Msg (BS.append "global" h) ps
+          hexName = Hex (BS.drop 6 name)
 
 instance Arbitrary Pattern where
   arbitrary = Pat <$> genName <*> genArgs
-    where genName = BS.append "Global" <$> genHex
+    where genName = do Hex h <- arbitrary
+                       return (BS.append "Global" h)
           genArgs = fmap (fromInteger . abs) arbitrary
 
-genHex :: Gen BS.ByteString
-genHex = do hex <- listOf1 genHexit
-            pad <- genHexit
-            return (BS.pack (if even (length hex)
-                                then hex
-                                else pad : hex))
-  where genHexit = elements "0123456789abcdefABCDEF"
+newtype Hex = Hex BS.ByteString
+
+instance Arbitrary Hex where
+  arbitrary = do hex <- listOf1 genHexit
+                 pad <- genHexit
+                 return (BS.pack (if even (length hex)
+                                     then hex
+                                     else pad : hex))
+    where genHexit = elements "0123456789abcdefABCDEF"
+
+  shrink h = if hexLen > 2
+                then [hexPad hexPre, hexPad hexPost]
+                else []
+    where hexLen   = BS.length hex `div` 2
+          hexPre   = BS.take hexLen hex
+          hexPost  = BS.drop hexLen hex
+          hexPad s = if BS.length s == 0
+                        then "00"
+                        else if even BS.length
+                                then s
+                                else BS.cons "0" s
