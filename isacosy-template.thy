@@ -4,6 +4,9 @@ imports Main IsaP IsaCoSy Orderings Set Pure List (*TEMPLATE_REPLACE_ME_WITH_IMP
 begin
 
 ML {*
+  (* To aid debugging *)
+  Multithreading.trace := 2;
+
   (* Example: @{term "Groups.plus_class.plus :: nat => nat => nat"} *)
   val functions = map Term.dest_Const [
     (*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS*)
@@ -35,7 +38,8 @@ ML {*
               |> ConstraintParams.add_consts functions
               |> ConstraintParams.add_arb_terms @{context} constr_trms
 
-  (* Perform the exploration *)
+  (* Perform the exploration. NOTE: This will throw an Interrupt exception if
+     we run out of memory. *)
   val (_, nw_ctxt) = SynthInterface.thm_synth
     SynthInterface.rippling_prover
     SynthInterface.quickcheck
@@ -56,10 +60,11 @@ ML {*
                               (SynthOutput.get_thms result_context);
 
   (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
-  PolyML.print (Pretty.output NONE (Pretty.list "[" "]"
-    ([Pretty.str "BEGIN OUTPUT"] @
-     found_theorems              @
-     found_conjectures           @
-     [Pretty.str "END OUTPUT"])));
+  val output = Pretty.output NONE (Pretty.list "[" "]"
+                 ([Pretty.str "BEGIN OUTPUT"] @
+                  found_theorems              @
+                  found_conjectures           @
+                  [Pretty.str "END OUTPUT"]));
+  val _ = (PolyML.print output; ());
 *}
 end
