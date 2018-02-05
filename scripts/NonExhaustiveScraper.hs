@@ -4,6 +4,7 @@
 {-# LANGUAGE OverloadedStrings     #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RecursiveDo           #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 import           Control.Applicative           ((<|>))
 import qualified Data.Aeson                    as Aeson

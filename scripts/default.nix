@@ -1,5 +1,5 @@
 { bash, coreutils, fail, haskell, haskellPackages, jq, lib, mkBin, python,
-  runCommand, withDeps, wrap }:
+  runCommand, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -155,13 +155,66 @@ rec {
     '';
   };
 
-  nonExhaustiveScraper = wrap {
-    name  = "nonExhaustiveScraper";
-    paths = [ (haskellPackages.ghcWithPackages (h: [
-      h.aeson h.bytestring h.parsec h.QuickCheck
-    ])) ];
-    file  = ./NonExhaustiveScraper.hs;
-  };
+  nonExhaustiveScraper =
+    with rec {
+      untested = wrap {
+        name  = "nonExhaustiveScraper";
+        paths = [ (haskellPackages.ghcWithPackages (h: [
+          h.aeson h.bytestring h.parsec h.QuickCheck
+        ])) ];
+        file  = ./NonExhaustiveScraper.hs;
+      };
+
+      test = runCommand "non-exhaustive-test"
+        {
+          inherit untested;
+          buildInputs = [ fail jq ];
+          example     = writeScript "non-exhaustive-example" ''
+            [1 of 1] Compiling A                ( A.hs, A.o )
+
+            A.hs:6044:1: Warning:
+                Pattern match(es) are non-exhaustive
+                In an equation for `global6465':
+                    Patterns not matched:
+                        Global6772
+
+            A.hs:6244:1: Warning:
+                Pattern match(es) are non-exhaustive
+                In an equation for `global7374':
+                    Patterns not matched:
+                        Global7469 _
+                                   _
+                        Global7032 _
+
+          '';
+        }
+        ''
+          set -e
+          RUN_TESTS=1 "$untested"
+
+          "$untested" < "$example" > got.json
+          for QUERY in 'type | . == "object"'                     \
+                       'keys | length | . == 2'                   \
+                       'has("global6465")'                        \
+                       'has("global7374")'                        \
+                       '.global6465 | keys | . == ["Global6772"]' \
+                       '.global6465 | .Global6772 | . == 0'       \
+                       '.global7374 | keys | length | . == 2'     \
+                       '.global7374 | has("Global7469")'          \
+                       '.global7374 | has("Global7032")'          \
+                       '.global7374 | .Global7469 | . == 2'       \
+                       '.global7374 | .Global7032 | . == 1'
+          do
+            jq -e "$QUERY" < got.json > /dev/null || {
+              cat got.json 1>&2
+              fail "\njq query '$QUERY' failed"
+            }
+          done
+
+          mkdir "$out"
+        '';
+    };
+    withDeps [ test ] untested;
 
   stripConstructorsDestructors = { te-benchmark }: wrap {
     name  = "stripConstructorsDestructors";
