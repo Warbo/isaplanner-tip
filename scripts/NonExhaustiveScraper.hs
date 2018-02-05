@@ -12,9 +12,9 @@ import           System.Environment            (lookupEnv)
 import           System.IO                     (hPutStrLn, stderr)
 import           Test.QuickCheck
 import           Text.Parsec                   (Parsec)
+import           Text.Parsec.ByteString.Lazy   (Parser)
 import           Text.Parsec.Char
 import           Text.Parsec.Combinator
-import           Text.Parsec.String            (Parser)
 import           Text.ParserCombinators.Parsec hiding (token, (<|>))
 
 main = lookupEnv "RUN_TESTS" >>= \case
@@ -30,6 +30,8 @@ msg = hPutStrLn stderr
 check :: IO [String]
 check = concat <$> sequence [
       run testCompileMessage,
+      run testPattern,
+      run testPatterns,
       run testWarning
     ]
   where run (m, t) = do msg ("Checking " ++ m)
@@ -61,6 +63,33 @@ testCompileMessage = ("can skip compile messages", go)
           Right _  -> True
         m  = "[1 of 1] Compiling A                ( A.hs, A.o )"
 
+unmatchedPattern :: Parsec BS.ByteString _ Pattern
+unmatchedPattern = do string "Global"
+                      hex <- many1 (oneOf "0123456789abcdefABCDEF")
+                      spaces
+                      args <- char '_' `sepEndBy` spaces
+                      return (Pat { patName = BS.append "Global" (BS.pack hex),
+                                    patArgs = fromIntegral (length args) })
+
+testPattern = ("can spot pattern", go)
+  where go p = case parse unmatchedPattern "test" (renderPat p) of
+          Left err -> error (show err)
+          Right p' -> p === p'
+
+patternsBlock :: Parsec BS.ByteString _ [Pattern]
+patternsBlock = unmatchedPattern `sepEndBy1` spaces
+
+testPatterns = ("can read block of patterns", go)
+  where go (NonEmpty ps) =
+          let i = BS.unlines (map renderPat ps)
+              r = case parse patternsBlock "test" i of
+                    Left err  -> error (show err)
+                    Right ps' -> ps === ps'
+           in counterexample (unlines ["BEGIN INPUT", BS.unpack i, "END INPUT"])
+                             r
+
+renderPat (Pat pN pA) = BS.unwords (pN : replicate (fromIntegral pA) "_")
+
 warning :: Parsec BS.ByteString _ Message
 warning = do colonSep [filename, line, column]
              spaces
@@ -72,7 +101,7 @@ warning = do colonSep [filename, line, column]
              spaces
              string "Patterns not matched:"
              spaces
-             pats <- sepBy1 pat spaces
+             pats <- patternsBlock
              return (Msg { msgName = BS.pack fName, msgPats = pats })
 
   where filename = many1 (noneOf ":")
@@ -80,13 +109,6 @@ warning = do colonSep [filename, line, column]
         column   = many1 digit
 
         funcName = char '`' *> many1 (noneOf "'") <* oneOf "'" <* char ':'
-
-        pat = do string "Global"
-                 hex <- many1 (oneOf "0123456789abcdefABCDEF")
-                 spaces
-                 args <- char '_' `sepBy` spaces
-                 return (Pat { patName = BS.append "Global" (BS.pack hex),
-                               patArgs = fromIntegral (length args) })
 
         -- Given [a, b, c] these match 'a:b:c:' and 'a b c '
         colonSep = seqSep (char ':')
@@ -96,30 +118,21 @@ warning = do colonSep [filename, line, column]
           p:ps -> p >> s >> seqSep s ps
 
 testWarning = ("match warnings", go)
-  where go = conjoin ts
+  where go m@(Msg name pats) =
+          let i = input name pats
+           in counterexample ("BEGIN INPUT\n" ++ BS.unpack i ++ "\nEND INPUT")
+              (case parse warning "test" i of
+                  Left err -> error (show err)
+                  Right m' -> m === m')
 
-        ts :: [Property]
-        ts = map test
-                 [[("Globaldeadbeef",      0)                     ],
-                  [("Globaldead",          0), ("Globalbeef",   0)],
-                  [("Globaldeadbeef _\n_", 2)                     ],
-                  [("Globaldead _\n_\n_",  3), ("Globalbeef _", 1)]]
+        input :: BS.ByteString -> [Pattern] -> BS.ByteString
+        input name pats = BS.unlines (pre name ++ map renderPat pats)
 
-        test :: [(BS.ByteString, Natural)] -> Property
-        test ps = case parse warning "test" (BS.unlines (pre ++ map fst ps)) of
-          Left err -> error (show err)
-          Right m  -> (msgName m === "global123") .&&.
-                      (msgPats m === map mkPat ps)
-
-        pre :: [BS.ByteString]
-        pre = ["test.hs:1:2: Warning:",
+        pre :: BS.ByteString -> [BS.ByteString]
+        pre name = ["test.hs:1:2: Warning:",
                "Pattern match(es) are non-exhaustive",
-               "In an equation for `global123':",
+               BS.concat ["In an equation for `", name, "':"],
                "Patterns not matched:"]
-
-        mkPat :: (BS.ByteString, Natural) -> Pattern
-        mkPat (string, arity) = Pat { patName = head (BS.words string),
-                                      patArgs = arity }
 
 data Message = Msg { msgName :: BS.ByteString, msgPats :: [Pattern] }
      deriving (Eq, Show)
@@ -128,12 +141,14 @@ data Pattern = Pat { patName :: BS.ByteString, patArgs :: Natural   }
      deriving (Eq, Show)
 
 instance Arbitrary Message where
-  arbitrary = Msg <$> genName <*> listOf arbitrary
+  arbitrary = Msg <$> genName <*> listOf1 arbitrary
     where genName = do Hex h <- arbitrary
                        return (BS.append "global" h)
 
-  shrink (Msg name pats) = map mkMsg (shrink (hexName, pats))
-    where mkMsg (Hex h, ps) = Msg (BS.append "global" h) ps
+  shrink (Msg name pats) = foldl mkMsg [] (shrink (hexName, pats))
+    where mkMsg acc (Hex h, ps) = if null ps
+                                     then acc
+                                     else Msg (BS.append "global" h) ps : acc
           hexName = Hex (BS.drop 6 name)
 
 instance Arbitrary Pattern where
@@ -147,19 +162,19 @@ newtype Hex = Hex BS.ByteString
 instance Arbitrary Hex where
   arbitrary = do hex <- listOf1 genHexit
                  pad <- genHexit
-                 return (BS.pack (if even (length hex)
-                                     then hex
-                                     else pad : hex))
+                 return (Hex (BS.pack (if even (length hex)
+                                          then hex
+                                          else pad : hex)))
     where genHexit = elements "0123456789abcdefABCDEF"
 
-  shrink h = if hexLen > 2
-                then [hexPad hexPre, hexPad hexPost]
-                else []
-    where hexLen   = BS.length hex `div` 2
-          hexPre   = BS.take hexLen hex
-          hexPost  = BS.drop hexLen hex
+  shrink (Hex h) = if hexLen > 2
+                      then map (Hex . hexPad) [hexPre, hexPost]
+                      else []
+    where hexLen   = BS.length h `div` 2
+          hexPre   = BS.take hexLen h
+          hexPost  = BS.drop hexLen h
           hexPad s = if BS.length s == 0
                         then "00"
-                        else if even BS.length
+                        else if even (BS.length s)
                                 then s
-                                else BS.cons "0" s
+                                else BS.cons '0' s
