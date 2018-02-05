@@ -127,9 +127,14 @@ data Message = Msg { msgName :: BS.ByteString, msgPats :: [Pattern] }
 data Pattern = Pat { patName :: BS.ByteString, patArgs :: Natural   }
      deriving (Eq, Show)
 
-genMsg :: Gen Message
-genMsg = Msg <$> genName <*> listOf genPat
-  where genName = BS.append "global" <$> genHex
+instance Arbitrary Message where
+  arbitrary = Msg <$> genName <*> listOf arbitrary
+    where genName = BS.append "global" <$> genHex
+
+instance Arbitrary Pattern where
+  arbitrary = Pat <$> genName <*> genArgs
+    where genName = BS.append "Global" <$> genHex
+          genArgs = fmap (fromInteger . abs) arbitrary
 
 genHex :: Gen BS.ByteString
 genHex = do hex <- listOf1 genHexit
@@ -138,8 +143,3 @@ genHex = do hex <- listOf1 genHexit
                                 then hex
                                 else pad : hex))
   where genHexit = elements "0123456789abcdefABCDEF"
-
-genPat :: Gen Pat
-genPat = Pat <$> genName <*> genArgs
-  where genName = BS.append "Global" <$> genHex
-        genArgs = fmap (fromInteger . abs) arbitrary
