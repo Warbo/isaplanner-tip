@@ -5,7 +5,7 @@ with { pkgsAlias = pkgs; };  # Since 'with pkgs' shadows the name 'pkgs'
 with pkgs;
 
 rec {
-  inherit (defs.isacosy) isacosy isacosy-nat-eqs;
+  inherit (defs.isacosy) isacosy;
 
   defs = {
     haskell-te = callPackage ./haskell-te.nix {};
