@@ -1,13 +1,15 @@
-{ fetchgit }:
+{ latestGit }:
 
 with builtins;
 rec {
   get-haskell-te = rev: rec {
     haskell-te     = import "${haskell-te-src}/nix-support" {};
-    haskell-te-src = fetchgit {
-      inherit rev;
+    haskell-te-src = latestGit {
       url    = http://chriswarbo.net/git/haskell-te.git;
-      sha256 = getAttr rev haskell-te-hashes;
+      stable = {
+        inherit rev;
+        sha256 = getAttr rev haskell-te-hashes;
+      };
     };
   };
 

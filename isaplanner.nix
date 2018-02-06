@@ -1,5 +1,5 @@
 # Isabelle with Isaplanner support
-{ bash, fail, fetchFromGitHub, fetchgit, fetchurl, file, isabelle, jdk,
+{ bash, fail, fetchFromGitHub, fetchurl, file, isabelle, jdk, latestGit,
   makeWrapper, nettools, perl, polyml, stdenv, wrap, writeScript }@args:
 
 rec {
@@ -24,10 +24,12 @@ rec {
   # Dependency of Isaplanner
   isaplib = stdenv.mkDerivation {
     name = "isaplib";
-    src  = fetchgit {
+    src  = latestGit {
       url    = https://github.com/iislucas/isaplib.git;
-      rev    = "714e0a2";
-      sha256 = "04jnw51718fzhw6b14fbff99x6d2k59zqicqs6lv78ysiys8z76y";
+      stable = {
+        rev    = "714e0a2";
+        sha256 = "04jnw51718fzhw6b14fbff99x6d2k59zqicqs6lv78ysiys8z76y";
+      };
     };
     inherit isabelle2015;
     installPhase = ''

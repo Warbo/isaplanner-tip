@@ -1,12 +1,12 @@
 # TEBenchmark converted to an Isabelle theory
-{ bash, callPackage, fetchFromGitHub, fetchgit, gcc, getBenchmarkTypes,
-  getPreprocessed, haskell, isaplanner, jq, nonExhaustiveScraper, perl,
-  runCommand, stdenv, stripConstructorsDestructors, writeScript }:
+{ bash, callPackage, fetchFromGitHub, gcc, getBenchmarkTypes, getPreprocessed,
+  haskell, isaplanner, jq, latestGit, nonExhaustiveScraper, perl, runCommand,
+  stdenv, stripConstructorsDestructors, writeScript }:
 
 rec {
-  get-te-benchmark = { rev, sha256 }: fetchgit {
-    inherit rev sha256;
-    url = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+  get-te-benchmark = { rev, sha256 }: latestGit {
+    url    = "http://chriswarbo.net/git/theory-exploration-benchmarks.git";
+    stable = { inherit rev sha256; };
   };
 
   te-benchmark-src = get-te-benchmark {
@@ -23,10 +23,12 @@ rec {
   withParser = runCommand "mk-parser"
     {
       buildInputs = [ bash haskellPackages.BNFC gcc ];
-      tipSrc      = fetchgit {
+      tipSrc      = latestGit {
         url    = http://chriswarbo.net/git/tip-tools.git;
-        rev    = "2b8ed14";
-        sha256 = "1nmja63agidjfspppgsrd6fv7fzc3vadw528cwj9vqajs9sgnla5";
+        stable = {
+          rev    = "2b8ed14";
+          sha256 = "1nmja63agidjfspppgsrd6fv7fzc3vadw528cwj9vqajs9sgnla5";
+        };
       };
     }
     ''
