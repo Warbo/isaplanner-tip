@@ -60,11 +60,10 @@ ML {*
                               (SynthOutput.get_thms result_context);
 
   (* Write output, delimited so we can easily chop off Isabelle/CoSy noise *)
-  val output = Pretty.output NONE (Pretty.list "[" "]"
-                 ([Pretty.str "BEGIN OUTPUT"] @
-                  found_theorems              @
-                  found_conjectures           @
-                  [Pretty.str "END OUTPUT"]));
-  val _ = (PolyML.print output; ());
+  writeln (Pretty.output NONE (Pretty.list "[" "]"
+    ([Pretty.str "BEGIN OUTPUT"] @
+     found_theorems              @
+     found_conjectures           @
+     [Pretty.str "END OUTPUT"])));
 *}
 end
