@@ -1,21 +1,28 @@
 # Nixpkgs sets, augmented with some custom configuration
+with builtins;
 with rec {
-  # Mixes unstable <nixpkgs> and stable config; only use as way to get fully
-  # stable and unstable versions.
+  # If we have nix-config use it, otherwise fetch one
+  options =
+    with tryEval <nix-config>;
+    if success
+       then { config = import "${value}/stable.nix"; f = "fetchGitHashless"; }
+       else { config = {};                           f = "fetchgit";         };
+
   pkgsWithCfg = import <nixpkgs> { config = import "${stableCfg}/config.nix"; };
 
   stableCfg =
-    with rec {
-      rev = "044d89400eb8e5b0e9123a88b70e4e8b688ab50d";
-      url = "https://github.com/Warbo/nix-config/archive/${rev}.tar.gz";
-    };
-    builtins.fetchTarball url;
+    getAttr options.f
+            (import <nixpkgs> { inherit (options) config; })
+            {
+              url    = http://chriswarbo.net/git/nix-config.git;
+              rev    = "044d894";
+              sha256 = "0s9jw6mna8qpl5s5phd9qx1im2pcclr43fmbm40i72v95nn8q8xh";
+            };
 
-  unstableCfg =
-    with builtins.tryEval <nixpkgs>;
-    if success
-       then value
-       else pkgsWithCfg.latestNixCfg;
+  unstableCfg = with tryEval <nix-config>;
+                if success
+                   then value
+                   else pkgsWithCfg.latestNixCfg;
 };
 {
   # A known-good version of our configuration; this is "production"
