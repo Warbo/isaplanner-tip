@@ -35,15 +35,14 @@ rec {
         exit 1
       }
 
-      OUTPUT=$("$raw" "ISACOSY.thy")
+      "$raw" "ISACOSY.thy" > "$out"
 
-      EQS=$(echo "$OUTPUT" | grep -c '=')
+      EQS=$(grep -c '=' < "$out")
       [[ "$EQS" -gt 2 ]] || {
-        echo "$OUTPUT" 1>&2
+        cat "$out" 1>&2
         echo "Didn't find equations for +, - and *:" 1>&2
         exit 1
       }
-      mkdir "$out"
     '';
 
   isacosy-untested = wrap {
