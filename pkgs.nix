@@ -4,11 +4,12 @@ with rec {
   # stable and unstable versions.
   pkgsWithCfg = import <nixpkgs> { config = import "${stableCfg}/config.nix"; };
 
-  stableCfg   = (import <nixpkgs> {}).fetchgit {
-    url    = http://chriswarbo.net/git/nix-config.git;
-    rev    = "044d894";
-    sha256 = "0s9jw6mna8qpl5s5phd9qx1im2pcclr43fmbm40i72v95nn8q8xh";
-  };
+  stableCfg =
+    with rec {
+      rev = "044d89400eb8e5b0e9123a88b70e4e8b688ab50d";
+      url = "https://github.com/Warbo/nix-config/archive/${rev}.tar.gz";
+    };
+    builtins.fetchTarball url;
 
   unstableCfg =
     with builtins.tryEval <nixpkgs>;
