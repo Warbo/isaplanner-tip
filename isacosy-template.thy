@@ -3,10 +3,7 @@ theory ISACOSY
 imports Main IsaP IsaCoSy Orderings Set Pure List (*TEMPLATE_REPLACE_ME_WITH_IMPORTS*)
 begin
 
-ML {*
-  (* To aid debugging *)
-  Multithreading.trace := 2;
-
+ML_command {*
   (* Example: @{term "Groups.plus_class.plus :: nat => nat => nat"} *)
   val functions = map Term.dest_Const [
     (*TEMPLATE_REPLACE_ME_WITH_FUNCTIONS*)
@@ -66,4 +63,5 @@ ML {*
      found_conjectures           @
      [Pretty.str "END OUTPUT"])));
 *}
+
 end
