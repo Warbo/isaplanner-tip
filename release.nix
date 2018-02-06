@@ -1,15 +1,14 @@
 with import ./pkgs.nix;
 with stable.lib;
 with rec {
-  onlyDrvs = x:
-    if isAttrs x
-       then if isDerivation x
-               then x
-               else with { result = filterAttrs (_: y: y != null)
-                                                (mapAttrs (_: onlyDrvs) x); };
-                    if result == {} then null else result
-       else null;
+  # Turn anything that's not a derivation or set into null, so Hydra skips it
+  onlyDrvs = x: if isAttrs x
+                   then if isDerivation x
+                           then x
+                           else mapAttrs (_: onlyDrvs) x
+                   else null;
 
+  # These are large sets (e.g. nixpkgs) which aren't part of this project
   unwantedPaths = [
     [ "defs" "haskell-te"           "haskell-te"      ]
     [ "defs" "tebenchmark-isabelle" "haskellPackages" ]
@@ -17,11 +16,20 @@ with rec {
     [ "defs" "tebenchmark-isabelle" "te-benchmark"    ]
   ];
 
-  stripUnwanted = mapAttrsRecursive (path: _: v: if elem path unwantedPaths
-                                                    then null
-                                                    else v);
+  # Recurse through attribute sets, accumulating a path, and checking if it's
+  # one of the unwantedPaths above. Replace with null if so.
+  stripUnwanted = path: n: v:
+    if elem (path ++ [n]) unwantedPaths
+       then null
+       else if isAttrs v
+               then if isDerivation v
+                       then v
+                       else mapAttrs (stripUnwanted (path ++ [n])) v
+               else v;
 
-  all = mapAttrs (_: pkgs: stripUnwanted (import ./. { inherit pkgs; }))
-                 { inherit stable /* FIXME (issue dd19449ea2ab8317) unstable*/; };
+  # Initialise stripUnwanted with an empty path, and apply to stable/unstable
+  all = mapAttrs (_: pkgs: mapAttrs (stripUnwanted [])
+                                    (import ./. { inherit pkgs; }))
+                 { inherit stable unstable; };
 };
 onlyDrvs all
