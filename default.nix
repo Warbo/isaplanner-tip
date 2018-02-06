@@ -18,8 +18,9 @@ rec {
     sampling = callPackage ./sampling.nix {
       inherit (defs.haskell-te          ) get-haskell-te;
       inherit (defs.isacosy             ) isacosy isacosy-theory;
-      inherit (defs.scripts             ) isabelleTypeArgs listUndefined;
-      inherit (defs.tebenchmark-isabelle) handleConstructors
+      inherit (defs.scripts             ) isabelleTypeArgs;
+      inherit (defs.tebenchmark-isabelle) find-undefined-cases
+                                          handleConstructors
                                           make-tebenchmark-data
                                           make-tebenchmark-isabelle
                                           te-benchmark;
@@ -28,6 +29,7 @@ rec {
     tebenchmark-isabelle = callPackage ./tebenchmark-isabelle.nix {
       inherit (defs.isaplanner) isaplanner;
       inherit (defs.scripts   ) getBenchmarkTypes getPreprocessed
+                                nonExhaustiveScraper
                                 stripConstructorsDestructors;
     };
   };

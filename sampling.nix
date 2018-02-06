@@ -1,7 +1,8 @@
-{ attrsToDirs, bash, fail, gawk, get-haskell-te, handleConstructors,
-  haskellPackages, isabelleTypeArgs, isacosy, isacosy-theory, jq, lib,
-  listUndefined, make-tebenchmark-data, make-tebenchmark-isabelle, mkBin,
-  nothing, runCommand, stdenv, te-benchmark, withDeps, wrap, writeScript }:
+{ attrsToDirs, bash, fail, find-undefined-cases, gawk, get-haskell-te,
+  handleConstructors, haskellPackages, isabelleTypeArgs, isacosy,
+  isacosy-theory, jq, lib, make-tebenchmark-data, make-tebenchmark-isabelle,
+  mkBin, nothing, runCommand, stdenv, te-benchmark, withDeps, wrap,
+  writeScript }:
 
 with builtins;
 with lib;
@@ -107,6 +108,8 @@ rec {
     data    = make-tebenchmark-data     { te-benchmark = teb; };
 
     theory  = make-tebenchmark-isabelle { te-benchmark = teb; };
+
+    undefs  = find-undefined-cases      { te-benchmark = teb; };
 
     allDefs = runCommand "all-defs"
       {
@@ -237,11 +240,32 @@ rec {
         namesTypes | jq -rs 'join(", ")' > "$out"
       '';
 
-    undefined = stdenv.mkDerivation {
-      inherit namesFile;
-      name    = "undefined-${label}";
-      builder = listUndefined { te-benchmark = teb; };
-    };
+    undefined = runCommand "undefined-${label}"
+      {
+        inherit namesFile undefs;
+        buildInputs = [ jq ];
+        expr        = writeScript "undef.jq" ''
+          def mkArgs: [range(.)] | map(tostring | "free" + .) | join(" ");
+
+          def mkCons: . as $in | keys | map(. + " " + ($in[.] | mkArgs));
+
+          def render: "Trm.change_frees_to_fresh_vars @{term \"" + . + "\"}";
+
+          def mkFuns: . as $in |
+                      .cons | mkCons |
+                      map($in["name"] + " (" + . + ")" | render);
+
+          map(. as $name | select($undefs | has($name)) |
+              {name: ., cons: $undefs[.]} | mkFuns | .[]) | join(",\n")
+        '';
+      }
+      ''
+        set -e
+        set -o pipefail
+
+        jq -R '.' < "$namesFile" |
+          jq -s -r --argfile undefs "$undefs" -f "$expr" > "$out"
+      '';
   };
 
   isacosy-from-sample-untested = args: isacosy-theory {

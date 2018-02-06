@@ -1,7 +1,7 @@
 # TEBenchmark converted to an Isabelle theory
 { bash, callPackage, fetchFromGitHub, fetchgit, gcc, getBenchmarkTypes,
-  getPreprocessed, haskell, isaplanner, jq, perl, runCommand, stdenv,
-  stripConstructorsDestructors, writeScript }:
+  getPreprocessed, haskell, isaplanner, jq, nonExhaustiveScraper, perl,
+  runCommand, stdenv, stripConstructorsDestructors, writeScript }:
 
 rec {
   get-te-benchmark = { rev, sha256 }: fetchgit {
@@ -83,13 +83,14 @@ rec {
 
   find-undefined-cases = args: runCommand "undefined-cases"
     {
+      inherit nonExhaustiveScraper;
       buildInputs = [ haskellPackages.ghc ];
       data        = tip-convert args;
     }
     ''
       cp "$data/A.hs" ./A.hs
-      ghc -fwarn-incomplete-patterns A.hs 2>&1 | tee "$out"
-      exit 1
+      ghc -fwarn-incomplete-patterns A.hs 2>&1 |
+        "$nonExhaustiveScraper" > "$out"
     '';
 
   tip-convert = { te-benchmark }: runCommand
