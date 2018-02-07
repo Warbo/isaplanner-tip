@@ -1,0 +1,19 @@
+From: Chris Warburton
+Date: Wed, 07 Feb 2018 03:01:38 +0000
+Subject: Re: Unstable broken due to missing 'weigh' dependency
+Message-Id: <dd19449ea2ab8317-b20b2d6404ba3f2e-artemis@nixos>
+References: <dd19449ea2ab8317-0-artemis@nixos>
+In-Reply-To: <dd19449ea2ab8317-0-artemis@nixos>
+
+The way release.nix was removing unwanted values was wrong. We used a
+library functions to traverse attrsets recursively, calling a given
+function on each value.
+
+Unfortunately, that function doesn't consider other attrsets to be
+values: instead, it just recurses into them without giving us a chance
+to mark them as unwanted.
+
+This meant that, despite us trying to discard defs.haskell-te.haskell-te
+(and everything contained within, that we haven't explicitly pulled out)
+it was actually all still there, and hence why Hydra was trying to
+evaluate ML4HSFE and hitting this problem.

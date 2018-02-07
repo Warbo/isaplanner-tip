@@ -1,0 +1,15 @@
+From: Chris Warburton
+Date: Wed, 07 Feb 2018 03:04:52 +0000
+Subject: Re: Still getting UNDEF exceptions
+Message-Id: <83975592e2652fff-9be0c99c1504cfa2-artemis@nixos>
+References: <83975592e2652fff-0-artemis@nixos>
+In-Reply-To: <83975592e2652fff-0-artemis@nixos>
+
+I've written a more robust undefined-case-finding function, but (a) it
+only seems to find 'destructor-' functions (which we were previously
+handling) and (b) we still get these exceptions at the end of
+exploration.
+
+Looking a little harder, they *seem* to be benign, and they're already
+filtered out by the Python script which spots 'BEGIN' and 'END' tokens,
+so I'm closing this as not a problem.

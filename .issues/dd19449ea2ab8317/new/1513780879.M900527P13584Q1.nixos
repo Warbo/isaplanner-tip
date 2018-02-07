@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 20 Dec 2017 14:37:42 +0000
-State: new
+State: resolved
 Subject: Unstable broken due to missing 'weigh' dependency
 Message-Id: <dd19449ea2ab8317-0-artemis@nixos>
+resolution: fixed
 
 From Hydra:
 

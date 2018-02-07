@@ -138,23 +138,6 @@ rec {
     };
     withDeps [ test ] untested;
 
-  listUndefined = { te-benchmark }: wrap {
-    name  = "listUndefined";
-    paths = [ coreutils (envFrom te-benchmark) fail ];
-    vars  = cacheFrom te-benchmark // {
-      listUndefined = ./listUndefined.rkt;
-      tipBenchmark  = te-benchmark.tip-benchmark-smtlib;
-    };
-    script = ''
-      #!/usr/bin/env bash
-      set -e
-      [[ -e "$namesFile" ]] || fail "No namesFile given"
-      SAMPLE=$(cat "$namesFile")
-      export SAMPLE
-      "$listUndefined" "$@"
-    '';
-  };
-
   nonExhaustiveScraper =
     with rec {
       untested = wrap {

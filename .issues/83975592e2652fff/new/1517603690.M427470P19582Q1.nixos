@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 02 Feb 2018 20:21:12 +0000
-State: new
+State: resolved
 Subject: Still getting UNDEF exceptions
 Message-Id: <83975592e2652fff-0-artemis@nixos>
+resolution: fixed
 
 This time it's not from destructors. I hit this while testing a theory
 containing plus, times and exp. I think it may be because 'exp Z Z'
