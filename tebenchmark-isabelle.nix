@@ -1,7 +1,7 @@
 # TEBenchmark converted to an Isabelle theory
 { bash, callPackage, fetchFromGitHub, gcc, getBenchmarkTypes, getPreprocessed,
-  haskell, isaplanner, jq, latestGit, nonExhaustiveScraper, perl, runCommand,
-  stdenv, stripConstructorsDestructors, writeScript }:
+  haskell, isaplanner, jq, latestGit, nonExhaustiveScraper, perl, runCabal2nix,
+  runCommand, stdenv, stripConstructorsDestructors, writeScript }:
 
 rec {
   get-te-benchmark = { rev, sha256 }: latestGit {
@@ -61,17 +61,7 @@ rec {
     cp -a ./tip-lib "$out"
   '';
 
-  nixpkgs1703 = import (fetchFromGitHub {
-    owner  = "NixOS";
-    repo   = "nixpkgs";
-    rev    = "1360efe";
-    sha256 = "0y4db7akf7h03kpqr145qzzkbayamn9fkzxhx04abq5jdkxxjv0d";
-  }) { config = {}; };
-
-  tip-lib = nixpkgs1703.haskellPackages.haskellSrc2nix {
-    name = "tip-lib";
-    src  = parserSrc;
-  };
+  tip-lib = runCabal2nix { url = parserSrc; };
 
   tebenchmark-isabelle = make-tebenchmark-isabelle { inherit te-benchmark; };
 
