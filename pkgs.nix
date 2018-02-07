@@ -21,7 +21,7 @@ with rec {
 
   unstableCfg = with tryEval <nix-config>;
                 if success
-                   then value
+                   then import "${value}/unstable.nix"
                    else pkgsWithCfg.latestNixCfg;
 };
 {
@@ -33,6 +33,6 @@ with rec {
   # Fetches whatever the latest version of our config is; useful for regression
   # testing
   unstable = import <nixpkgs> {
-    config = import "${unstableCfg}/unstable.nix";
+    config = unstableCfg;
   };
 }
