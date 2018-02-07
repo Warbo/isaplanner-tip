@@ -278,11 +278,6 @@ rec {
   # revisions which contain the benchmark data (which must, of course, be
   # added in a new commit after the code which got benchmarked).
   known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
-    ce9c9478 = {
-      filename = "ce9c9478-nix-py-dirnull.json.gz";
-      machine  = "desktop";
-      rev      = "334d529";
-    };
   };
 
   runnerFor = { label, names, te-benchmark }: wrap {
