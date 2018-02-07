@@ -12,7 +12,6 @@ with rec {
   unwantedPaths = [
     [ "defs" "haskell-te"           "haskell-te"      ]
     [ "defs" "tebenchmark-isabelle" "haskellPackages" ]
-    [ "defs" "tebenchmark-isabelle" "nixpkgs1703"     ]
     [ "defs" "tebenchmark-isabelle" "te-benchmark"    ]
   ];
 
