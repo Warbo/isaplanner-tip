@@ -30,7 +30,7 @@ rec {
   # time. These samples let us check if such a time exists.
   find-cutoff-time = cutoff-timer {
     runners = genAttrs ["1" "10" "20" "30" "40" "50"]
-                       (size: genAttrs ["0" "1" "2"]
+                       (size: genAttrs ["0" "1" "2" "3" "4"]
                                        (rep: runnerForSample {
                                                inherit rep size;
                                              }));
