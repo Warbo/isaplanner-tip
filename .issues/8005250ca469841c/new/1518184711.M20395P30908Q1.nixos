@@ -1,0 +1,27 @@
+From: Chris Warburton
+Date: Fri, 09 Feb 2018 13:51:45 +0000
+State: new
+Subject: Scrap compatibility junk from scripts/default.nix
+Message-Id: <8005250ca469841c-0-artemis@nixos>
+
+At the top of scripts/default.nix there are some gubbins to reach inside
+old versions of te-benchmark and pull out things like the benchmark dir,
+the racket environment, etc.
+
+These were needed so that we could interoperate with old versions of
+te-benchmarks, which didn't directly expose some of the things we
+need. We needed to interoperate with those versions to make sure our own
+Isabelle runs are using the same benchmark as any Haskell versions we're
+comparing against.
+
+We've recently spotted a problem in the old benchmark version, in that
+it was including destructors and their wrapper functions, which will
+artificially deflate the precisions (since the destructors themselves
+would never have any corresponding theorems in the ground truth set,
+despite the (equivalent) destructor functions possibly having some).
+
+The benchmark has been updated, but since those old results are dodgy,
+there's little point going to these lengths to support them. We might as
+ensure that the fixed benchmarks expose everything we need, then re-run
+the Haskell version with this new benchmark, then this Isabelle version
+won't have to mess around to be consistent.

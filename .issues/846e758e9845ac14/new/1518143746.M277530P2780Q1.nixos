@@ -1,0 +1,13 @@
+From: Chris Warburton
+Date: Fri, 09 Feb 2018 02:34:17 +0000
+State: new
+Subject: Find cutoff time
+Message-Id: <846e758e9845ac14-0-artemis@nixos>
+
+We don't want to run for too long per iteration, but we also don't want
+to have loads of timeouts.
+
+Write a script to test a few runs for up to an hour, so we can see if
+there's a nice point at which we can timeout.
+
+Probably use python's subprocess32 module.

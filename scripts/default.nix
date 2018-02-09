@@ -1,9 +1,12 @@
-{ bash, coreutils, fail, haskell, haskellPackages, jq, lib, mkBin, python,
+{ bash, coreutils, fail, haskell, haskellPackages, jq, lib, mkBin, nixpkgs1709,
   runCommand, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
 with {
+  # Prior versions suffer from https://github.com/NixOS/nixpkgs/pull/23600
+  inherit (nixpkgs1709) python;
+
   # These need to work for any old revisions in known-samples
 
   cacheFrom = te-benchmark:
