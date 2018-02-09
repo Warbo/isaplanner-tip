@@ -16,7 +16,7 @@ with rec {
             {
               url    = http://chriswarbo.net/git/nix-config.git;
               rev    = "044d894";
-              sha256 = "0s9jw6mna8qpl5s5phd9qx1im2pcclr43fmbm40i72v95nn8q8xh";
+              sha256 = "0y873r2nfw9qazdl555kwj2072n532pnv5iwp3nyck614qncvvzl";
             };
 
   unstableCfg = with tryEval <nix-config>;
