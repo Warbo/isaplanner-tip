@@ -1,8 +1,8 @@
-{ attrsToDirs, bash, fail, find-undefined-cases, gawk, get-haskell-te,
-  handleConstructors, haskellPackages, isabelleTypeArgs, isacosy,
-  isacosy-theory, jq, lib, make-tebenchmark-data, make-tebenchmark-isabelle,
-  mkBin, nothing, python, runCommand, stdenv, te-benchmark, withDeps, wrap,
-  writeScript }:
+{ attrsToDirs, bash, cutoff-timer, fail, find-undefined-cases, gawk,
+  get-haskell-te, handleConstructors, haskellPackages, isabelleTypeArgs,
+  isacosy, isacosy-theory, jq, lib, make-tebenchmark-data,
+  make-tebenchmark-isabelle, mkBin, nothing, runCommand, stdenv, te-benchmark,
+  withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -28,17 +28,12 @@ rec {
   # execution. We figure that it shouldn't be more than an hour, but we might be
   # able to get away with less, if the majority of runs finish below a certain
   # time. These samples let us check if such a time exists.
-  cutoff-timer = wrap {
-    name  = "cutoff-timer";
-    file  = ./scripts/cutoff-timer.py;
-    paths = [ python ];
-    vars  = {
-      runners = toJSON (genAttrs ["1" "10" "20" "30" "40" "50"]
-                                 (size: genAttrs ["0" "1" "2"]
-                                                 (rep: runnerForSample {
-                                                   inherit rep size;
-                                                 })));
-    };
+  find-cutoff-time = cutoff-timer {
+    runners = genAttrs ["1" "10" "20" "30" "40" "50"]
+                       (size: genAttrs ["0" "1" "2"]
+                                       (rep: runnerForSample {
+                                               inherit rep size;
+                                             }));
   };
 
   # Using the same samples as haskell-te lets us directly compare Isabelle and
