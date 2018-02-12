@@ -28,13 +28,99 @@ rec {
   # execution. We figure that it shouldn't be more than an hour, but we might be
   # able to get away with less, if the majority of runs finish below a certain
   # time. These samples let us check if such a time exists.
-  find-cutoff-time = cutoff-timer {
-    runners = genAttrs ["1" "10" "20" "30" "40" "50"]
-                       (size: genAttrs ["0" "1" "2" "3" "4"]
-                                       (rep: runnerForSample {
-                                               inherit rep size;
-                                             }));
-  };
+  find-cutoff-time =
+    with rec {
+      mkRunners = sizes: reps:
+        genAttrs (map toString sizes)
+                 (size: genAttrs (map toString (range 0 (reps - 1)))
+                                 (rep: runnerForSample {
+                                   inherit rep size;
+                                 }));
+
+      times-out = runCommand "cutoff-timer-times-out"
+        {
+          buildInputs = [ fail jq ];
+          cmd = cutoff-timer {
+            runners      = mkRunners [1 2 3] 2;
+            timeout_secs = 2;
+          };
+        }
+        ''
+          BEFORE=$(date "+%s")
+          "$cmd" > /dev/null
+          AFTER=$(date +%s)
+
+          DIFF=$(( AFTER - BEFORE ))
+          [[ "$DIFF" -lt 20 ]] ||
+            fail "Should've taken 12 seconds, took '$DIFF'"
+
+          mkdir "$out"
+        '';
+
+      have-output = runCommand "cutoff-time-has-output"
+        {
+          buildInputs = [ fail jq ];
+          cmd = cutoff-timer {
+            runners      = mkRunners [1 2 3] 2;
+            timeout_secs = 2;
+          };
+        }
+        ''
+          "$cmd" > output
+
+          function q {
+            jq -e "${"$" + "{@:2}"}" < output || {
+              cat output 1>&2
+              echo ""    1>&2
+              fail "$1"
+            }
+          }
+
+          q "Got object" 'type | . == "object"'
+          q "Got sizes"  'keys | sort | . == ["1", "2", "3"]'
+          for SIZE in 1 2 3
+          do
+            q "Got object for '$SIZE'" \
+              --arg size "$SIZE" '.[$size] | type | . == "object"'
+
+            q "Got reps for '$SIZE'" \
+              --arg size "$SIZE" '.[$size] | keys | sort | . == ["0", "1"]'
+
+            for REP in 0 1
+            do
+              for FIELD in stdout stderr timeout error 'timed out'
+              do
+                q "Size '$SIZE' rep '$REP' has '$FIELD'" \
+                  --arg size "$SIZE" --arg rep "$REP" --arg field "$FIELD" \
+                  '.[$size] | .[$rep] | has($field)'
+              done
+            done
+          done
+          mkdir "$out"
+        '';
+
+      find-something = runCommand "cutoff-finds-something"
+        {
+          buildInputs = [ fail jq ];
+          cmd = cutoff-timer {
+            runners      = mkRunners [3] 3;
+            timeout_secs = 600;
+          };
+        }
+        ''
+          set -e
+          "$cmd" | tee output
+          jq -e '[.[] | .[] | .["timed out"] | not] | any' ||
+            fail "All timed out"
+          jq '.[] | .[] | select(.["timed out"] | not) | .stdout' < output 1>&2
+        '';
+
+      real = cutoff-timer {
+        runners = mkRunners [1 10 20 30 40 50] 5;
+        timeout_secs = 3600;
+      };
+    };
+    withDeps [ times-out have-output find-something ] real;
 
   # Using the same samples as haskell-te lets us directly compare Isabelle and
   # Haskell results. Outputs '{"1": {"2":["foo"], ...}, ...}' where "1" is a

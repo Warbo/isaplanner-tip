@@ -38,11 +38,14 @@ with {
        else asDep;
 };
 rec {
-  cutoff-timer = { runners }: wrap {
+  cutoff-timer = { runners, timeout_secs }: wrap {
     name  = "cutoff-timer";
     file  = ./cutoff-timer.py;
     paths = [ (python.withPackages (p: [ p.subprocess32 ])) ];
-    vars  = { runners = toJSON runners; };
+    vars  = {
+      runners      = toJSON runners;
+      timeout_secs = toString timeout_secs;
+    };
   };
 
   eqsToJson = wrap {
