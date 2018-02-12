@@ -24,6 +24,8 @@ for size in runners:
             code     = proc.poll()
             results[size][rep] = {
                 'stdout':    out,
+                'size':      int(size),
+                'rep':       int(rep),
                 'stderr':    err,
                 'timeout':   timeout_secs,
                 'timed out': False,
@@ -36,6 +38,8 @@ for size in runners:
 
             out, err = proc.communicate()
             results[size][rep] = {
+                'size':      int(size),
+                'rep':       int(rep),
                 'stdout':    out,
                 'stderr':    err,
                 'timeout':   timeout_secs,
