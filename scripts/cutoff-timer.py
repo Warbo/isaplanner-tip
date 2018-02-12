@@ -10,7 +10,7 @@ runners = json.loads(os.getenv('runners'))
 
 timeout_secs = int(os.getenv('timeout_secs'))
 
-sample_env                = environ.copy()
+sample_env                = os.environ.copy()
 sample_env['DUMP_SAMPLE'] = '1'
 
 results = {}
