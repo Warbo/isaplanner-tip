@@ -122,8 +122,8 @@ rec {
             outs | jq -R '.' | jq '.[]' | jq -s '. | length' 1>&2
           }
 
-          eqs
-          exit 1
+          COUNT=$(eqs)
+          [[ "$COUNT" -gt 0 ]] || fail "Found no equations"
         '';
 
       real = cutoff-timer {
