@@ -1,0 +1,20 @@
+From: Chris Warburton
+Date: Fri, 09 Feb 2018 18:06:37 +0000
+State: new
+Subject: Ensure we're getting some equations from "cutoff times"
+Message-Id: <bb79a42968d032e6-0-artemis@nixos>
+
+Before we go running 30 potentially-hour-long processes in a row, we
+should make sure they're actually working.
+
+In particular, we seem to get some '[BEGIN OUTPUT...END OUTPUT]' data in
+stderr, but I haven't yet seen this get converted into equations on
+stdout.
+
+There may be a few reasons for this:
+
+ - The equations are getting discarded, because they contain
+   constructors which aren't in the sample.
+ - The equations aren't getting parsed or spotted properly.
+ - The pipeline is dying before the equation parser gets a chance to run
+   (e.g. due to UNDEF)
