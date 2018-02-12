@@ -19,7 +19,7 @@ for size in runners:
             proc     = subprocess32.Popen([runners[size][rep]],
                                           stdout=subprocess32.PIPE,
                                           stderr=subprocess32.PIPE,
-                                          preexec_fn=os.setsid)
+                                          start_new_session=True)
             out, err = proc.communicate(timeout=timeout_secs)
             code     = proc.poll()
             results[size][rep] = {
