@@ -115,11 +115,11 @@ rec {
             fail "All timed out"
 
           function outs {
-            jq '.[] | .[] | select(.["timed out"] | not) | .stdout' < "$out"
+            jq -r '.[] | .[] | select(.["timed out"] | not) | .stdout' < "$out"
           }
 
           function eqs {
-            outs | jq -R '.' | jq '.[]' | jq -s '. | length' 1>&2
+            outs | jq '.[]' | jq -s '. | length'
           }
 
           COUNT=$(eqs)
