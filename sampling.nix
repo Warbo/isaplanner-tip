@@ -404,6 +404,12 @@ rec {
       set -o pipefail
       cd "$workingDir" || fail "Couldn't cd to '$workingDir'"
 
+      if [[ -n "$DUMP_SAMPLE" ]]
+      then
+        cat "$sampleFile"
+        exit 0
+      fi
+
       SAMPLE=$(cat "$sampleFile")
       export SAMPLE
 

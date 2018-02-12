@@ -10,10 +10,15 @@ runners = json.loads(os.getenv('runners'))
 
 timeout_secs = int(os.getenv('timeout_secs'))
 
+sample_env                = environ.copy()
+sample_env['DUMP_SAMPLE'] = '1'
+
 results = {}
 for size in runners:
     results[size] = {}
     for rep in runners[size]:
+        sample = subprocess32.check_output([runners[size][rep]],
+                                           env=sample_env)
         try:
             sys.stderr.write('Running size {0} rep {1}\n'.format(size, rep))
             proc     = subprocess32.Popen([runners[size][rep]],
@@ -25,6 +30,7 @@ for size in runners:
             results[size][rep] = {
                 'size':      int(size),
                 'rep':       int(rep),
+                'sample':    sample,
                 'stdout':    out,
                 'stderr':    err,
                 'timeout':   timeout_secs,
@@ -40,6 +46,7 @@ for size in runners:
             results[size][rep] = {
                 'size':      int(size),
                 'rep':       int(rep),
+                'sample':    sample,
                 'stdout':    out,
                 'stderr':    err,
                 'timeout':   timeout_secs,
