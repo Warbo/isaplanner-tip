@@ -23,9 +23,9 @@ for size in runners:
             out, err = proc.communicate(timeout=timeout_secs)
             code     = proc.poll()
             results[size][rep] = {
-                'stdout':    out,
                 'size':      int(size),
                 'rep':       int(rep),
+                'stdout':    json.loads(out),
                 'stderr':    err,
                 'timeout':   timeout_secs,
                 'timed out': False,
