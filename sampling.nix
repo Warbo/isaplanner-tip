@@ -109,10 +109,21 @@ rec {
         }
         ''
           set -e
-          "$cmd" | tee output
-          jq -e '[.[] | .[] | .["timed out"] | not] | any' ||
+          "$cmd" | tee "$out"
+
+          jq -e '[.[] | .[] | .["timed out"]] | all | not' < "$out" ||
             fail "All timed out"
-          jq '.[] | .[] | select(.["timed out"] | not) | .stdout' < output 1>&2
+
+          function outs {
+            jq '.[] | .[] | select(.["timed out"] | not) | .stdout' < "$out"
+          }
+
+          function eqs {
+            outs | jq -R '.' | jq '.[]' | jq -s '. | length' 1>&2
+          }
+
+          eqs
+          exit 1
         '';
 
       real = cutoff-timer {
