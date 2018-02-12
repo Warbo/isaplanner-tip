@@ -25,7 +25,7 @@ for size in runners:
             results[size][rep] = {
                 'size':      int(size),
                 'rep':       int(rep),
-                'stdout':    json.loads(out),
+                'stdout':    out,
                 'stderr':    err,
                 'timeout':   timeout_secs,
                 'timed out': False,
