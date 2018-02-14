@@ -5,6 +5,7 @@ import os
 import signal
 import subprocess32
 import sys
+import timeit
 
 runners = json.loads(os.getenv('runners'))
 
@@ -19,6 +20,7 @@ for size in runners:
     for rep in runners[size]:
         sample = subprocess32.check_output([runners[size][rep]],
                                            env=sample_env)
+        start  = timeit.default_timer()
         try:
             sys.stderr.write('Running size {0} rep {1}\n'.format(size, rep))
             proc     = subprocess32.Popen([runners[size][rep]],
@@ -33,6 +35,7 @@ for size in runners:
                 'sample':    sample,
                 'stdout':    out,
                 'stderr':    err,
+                'time':      timeit.default_timer() - start,
                 'timeout':   timeout_secs,
                 'timed out': False,
                 'error':     code != 0,
@@ -49,6 +52,7 @@ for size in runners:
                 'sample':    sample,
                 'stdout':    out,
                 'stderr':    err,
+                'time':      timeit.default_timer() - start,
                 'timeout':   timeout_secs,
                 'timed out': True,
                 'error':     True,

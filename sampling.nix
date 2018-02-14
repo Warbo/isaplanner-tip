@@ -88,7 +88,7 @@ rec {
 
             for REP in 0 1
             do
-              for FIELD in stdout stderr timeout error 'timed out'
+              for FIELD in stdout stderr time timeout error 'timed out'
               do
                 q "Size '$SIZE' rep '$REP' has '$FIELD'" \
                   --arg size "$SIZE" --arg rep "$REP" --arg field "$FIELD" \
