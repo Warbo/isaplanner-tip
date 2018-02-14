@@ -127,7 +127,7 @@ rec {
         '';
 
       real = cutoff-timer {
-        runners = mkRunners [1 10 20 30 40 50] 5;
+        runners      = mkRunners [1 2 4 8 16 32] 5;
         timeout_secs = 3600;
       };
     };
