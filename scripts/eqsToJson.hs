@@ -1,6 +1,8 @@
 #!/usr/bin/env runhaskell
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 
 import           Control.Applicative           ((*>), (<*), (<|>))
 import           Data.Aeson
@@ -11,7 +13,9 @@ import           Data.List                     (elemIndex, intercalate, nub)
 import           Data.Maybe                    (fromJust)
 import           Numeric
 import           Prelude                       hiding (Eq)
+import           System.Environment            (lookupEnv)
 import           System.IO
+import           Test.QuickCheck
 import           Text.Parsec.Char
 import           Text.Parsec.Combinator
 import           Text.Parsec.Expr
@@ -23,7 +27,15 @@ import           Text.ParserCombinators.Parsec hiding ((<|>))
 
 data Eq   a = Eq (Expr a) (Expr a)
 
-data Expr a = Const String | Var a | App (Expr a) (Expr a)
+data Expr a = Const String | Var (Var a) | App (Expr a) (Expr a) | Lam (Expr a)
+
+data Var  a = Free a | Bound Int
+
+varIndex (Free  i) = toJSON i
+varIndex (Bound i) = toJSON i
+
+isBound (Bound _) = True
+isBound (Free  _) = False
 
 instance ToJSON (Eq Int) where
   toJSON (Eq lhs rhs) = object ["relation" .= String "~=",
@@ -35,9 +47,10 @@ instance ToJSON a => ToJSON (Expr a) where
                        Const s -> ["role"   .= String "constant"   ,
                                    "type"   .= String "unknown"    ,
                                    "symbol" .= s                   ]
-                       Var   i -> ["role"   .= String "variable"   ,
+                       Var v   -> ["role"   .= String "variable"   ,
                                    "type"   .= String "unknown"    ,
-                                   "id"     .= toJSON i            ]
+                                   "bound"  .= Bool   (isBound v)  ,
+                                   "id"     .= varIndex v          ]
                        App f x -> ["role"   .= String "application",
                                    "lhs"    .= toJSON f            ,
                                    "rhs"    .= toJSON x            ])
@@ -45,8 +58,6 @@ instance ToJSON a => ToJSON (Expr a) where
 -- Needed by 'notFollowedBy', for some reason
 instance Show (Expr String) where
   show = B.unpack . encode
-
-main = B.interact (encode . stringToEqs . B.unpack)
 
 stringToEqs :: String -> [Eq Int]
 stringToEqs = map stringToEq . filter (/= "") . lines
@@ -83,7 +94,7 @@ parseVar :: Parser (Expr String)
 parseVar = do
     optional (char '?')
     id <- many1 letter
-    return (Var id)
+    return (Var (Free id))
   <?> "parseVar"
 
 numberEq :: Eq String -> Eq Int
@@ -92,12 +103,23 @@ numberEq (Eq lhs rhs) = Eq (numberExpr db lhs) (numberExpr db rhs)
 
 collectVars :: Expr String -> [String]
 collectVars e = case e of
-  Const _   -> []
-  Var   s   -> [s]
-  App   f x -> collectVars f ++ collectVars x
+  Const _        -> []
+  Var   (Free s) -> [s]
+  App   f x      -> collectVars f ++ collectVars x
 
 numberExpr :: [String] -> Expr String -> Expr Int
 numberExpr db e = case e of
-  Const s   -> Const s
-  Var   s   -> Var (fromJust (elemIndex s db))
-  App   f x -> App (numberExpr db f) (numberExpr db x)
+  Const s        -> Const s
+  Var   (Free s) -> Var (Free (fromJust (elemIndex s db)))
+  App   f x      -> App (numberExpr db f) (numberExpr db x)
+
+-- Uses TemplateHaskell to look up definitions prefixed with 'prop_'
+return []
+runTests = $quickCheckAll
+
+main :: IO ()
+main = lookupEnv "RUN_TESTS" >>= \case
+  Nothing -> B.interact (encode . stringToEqs . B.unpack)
+  Just _  -> runTests >>= \case
+    True  -> putStrLn "All tests pass"
+    False -> error    "Test suite failed"

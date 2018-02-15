@@ -48,16 +48,30 @@ rec {
     };
   };
 
-  eqsToJson = wrap {
-    name = "eqsToJson.hs";
-    file = ./eqsToJson.hs;
+  eqsToJson =
+    with rec {
+      untested = wrap {
+        name = "eqsToJson.hs";
+        file = ./eqsToJson.hs;
 
-    # We pick GHC 7.10.3 since the 8.x was failing to build Aeson due to missing
-    # constructors in GHC.Generics.
-    paths = [ (haskell.packages.ghc7103.ghcWithPackages (h: [
-      h.aeson h.parsec
-    ])) ];
-  };
+        # We pick GHC 7.10.3 since the 8.x was failing to build Aeson due to
+        # missing constructors in GHC.Generics.
+        paths = [ (haskell.packages.ghc7103.ghcWithPackages (h: [
+          h.aeson h.parsec h.QuickCheck
+        ])) ];
+      };
+
+      test = runCommand "eqsToJson-test"
+        {
+          inherit untested;
+          RUN_TESTS = "1";
+        }
+        ''
+          "$untested" || exit 1
+          mkdir "$out"
+        '';
+    };
+    withDeps [ test ] untested;
 
   extractEqs = wrap {
     name  = "extractEqs.py";
