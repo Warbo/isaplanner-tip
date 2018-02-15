@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 09 Feb 2018 18:06:37 +0000
-State: new
+State: resolved
 Subject: Ensure we're getting some equations from "cutoff times"
 Message-Id: <bb79a42968d032e6-0-artemis@nixos>
+resolution: fixed
 
 Before we go running 30 potentially-hour-long processes in a row, we
 should make sure they're actually working.

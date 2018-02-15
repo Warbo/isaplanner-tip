@@ -1,0 +1,8 @@
+From: Chris Warburton
+Date: Wed, 14 Feb 2018 17:25:18 +0000
+Subject: Re: Ensure we're getting some equations from "cutoff times"
+Message-Id: <bb79a42968d032e6-d3602f4ad32c5751-artemis@nixos>
+References: <bb79a42968d032e6-0-artemis@nixos>
+In-Reply-To: <bb79a42968d032e6-0-artemis@nixos>
+
+We are, and this is now tested automatically

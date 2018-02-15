@@ -1,0 +1,105 @@
+From: Chris Warburton
+Date: Wed, 14 Feb 2018 23:44:53 +0000
+Subject: Re: Parse error for equations
+Message-Id: <b2957b049a17b4ed-900182d9f2ee2b9d-artemis@nixos>
+References: <b2957b049a17b4ed-0-artemis@nixos>
+In-Reply-To: <b2957b049a17b4ed-0-artemis@nixos>
+
+The following ground-truth theorems include lambdas:
+
+tip2015/list_PairEvens.smt2
+(assert-not
+  (par (b) (forall ((xs (list b)))
+    (custom-=> (even (length xs))
+               (custom-bool-converter
+                 (= (map2 (lambda ((x (Pair b b))) (fst x)) (pairs xs))
+                    (evens xs)))))))
+
+tip2015/tree_Flatten1List.smt2
+(assert-not
+  (par (a) (forall ((ps (list (Tree a))))
+    (custom-bool-converter
+      (= (flatten1 ps)
+         (concatMap (lambda ((x (Tree a))) (flatten0 x)) ps))))))
+
+tip2015/list_Select.smt2
+(assert-not
+  (par (t) (forall ((xs (list t)))
+    (custom-bool-converter
+      (= (map2 (lambda ((x (Pair t (list t)))) (fst x)) (select2 xs))
+         xs)))))
+
+tip2015/propositional_Okay.smt2
+(assert-not
+  (forall ((p Form))
+    (all (lambda ((x (list (Pair CustomInt CustomBool)))) (okay x))
+         (models p (as nil (list (Pair CustomInt CustomBool)))))))
+
+tip2015/list_SelectPermutations'.smt2
+(assert-not
+  (forall ((xs (list CustomInt)) (z CustomInt))
+    (all (lambda ((x (list CustomInt))) (eq (count z xs) (count z x)))
+         (prop_SelectPermutations (select2 xs)))))
+
+tip2015/list_PairOdds.smt2
+(assert-not
+  (par (t) (forall ((xs (list t)))
+    (custom-bool-converter
+      (= (map2 (lambda ((x (Pair t t))) (snd x)) (pairs xs))
+         (odds xs))))))
+
+isaplanner/prop_36.smt2
+(assert-not
+  (par (a) (forall ((xs (list a)))
+    (custom-bool-converter
+      (= (takeWhile (lambda ((x a)) CustomTrue) xs)
+         xs)))))
+
+tip2015/list_return_2.smt2
+(assert-not
+  (par (a) (forall ((xs (list a)))
+    (custom-bool-converter
+      (= (bind xs (lambda ((x a)) (return x)))
+         xs)))))
+
+isaplanner/prop_35.smt2
+(assert-not
+  (par (a) (forall ((xs (list a)))
+    (custom-bool-converter
+      (= (dropWhile (lambda ((x a)) CustomFalse) xs)
+         xs)))))
+
+tip2015/propositional_Sound.smt2
+(assert-not
+  (forall ((p Form))
+    (all (lambda ((x (list (Pair CustomInt CustomBool)))) (=2 x p))
+         (models p (as nil (list (Pair CustomInt CustomBool)))))))
+
+tip2015/subst_SubstFreeYes.smt2
+(assert-not
+  (forall ((x CustomInt) (e Expr) (a Expr) (y CustomInt))
+    (custom-=> (elem x (free a))
+               (custom-bool-converter
+                 (= (elem y (append (filter (lambda ((z CustomInt)) (custom-bool-converter (distinct z x))) (free a)) (free e)))
+                    (elem y (free (subst x e a))))))))
+
+tip2015/list_SelectPermutations.smt2
+(assert-not
+  (forall ((xs (list CustomInt)))
+    (all (lambda ((x (list CustomInt))) (isPermutation x xs))
+         (prop_SelectPermutations (select2 xs)))))
+
+tip2015/list_assoc.smt2
+(assert-not
+  (par (a b c) (forall ((m (list a)) (f (=> a (list b))) (g (=> b (list c))))
+    (custom-bool-converter
+      (= (bind (bind m f) g)
+         (bind m (lambda ((x a)) (bind (@ f x) g))))))))
+
+tip2015/escape_NoSpecial.smt2
+(assert-not
+  (forall ((xs (list Token)))
+    (all (lambda ((x Token)) (ok x)) (escape xs))))
+
+There are 14, and whilst some are just eta-expansions others are more
+complicated. Maybe we should add lambda support after all...

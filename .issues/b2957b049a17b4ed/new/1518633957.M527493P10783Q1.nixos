@@ -1,0 +1,108 @@
+From: Chris Warburton
+Date: Wed, 14 Feb 2018 17:34:55 +0000
+State: new
+Subject: Parse error for equations
+Message-Id: <b2957b049a17b4ed-0-artemis@nixos>
+
+Looks like equations can have more syntax than we expected. Here are
+some errors with unexpected '%' signs:
+
+    wv9x50m2s6kib75acq3z206vakhsh6vc-eqsToJson.hs: Couldn't parse 'global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64 (global697361706c616e6e65722f70726f705f33352e736d743264726f705768696c65 (%a. ?a) Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c) ?b': \"lhs\" (line 1, column 165):
+    unexpected \"%\"
+    expecting parseExpr
+
+The relevant part of the input seems to be:
+
+[BEGIN OUTPUT,
+  ...
+  global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+
+   (global697361706c616e6e65722f70726f705f33352e736d743264726f705768696c65
+     (%a. ?a)
+     Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c)
+   ?b =
+  ?b,
+  global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+   (global697361706c616e6e65722f70726f705f33362e736d743274616b655768696c65
+     (%a. ?a)
+     Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c)
+   ?b =
+  ?b,
+  global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+   ?a (global697361706c616e6e65722f70726f705f33352e736d743264726f705768696c65
+        (%a. ?b)
+        Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c) =
+  ?a,
+  global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d7432617070656e64
+   ?a (global697361706c616e6e65722f70726f705f33362e736d743274616b655768696c65
+        (%a. ?b)
+        Global6772616d6d6172732f7061636b7261745f756e616d6269675061636b7261742e736d74326e696c) =
+  ?a,
+  ...
+  END OUTPUT]
+
+Decoding the names gives us:
+
+[BEGIN OUTPUT,
+  ...
+  grammars/packrat_unambigPackrat.smt2append
+
+   (isaplanner/prop_35.smt2dropWhile
+     (%a. ?a)
+     grammars/packrat_unambigPackrat.smt2nil)
+   ?b =
+  ?b,
+  grammars/packrat_unambigPackrat.smt2append
+   (isaplanner/prop_36.smt2takeWhile
+     (%a. ?a)
+     grammars/packrat_unambigPackrat.smt2nil)
+   ?b =
+  ?b,
+  grammars/packrat_unambigPackrat.smt2append
+   ?a (isaplanner/prop_35.smt2dropWhile
+        (%a. ?b)
+        grammars/packrat_unambigPackrat.smt2nil) =
+  ?a,
+  grammars/packrat_unambigPackrat.smt2append
+   ?a (isaplanner/prop_36.smt2takeWhile
+        (%a. ?b)
+        grammars/packrat_unambigPackrat.smt2nil) =
+  ?a,
+  ...
+  END OUTPUT]
+
+Trimming things down gives us:
+
+[BEGIN OUTPUT,
+  ...
+  append (dropWhile (%a. ?a) nil) ?b = ?b,
+
+  append (takeWhile (%a. ?a) nil) ?b = ?b,
+
+  append ?a (dropWhile (%a. ?b) nil) = ?a,
+
+  append ?a (takeWhile (%a. ?b) nil) = ?a,
+  ...
+  END OUTPUT]
+
+So these all seem to involve expressions which don't actually alter the
+output: 'dropWhile foo nil` and 'takeWhile foo nil' will always evaluate
+to 'nil', since the input list is 'nil'.
+
+So what are these '%a. ?a' expressions? According to
+http://brynosaurus.com/isabelle/dict/Dict.html:
+
+> Note that the percent sign is the lambda operator in Isabelle/HOL.
+
+This means that we're generating equations which include anonymous
+lambda functions! We certainly weren't expecting that!
+
+Long-term this means we should alter/ditch our equation format (might as
+well use tip-like s-expressions I suppose).
+
+Short-term, can we bodge something which works without changing the
+formats and tooling too much? Note that we only need to be able to
+match up those particular equations (if any) which appear in the
+TEBenchmark ground truth. Everything else will just get lumped into the
+'non-interesting' pile. Could we give each of those lambdas a name and
+treat them like constants?
