@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Wed, 14 Feb 2018 17:34:55 +0000
-State: new
+State: resolved
 Subject: Parse error for equations
 Message-Id: <b2957b049a17b4ed-0-artemis@nixos>
+resolution: fixed
 
 Looks like equations can have more syntax than we expected. Here are
 some errors with unexpected '%' signs:

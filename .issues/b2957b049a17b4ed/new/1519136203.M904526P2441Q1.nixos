@@ -1,0 +1,9 @@
+From: Chris Warburton
+Date: Tue, 20 Feb 2018 14:16:18 +0000
+Subject: Re: Parse error for equations
+Message-Id: <b2957b049a17b4ed-87af0aa60faf6e2a-artemis@nixos>
+References: <b2957b049a17b4ed-0-artemis@nixos>
+In-Reply-To: <b2957b049a17b4ed-0-artemis@nixos>
+
+We now curry multi-argument lambdas. Also fixed some other issues about
+de Bruijn indices, free/bound overlaps, etc.

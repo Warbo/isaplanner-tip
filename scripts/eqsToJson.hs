@@ -29,7 +29,10 @@ import           Text.ParserCombinators.Parsec hiding ((<|>))
 
 data Eq   a = Eq (Expr a) (Expr a) deriving (Prelude.Eq)
 
-data Expr a = Const String | Var (Var a) | App (Expr a) (Expr a) | Lam (Expr a)
+-- 'Var' is either bound (by a Lam) or free. A 'Lam' with 'Just foo' binds the
+-- variable named 'foo', whilst a 'Lam' with 'Nothing' uses de Bruijn indices.
+data Expr a = Const String | Var (Var a) | App (Expr a) (Expr a) |
+              Lam (Maybe a) (Expr a)
      deriving (Prelude.Eq)
 
 data Var  a = Free a | Bound Int
@@ -42,16 +45,19 @@ instance (ToJSON a) => ToJSON (Eq a) where
 
 instance ToJSON a => ToJSON (Expr a) where
   toJSON e = object (case e of
-                       Const s -> ["role"   .= String "constant"   ,
-                                   "type"   .= String "unknown"    ,
-                                   "symbol" .= s                   ]
-                       Var v   -> ["role"   .= String "variable"   ,
-                                   "type"   .= String "unknown"    ,
-                                   "bound"  .= Bool   (isBound v)  ,
-                                   "id"     .= varIndex v          ]
-                       App f x -> ["role"   .= String "application",
-                                   "lhs"    .= toJSON f            ,
-                                   "rhs"    .= toJSON x            ])
+                       Const s -> ["role"   .= String "constant"    ,
+                                   "type"   .= String "unknown"     ,
+                                   "symbol" .= s                    ]
+                       Var v   -> ["role"   .= String "variable"    ,
+                                   "type"   .= String "unknown"     ,
+                                   "bound"  .= Bool   (isBound v)   ,
+                                   "id"     .= varIndex v           ]
+                       App f x -> ["role"   .= String "application" ,
+                                   "lhs"    .= toJSON f             ,
+                                   "rhs"    .= toJSON x             ]
+                       Lam v x -> ["role"   .= String "lambda"      ,
+                                   "arg"    .= maybe Null toJSON v  ,
+                                   "body"   .= toJSON x             ])
 
 instance (ToJSON a) => Show (Eq a) where
   show = B.unpack . encode
@@ -86,10 +92,15 @@ stringToEq s = case (parse parseExpr "lhs" lhs, parse parseExpr "rhs" rhs) of
 prop_stringToEq_lambdas =
   stringToEq "global64 (global65 (%a. ?a) Global6c) ?b = ?b" ===
   (Eq (App (App (Const "global64") (App (App (Const "global65")
-                                             (Lam (Var (Bound 0))))
+                                             (Lam Nothing (Var (Bound 0))))
                                         (Const "Global6c")))
            (Var (Free 0)))
       (Var (Free 0)))
+
+prop_stringToEq_curries =
+  stringToEq "globalaa (%x y. ?x) = globalbb" ===
+  (Eq (App (Const "globalaa") (Lam Nothing (Lam Nothing (Var (Bound 1)))))
+      (Const "globalbb"))
 
 trim = reverse . trimLeading . reverse . trimLeading
   where trimLeading = dropWhile isSpace
@@ -97,7 +108,18 @@ trim = reverse . trimLeading . reverse . trimLeading
 parseExpr :: Parser (Expr String)
 parseExpr = chainl1 parseNonApp (space >> return App) <?> "parseExpr"
 
-parseNonApp = (parseGroup <|> try parseConst <|> parseVar) <?> "parseNonApp"
+parseNonApp = (try parseLam <|> parseGroup <|> try parseConst <|> parseVar)
+              <?> "parseNonApp"
+
+parseLam = between (char '(') (char ')') go <|> go <?> "parseLam"
+  where go = do char '%'
+                vars <- sepBy1 (many1 (noneOf ". ")) space
+                char '.'
+                spaces
+                body <- parseExpr
+                return (nestLams vars body)
+        nestLams []     body = body
+        nestLams (v:vs) body = Lam (Just v) (nestLams vs body)
 
 parseGroup :: Parser (Expr String)
 parseGroup = between (char '(') (char ')') parseExpr <?> "parseGroup"
@@ -118,20 +140,40 @@ parseVar = do
   <?> "parseVar"
 
 numberEq :: Eq String -> Eq Int
-numberEq (Eq lhs rhs) = Eq (numberExpr db lhs) (numberExpr db rhs)
-  where db = nub (collectVars lhs ++ collectVars rhs)
+numberEq (Eq lhs rhs) = Eq (numberExpr db [] lhs) (numberExpr db [] rhs)
+  where db = nub (collectVars [] lhs ++ collectVars [] rhs)
 
-collectVars :: Expr String -> [String]
-collectVars e = case e of
+collectVars :: [String] -> Expr String -> [String]
+collectVars bound e = case e of
   Const _        -> []
-  Var   (Free s) -> [s]
-  App   f x      -> collectVars f ++ collectVars x
+  Var (Free s)   -> if s `elem` bound then [] else [s]
+  App f x        -> collectVars bound f ++ collectVars bound x
+  Lam (Just v) x -> collectVars (v:bound) x
 
-numberExpr :: [String] -> Expr String -> Expr Int
-numberExpr db e = case e of
-  Const s        -> Const s
-  Var   (Free s) -> Var (Free (fromJust (elemIndex s db)))
-  App   f x      -> App (numberExpr db f) (numberExpr db x)
+numberExpr :: [String] -> [String] -> Expr String -> Expr Int
+numberExpr db env e = case e of
+  -- Constants don't contain variables
+  Const s -> Const s
+
+  -- Recurse into applications, without changing the context
+  App f x -> App (numberExpr db env f) (numberExpr db env x)
+
+  -- All variables come in as 'Free'; look them up in 'env' (bound locals) first
+  -- and fall back to 'db' (free globals) if not found
+  Var (Free s) -> case (elemIndex s env, elemIndex s db) of
+                    (Just i , _     ) -> Var (Bound i)
+                    (Nothing, Just i) -> Var (Free  i)
+                    _                 -> error ("Unknown var " ++ show s)
+
+  -- If there are bound variables in our input, something is wrong
+  Var (Bound s) -> error ("Prematurely bound variable " ++ show s)
+
+  -- Recurse into lambdas, but extend the environment. The result will use
+  -- de Bruijn indices.
+  Lam (Just s) x -> Lam Nothing (numberExpr db (s:env) x)
+
+  -- If there are de Bruijn lambdas in our input, something is wrong
+  Lam Nothing x -> error ("Prematurely de-Bruijn-transformed lambda " ++ show x)
 
 varIndex (Free  i) = toJSON i
 varIndex (Bound i) = toJSON i

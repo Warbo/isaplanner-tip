@@ -1,0 +1,26 @@
+From: Chris Warburton
+Date: Tue, 20 Feb 2018 13:48:32 +0000
+Subject: Re: Parse error for equations
+Message-Id: <b2957b049a17b4ed-ea9c5c2d501d0857-artemis@nixos>
+References: <b2957b049a17b4ed-0-artemis@nixos>
+In-Reply-To: <b2957b049a17b4ed-0-artemis@nixos>
+
+te-benchmark has now got support for lambdas. We also have support for
+rendering lambdas in haskell-te's renderEqs, and for parsing them in
+isaplanner-tip's eqsToJson.
+
+One thing which remains is to curry multi-argument lambdas. The syntax
+for this can be seen at (for example):
+
+https://stackoverflow.com/questions/33321391/normal-constant-definition-versus-lambda-constant-definition
+
+The way we curry is simply to have:
+
+    %x y. foo x y
+
+Become:
+
+    Lam Nothing (Lam Nothing (App (App (Const "foo") (Var (Bound 1)))
+                                  (Var (Bound 0))
+
+(In the internal format of eqsToJson)
