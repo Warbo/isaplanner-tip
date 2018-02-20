@@ -41,6 +41,12 @@ for size in runners:
                 'error':     code != 0,
                 'exit code': code
             }
+
+            # The only errors should be timeouts
+            if results[size][rep]['error']:
+                sys.stderr.write('Runner failed (not timeout):\n{0}\n'.format(
+                    json.dumps(results[size][rep])))
+
         except subprocess32.TimeoutExpired:
             # Kill the process group, which will include all children
             os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
