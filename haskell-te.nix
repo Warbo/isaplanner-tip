@@ -15,10 +15,8 @@ rec {
 
   # Known versions of haskell-te, e.g. those used for particular benchmark runs
   haskell-te-hashes = {
-    "7a4cc07a" = "04s9b60c6l2jji85ksmgab2gbxyddjxx4ps39rynjxr3fv1w550m";
-    "ce9c9478" = "0bmdjz13ya3c3lfc2paf2bcc1wmhyld7qqx492sdvjknjnf4p9cb";
-    "334d529"  = "109g8hkpggjjlw7ksd7l157jknp4wkg9lbjlyiqqvqzah2kl65jf";
+    "a66be4f" = "0kbp4f40bhwxxzzq3dx4g4294s7if4bxhgxiy7gw9y7acfbpc7js";
   };
 
-  inherit (get-haskell-te "7a4cc07a") haskell-te haskell-te-src;
+  inherit (get-haskell-te "a66be4f") haskell-te haskell-te-src;
 }
