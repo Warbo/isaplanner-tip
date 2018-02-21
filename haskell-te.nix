@@ -15,8 +15,8 @@ rec {
 
   # Known versions of haskell-te, e.g. those used for particular benchmark runs
   haskell-te-hashes = {
-    "a66be4f" = "0kbp4f40bhwxxzzq3dx4g4294s7if4bxhgxiy7gw9y7acfbpc7js";
+    "1dbea17" = "1vmxg7zsk1crk29ng2sd6z3mwrfzsa8amz8b6mz0g82kbw5b2g3f";
   };
 
-  inherit (get-haskell-te "a66be4f") haskell-te haskell-te-src;
+  inherit (get-haskell-te "1dbea17") haskell-te haskell-te-src;
 }
