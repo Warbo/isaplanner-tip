@@ -6,36 +6,6 @@ with lib;
 with {
   # Prior versions suffer from https://github.com/NixOS/nixpkgs/pull/23600
   inherit (nixpkgs1709) python;
-
-  # These need to work for any old revisions in known-samples
-
-  cacheFrom = te-benchmark:
-    te-benchmark.cache or (filterAttrs (n: _: hasPrefix "BENCHMARK" n)
-                                       te-benchmark.tools);
-
-  envFrom = te-benchmark:
-    te-benchmark.env or
-    (head (filter (x: x.name == "tip-bench-env")
-                  (concatLists (map (n: getAttr n te-benchmark.tools) [
-                    "buildInputs" "propagatedNativeBuildInputs"
-                    "propagatedBuildInputs" "nativeBuildInputs"
-                  ]))));
-
-  scriptsFrom = te-benchmark:
-    with rec {
-      # Older way: read source of env var derivation
-      smtlib = te-benchmark.tip-benchmark-smtlib;
-      asVar  = smtlib.BENCHMARKS_FINAL_BENCHMARK_DEFS;
-
-      # Newer way: read PLTCOLLECTS of compiled builder
-      bldr   = elemAt smtlib.args 1;
-      varNm  = head (attrNames (filterAttrs (n: v: v == "PLTCOLLECTS") bldr));
-      valNm  = replaceStrings [ "Names" ] [ "Vals" ] varNm;
-      asDep  = removePrefix ":" (getAttr valNm bldr);
-    };
-    if hasAttr "BENCHMARKS_FINAL_BENCHMARK_DEFS" smtlib
-       then asVar.src
-       else asDep;
 };
 rec {
   cutoff-timer = { runners, timeout_secs }: wrap {
@@ -92,10 +62,10 @@ rec {
   getBenchmarkTypes = { te-benchmark, tebenchmark-isabelle }: wrap {
     name  = "getBenchmarkTypes.rkt";
     file  = ./getBenchmarkTypes.rkt;
-    paths = [ (envFrom te-benchmark) ];
-    vars  = cacheFrom te-benchmark // {
+    paths = [ te-benchmark.env ];
+    vars  = te-benchmark.cache // {
       FIXES       = ./fixes.json;
-      PLTCOLLECTS = ":${scriptsFrom te-benchmark}";
+      PLTCOLLECTS = ":${te-benchmark.scripts}";
       smtlib = te-benchmark.tip-benchmark-smtlib;
       tebIsabelle = tebenchmark-isabelle;
     };
@@ -229,9 +199,9 @@ rec {
   stripConstructorsDestructors = { te-benchmark }: wrap {
     name  = "stripConstructorsDestructors";
     file  = ./stripConstructorsDestructors.rkt;
-    paths = [ (envFrom te-benchmark) ];
-    vars  = cacheFrom te-benchmark // {
-      PLTCOLLECTS = ":${scriptsFrom te-benchmark}";
+    paths = [ te-benchmark.env ];
+    vars  = te-benchmark.cache // {
+      PLTCOLLECTS = ":${te-benchmark.scripts}";
     };
   };
 }
