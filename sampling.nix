@@ -168,7 +168,7 @@ rec {
 
           theory = isacosy-from-sample-untested {
             label = "filter-test";
-            names = choose_sample { size = "200"; rep = "0"; };
+            names = choose_sample { size = "150"; rep = "0"; };
           };
 
           fixes = ./scripts/fixes.json;
@@ -527,7 +527,7 @@ rec {
         {
           inherit (dataForSample {
             label = "test";
-            names = choose_sample { size = "200"; rep = "0"; };
+            names = choose_sample { size = "150"; rep = "0"; };
           }) definitions functions;
           buildInputs = [ fail ];
         }
