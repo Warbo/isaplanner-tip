@@ -1,4 +1,5 @@
 result
+result-*
 *.pyc
 .asv/env
 .asv/results/*/*.json
