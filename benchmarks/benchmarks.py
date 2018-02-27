@@ -45,26 +45,25 @@ def setup_cache():
     for size in cache:
         for rep in cache[size]:
             rep = int(rep)
-            runner   = cache[size][rep]['runner']
-            result   = run_timed(runner, timeout=timeout_secs)
-            analysis = {'analysed': False}
-            if not result['killed']:
-                try:
-                    analysis = run([cache[size][rep]['analyser']],
-                                   stdin=result['stdout']);
-                    analysis['analysed'] = True
-                except:
-                    analysis = {'analysed':       False,
-                                'analysis error': repr(exc_info())}
+            runner     = cache[size][rep]['runner']
+            result     = run_timed(runner, timeout=timeout_secs)
+            to_analyse = '[]' if result['killed'] else result['stdout']
+            try:
+                analysis = run([cache[size][rep]['analyser']],
+                               stdin=to_analyse);
+                analysis['analysed'] = True
+            except:
+                analysis = {'analysed':       False,
+                            'analysis error': repr(exc_info())}
 
-                if analysis['analysed']:
-                    try:
-                        parsed             = loads(analysis['stdout'])
-                        parsed['analysed'] = True
-                        analysis           = parsed
-                    except:
-                        analysis['analysed']       = False,
-                        analysis['analysis error'] = repr(exc_info()),
+            if analysis['analysed']:
+                try:
+                    parsed             = loads(analysis['stdout'])
+                    parsed['analysed'] = True
+                    analysis           = parsed
+                except:
+                    analysis['analysed']       = False,
+                    analysis['analysis error'] = repr(exc_info())
             cache[size][rep]['result']   = result
             cache[size][rep]['analysis'] = analysis
 
