@@ -31,4 +31,4 @@ with rec {
                                     (import ./. { inherit pkgs; }))
                  { inherit stable unstable; };
 };
-onlyDrvs all
+onlyDrvs all // { benchmarks = import ./benchmarks; }
