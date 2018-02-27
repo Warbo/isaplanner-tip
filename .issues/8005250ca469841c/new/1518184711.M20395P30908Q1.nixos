@@ -1,8 +1,9 @@
 From: Chris Warburton
 Date: Fri, 09 Feb 2018 13:51:45 +0000
-State: new
+State: resolved
 Subject: Scrap compatibility junk from scripts/default.nix
 Message-Id: <8005250ca469841c-0-artemis@nixos>
+resolution: fixed
 
 At the top of scripts/default.nix there are some gubbins to reach inside
 old versions of te-benchmark and pull out things like the benchmark dir,
