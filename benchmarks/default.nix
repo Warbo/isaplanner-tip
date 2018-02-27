@@ -1,38 +1,39 @@
+with builtins;
 with import ../pkgs.nix;
 with import ../. { pkgs = stable; };
+with stable.lib;
 with defs.sampling;
 with rec {
-  python = stable.python.withPackages (pyPkgs: [ pyPkgs.subprocess32 ]);
+  python  = stable.nixpkgs1709.python.withPackages (p: [ p.subprocess32 ]);
 
-  rev     = "ce9c9478";
+  checks  = runner-tests ++ defs.cutoff-timer.analyse-results.checks;
+
+  rev     = "be30d74";
 
   runners = mapAttrs (size: mapAttrs (rep: runner: rec {
                        inherit runner;
-                       sample   = attrByPath [ rev size rep ] known-samples;
+                       sample   = attrByPath [ rev size rep ]
+                                             (abort (toJSON {
+                                               inherit rev size rep;
+                                               error = "No such sample";
+                                             }))
+                                             known-samples;
                        analyser = sampleAnalyser {
-                         REP        = rep;
-                         SIZE       = size;
-                         # TODO: haskell-te commit e911a65 adds a SAMPLED_NAMES
-                         # argument, which lets us pass in our list of strings
-                         # without writing them to a file
-                         sampleFile = writeScript "sample-${rev}-${size}-${rep}"
-                                        (concatStringsSep "\n" sample);
+                         REP           = rep;
+                         SIZE          = size;
+                         SAMPLED_NAMES = sample;
                        };
                      }))
                      (getAttr rev known-runners);
 
-  sampleAnalyser = stable.callPackage
-    "${defs.haskell-te.haskell-te-src}/benchmarks/sampleAnalyser.nix"
-    { inherit (defs.haskell-te.haskell-te) analysis; };
-
   wrapper = stable.mkBin {
     name  = "python";
+    file  = "${python}/bin/python";
     paths = [ python ];
     vars  = {
-      inherit runners;
-      timeout_secs = "180";
+      runners      = toJSON runners;
+      timeout_secs = "20";
     };
-    file  = "${python}/bin/python";
   };
 };
-stable.withDeps [ runner-tests ] python
+stable.withDeps checks wrapper
