@@ -8,6 +8,10 @@ rec {
   inherit (defs.isacosy) isacosy;
 
   defs = {
+    cutoff-timer = callPackage ./cutoff-timer.nix {
+      inherit (defs.scripts ) cutoff-timer;
+      inherit (defs.sampling) runnerForSample sampleAnalyser;
+    };
     haskell-te = callPackage ./haskell-te.nix {};
     isaplanner = callPackage ./isaplanner.nix {};
     isacosy    = callPackage ./isacosy.nix {
@@ -18,7 +22,7 @@ rec {
     sampling = callPackage ./sampling.nix {
       inherit (defs.haskell-te          ) get-haskell-te;
       inherit (defs.isacosy             ) isacosy isacosy-theory;
-      inherit (defs.scripts             ) cutoff-timer isabelleTypeArgs;
+      inherit (defs.scripts             ) isabelleTypeArgs;
       inherit (defs.tebenchmark-isabelle) find-undefined-cases
                                           handleConstructors
                                           make-tebenchmark-data
