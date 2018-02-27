@@ -1,8 +1,8 @@
-{ attrsToDirs, bash, cutoff-timer, fail, find-undefined-cases, gawk,
-  get-haskell-te, handleConstructors, haskellPackages, isabelleTypeArgs,
-  isacosy, isacosy-theory, jq, lib, make-tebenchmark-data,
-  make-tebenchmark-isabelle, mkBin, nothing, runCommand, stdenv, te-benchmark,
-  withDeps, wrap, writeScript }:
+{ attrsToDirs, bash, callPackage, fail, find-undefined-cases, gawk,
+  get-haskell-te, handleConstructors, haskell-te, haskell-te-src,
+  haskellPackages, isabelleTypeArgs, isacosy, isacosy-theory, jq, lib, lzip,
+  make-tebenchmark-data, make-tebenchmark-isabelle, mkBin, nothing, runCommand,
+  stdenv, te-benchmark, withDeps, wrap, writeScript }:
 
 with builtins;
 with lib;
@@ -28,13 +28,12 @@ rec {
   # Using the same samples as haskell-te lets us directly compare Isabelle and
   # Haskell results. Outputs '{"1": {"2":["foo"], ...}, ...}' where "1" is a
   # sample size, "2" is a repetition (0, 1, 2, ...) and ["foo"] is the sample.
-  samples-from-haskell-te = { filename, machine, rev }:
-    with get-haskell-te rev;
-    runCommand "samples-from-${filename}"
+  samples-from-haskell-te = { file }:
+    runCommand "samples-from-${unsafeDiscardStringContext (baseNameOf file)}"
       {
-        buildInputs = [ jq ];
-        file    = "${haskell-te-src}/benchmarks/results/${machine}/${filename}";
-        nixExpr = ''
+        inherit file;
+        buildInputs = [ jq lzip ];
+        nixExpr     = ''
           with builtins;
           fromJSON (readFile ./samples.json)
         '';
@@ -42,7 +41,7 @@ rec {
       ''
         set -e
         mkdir "$out"
-        gunzip < "$file"                       |
+        lzip -d < "$file"                      |
           jq '.results                         |
               ."quickspectip.track_data"       |
               .result                          |
@@ -278,8 +277,16 @@ rec {
   # the code which got benchmarked. The inner 'rev' values are the haskell-te
   # revisions which contain the benchmark data (which must, of course, be
   # added in a new commit after the code which got benchmarked).
-  known-samples = mapAttrs (_: args: import (samples-from-haskell-te args)) {
-  };
+  known-samples =
+    with rec {
+      machine = "desktop";
+      extract = rev: filename: import (samples-from-haskell-te {
+        file = "${(get-haskell-te rev).haskell-te-src}/benchmarks/results/${machine}/${filename}";
+      });
+    };
+    mapAttrs extract {
+      be30d74 = "b1247807-nix-py-dirnull.json.lz";
+    };
 
   runnerFor = { label, names, te-benchmark }: wrap {
     name  = "isacosy-runner-${label}";
@@ -327,11 +334,15 @@ rec {
                        (rep: names: runnerFor {
                          inherit names;
                          label        = "${rev}-${size}-${rep}";
-                         te-benchmark =
-                           with get-haskell-te rev;
-                           haskell-te.tipBenchmarks;
+                         te-benchmark = with get-haskell-te rev;
+                                        haskell-te.tipBenchmarks.tebench;
                        })))
       known-samples;
+
+  sampleAnalyser = callPackage
+    "${haskell-te-src}/benchmarks/sampleAnalyser.nix"
+    { inherit (haskell-te) analysis; };
+
 
   runner-tests =
     with rec {
@@ -450,5 +461,5 @@ rec {
         (checkConjectures list)
       ];
     };
-    withDeps tests nothing;
+    tests;
 }

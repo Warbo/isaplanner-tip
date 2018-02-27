@@ -20,7 +20,8 @@ rec {
       inherit (defs.tebenchmark-isabelle) te-benchmark;
     };
     sampling = callPackage ./sampling.nix {
-      inherit (defs.haskell-te          ) get-haskell-te;
+      inherit (defs.haskell-te          ) get-haskell-te haskell-te
+                                          haskell-te-src;
       inherit (defs.isacosy             ) isacosy isacosy-theory;
       inherit (defs.scripts             ) isabelleTypeArgs;
       inherit (defs.tebenchmark-isabelle) find-undefined-cases
