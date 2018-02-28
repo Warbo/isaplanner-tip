@@ -21,7 +21,7 @@ with rec {
                        analyser = sampleAnalyser {
                          REP           = rep;
                          SIZE          = size;
-                         SAMPLED_NAMES = sample;
+                         SAMPLED_NAMES = concatStringsSep "\n" sample;
                        };
                      }))
                      (getAttr rev known-runners);
