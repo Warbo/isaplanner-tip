@@ -19,5 +19,5 @@ rec {
     "be30d74" = "0skmiy0riry3jxkz6pk3lf38bqd3lw6gxlh4l6j41ccdm7lwlh55";
   };
 
-  inherit (get-haskell-te "1dbea17") haskell-te haskell-te-src;
+  inherit (get-haskell-te "be30d74") haskell-te haskell-te-src;
 }
