@@ -31,8 +31,8 @@ with rec {
     file  = "${python}/bin/python";
     paths = [ python ];
     vars  = {
-      runners      = toJSON runners;
       timeout_secs = "20";
+      runners      = stable.writeScript "runners.json" (toJSON runners);
     };
   };
 };
