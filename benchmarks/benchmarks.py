@@ -13,6 +13,12 @@ del(missing)
 
 timeout_secs = int(getenv('timeout_secs'))
 
+def get_runners():
+    with open(getenv('runners'), 'r') as f:
+        return loads(f.read())
+
+runners = get_runners()
+
 def run(cmd, stdin=None):
     proc = Popen(cmd, stdin=PIPE if stdin else None, stdout=PIPE, stderr=PIPE)
     (stdout, stderr) = proc.communicate(input=stdin)
@@ -41,10 +47,9 @@ def run_timed(cmd, stdin=None, timeout=None):
     return result
 
 def setup_cache():
-    cache = loads(getenv('runners'))
+    cache = get_runners()
     for size in cache:
         for rep in cache[size]:
-            rep = int(rep)
             runner     = cache[size][rep]['runner']
             result     = run_timed(runner, timeout=timeout_secs)
             to_analyse = '[]' if result['killed'] else result['stdout']
@@ -69,9 +74,13 @@ def setup_cache():
 
     return cache
 setup_cache.timeout = max(3600,
-                          timeout_secs                  * \
-                          len(loads(getenv('runners'))) * \
-                          len(loads(getenv('runners')).popitem()[1]))
+                          timeout_secs          * \
+                          len(runners.values()) * \
+                          len(runners.values()[0]))
 
 def track_data(cache, _):
     return cache
+track_data.repeat      = 1
+track_data.number      = 1
+track_data.params      = (["dummy"],)
+track_data.param_names = ["dummy"]
