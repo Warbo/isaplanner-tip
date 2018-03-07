@@ -42,8 +42,10 @@ def run_timed(cmd, stdin=None, timeout=None):
 
     proc.wait()  # Reaps zombies
 
-    end = default_timer()
+    end            = default_timer()
     result['time'] = end - start
+    if timeout is not None:
+        result['timeout'] = timeout
     return result
 
 def setup_cache():
