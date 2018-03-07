@@ -273,10 +273,10 @@ rec {
     name = "sample-${args.label}";
   };
 
-  # The attribute names (e.g. ce9c9478) are the haskell-te revisions defining
-  # the code which got benchmarked. The inner 'rev' values are the haskell-te
-  # revisions which contain the benchmark data (which must, of course, be
-  # added in a new commit after the code which got benchmarked).
+  # The filenames reference the haskell-te code revision which got benchmarked.
+  # The attribute names are the haskell-te revisions which contain the results
+  # (which must, of course, be added in a new commit after the code which got
+  # benchmarked).
   known-samples =
     with rec {
       machine = "desktop";
@@ -285,7 +285,8 @@ rec {
       });
     };
     mapAttrs extract {
-      be30d74 = "b1247807-nix-py-dirnull.json.lz";
+      "be30d74" = "b1247807-nix-py-dirnull.json.lz";  # Even numbered sizes
+      "3c15e23" = "bdea634a-nix-py-dirnull.json.lz";  # Odd  numbered sizes
     };
 
   runnerFor = { label, names, te-benchmark }: wrap {
