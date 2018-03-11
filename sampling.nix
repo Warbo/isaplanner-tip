@@ -287,6 +287,7 @@ rec {
     mapAttrs extract {
       "be30d74" = "b1247807-nix-py-dirnull.json.lz";  # Even numbered sizes
       "3c15e23" = "bdea634a-nix-py-dirnull.json.lz";  # Odd  numbered sizes
+      "1c6ae74" = "eb2d64e8-nix-py-dirnull.json.lz";  # Rep 30
     };
 
   runnerFor = { label, names, te-benchmark }: wrap {
