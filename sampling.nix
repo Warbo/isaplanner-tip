@@ -281,7 +281,12 @@ rec {
     with rec {
       machine = "desktop";
       extract = rev: filename: import (samples-from-haskell-te {
-        file = "${(get-haskell-te rev).haskell-te-src}/benchmarks/results/${machine}/${filename}";
+        file = concatStringsSep "/" [
+          "${(get-haskell-te rev).haskell-te-src}"
+          "benchmarks/results"
+          machine
+          filename
+        ];
       });
     };
     mapAttrs extract {
