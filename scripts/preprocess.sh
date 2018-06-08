@@ -2,6 +2,7 @@
 set -e
 set -o pipefail
 
+# shellcheck disable=SC2154
 [[ -n "$smtlib" ]] || {
     echo "No smtlib variable, aborting" 1>&2
     exit 1

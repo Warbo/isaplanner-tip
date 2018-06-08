@@ -15,6 +15,8 @@ P='with rec {
 BASE=$(dirname "$(readlink -f "$0")")
 FILE="$BASE/cutoff-times-vis.gnumeric"
 export FILE
+
+# shellcheck disable=SC2016
 CMD='gnumeric "$FILE"'
 
 [[ -f "$FILE" ]] || {
